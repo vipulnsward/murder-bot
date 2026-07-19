@@ -7,3 +7,4 @@ hls/
 state_*.png
 status_latest.png
 run_*.log
+.gstack/

@@ -161,7 +161,7 @@ def page():
 :root{--navy:#070d18;--panel:rgba(16,30,54,.66);--panel2:rgba(20,34,60,.58);--bd:rgba(230,197,104,.24);--ink:#f3ecda;--muted:#c2cfe2;--gold:#f0d27e;--good:#8be0a6;--bad:#e2745e;--track:rgba(6,14,26,.78)}
 *{box-sizing:border-box}body{margin:0;background:#070d18;color:var(--ink);font-family:system-ui,sans-serif;line-height:1.5;overflow-x:hidden}
 #core{position:fixed;inset:0;width:100vw;height:100vh;z-index:-2;display:block}
-.scrim{position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(120% 90% at 50% 0%,rgba(4,8,16,.15) 20%,rgba(4,8,16,.62)),linear-gradient(180deg,rgba(6,11,22,.42),rgba(6,11,22,.72))}
+.scrim{position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(130% 100% at 50% 40%,transparent 30%,rgba(4,7,15,.4)),linear-gradient(180deg,rgba(6,10,20,.14),rgba(6,10,20,.34))}
 .wrap{max-width:900px;margin:0 auto;padding:22px 16px 46px;position:relative;z-index:1}
 .top,.cap,.tag{text-shadow:0 1px 4px rgba(0,0,0,.78)}
 .top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}

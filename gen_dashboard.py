@@ -125,50 +125,40 @@ body{background:#070d18;color:#ece4cf;font-family:system-ui,-apple-system,"Segoe
 
 FRAG = r"""precision highp float;
 uniform vec2 R; uniform float T; uniform float M; uniform float PIX; uniform vec2 MO;
-float hash(vec2 p){p=fract(p*vec2(123.34,345.45));p+=dot(p,p+34.345);return fract(p.x*p.y);}
-float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
- float a=hash(i),b=hash(i+vec2(1.,0.)),c=hash(i+vec2(0.,1.)),d=hash(i+vec2(1.,1.));
- return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);}
-float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<5;i++){s+=a*noise(p);p=p*2.02+vec2(1.7);a*=.5;}return s;}
-mat3 rotY(float a){float c=cos(a),s=sin(a);return mat3(c,0.,s,0.,1.,0.,-s,0.,c);}
-mat3 rotX(float a){float c=cos(a),s=sin(a);return mat3(1.,0.,0.,0.,c,-s,0.,s,c);}
+float hash21(vec2 p){p=fract(p*vec2(123.34,233.53));p+=dot(p,p+23.234);return fract(p.x*p.y);}
+float vn(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.-2.*f);
+ return mix(mix(hash21(i),hash21(i+vec2(1.,0.)),u.x),mix(hash21(i+vec2(0.,1.)),hash21(i+vec2(1.,1.)),u.x),u.y);}
+float fbm(vec2 p){float s=0.,a=.55,tot=0.;mat2 m=mat2(1.6,1.2,-1.2,1.6);
+ for(int i=0;i<5;i++){s+=a*vn(p);tot+=a;p=m*p;a*=.5;}return s/tot;}
+float stars(vec2 uv,float dens,float thr){vec2 g=uv*dens;vec2 id=floor(g);vec2 f=fract(g)-0.5;
+ float h=hash21(id);float s=smoothstep(0.11,0.0,length(f))*step(thr,h);
+ float tw=0.55+0.45*sin(T*M*3.0+h*44.0);return s*tw;}
 void main(){
- vec2 fc=gl_FragCoord.xy;
- if(PIX>1.5){fc=(floor(fc/PIX)+0.5)*PIX;}
- vec2 uv=(fc-0.5*R)/R.y;
- float t=T*M;
- vec3 navy=vec3(0.03,0.065,0.13), navy2=vec3(0.013,0.028,0.065);
- vec3 gold=vec3(0.86,0.70,0.36), gold2=vec3(1.0,0.86,0.55);
- vec2 q=uv*1.5+MO*0.15;
- float n=fbm(q+vec2(t*0.03,-t*0.02));
- n=fbm(q+n*1.4+vec2(0.0,t*0.02));
- vec3 col=mix(navy2,navy,smoothstep(0.15,0.95,n));
- col+=gold*pow(max(n-0.55,0.0),2.0)*0.55;
- col*=1.0-0.5*dot(uv,uv);
- vec3 ro=vec3(0.0,0.0,3.2);
- vec3 rd=normalize(vec3(uv+MO*0.05,-1.6));
- mat3 rot=rotY(t*0.22)*rotX(0.5+sin(t*0.13)*0.14);
- float rad=1.12;
- float b=dot(ro,rd), c2=dot(ro,ro)-rad*rad, h=b*b-c2;
- if(h>0.0){
-  h=sqrt(h); float tH=-b-h; vec3 p=ro+rd*tH; vec3 nr=normalize(p); vec3 pl=rot*p;
-  float e=fbm(pl.xy*2.1+pl.z*1.2+vec2(t*0.18)); e+=0.5*fbm(pl.yz*3.6-vec2(t*0.14));
-  float fres=pow(1.0-max(dot(nr,-rd),0.0),2.4);
-  float lat=abs(fract(pl.y*6.0)-0.5);
-  float lon=abs(fract((atan(pl.x,pl.z)/6.2831+0.5)*18.0)-0.5);
-  float grid=smoothstep(0.055,0.0,min(lat,lon))*0.55;
-  vec3 core=mix(gold*0.22,gold2,clamp(e,0.,1.));
-  core+=gold2*fres*1.35; core+=gold2*grid; core*=0.55+0.65*e;
-  core*=0.85+0.22*sin(t*1.1);
-  col=mix(col,core,clamp(0.28+0.85*e+fres,0.0,1.0));
- }
- float d=length(uv);
- col+=gold*smoothstep(1.25,0.0,d)*0.05;
- vec2 dp=uv*3.0;
- for(int i=0;i<3;i++){float fi=float(i);
-  vec2 g=fract(dp*(1.0+fi*0.7)+vec2(t*(0.05+fi*0.03),t*0.02))-0.5;
-  col+=gold2*smoothstep(0.03,0.0,length(g))*0.28; dp*=1.7;}
- col=pow(max(col,0.0),vec3(0.88));
+ vec2 fc=gl_FragCoord.xy; if(PIX>1.5){fc=(floor(fc/PIX)+0.5)*PIX;}
+ vec2 uv=(fc-0.5*R)/R.y; float t=T*M;
+ vec2 drift=vec2(t*0.006,t*0.004);
+ vec3 col=mix(vec3(0.015,0.02,0.055),vec3(0.03,0.02,0.082),smoothstep(-0.7,0.8,uv.y));
+ vec2 q=uv*1.25+MO*0.12+drift;
+ float w1=fbm(q+vec2(0.0,t*0.02));
+ float w2=fbm(q*1.8+w1*2.2+vec2(t*0.02,0.0));
+ float neb=fbm(q+w2*1.7);
+ neb=pow(clamp(neb,0.,1.),1.5);
+ vec3 violet=vec3(0.20,0.07,0.40),blue=vec3(0.05,0.18,0.52),magenta=vec3(0.48,0.10,0.44),gold=vec3(0.98,0.75,0.36);
+ vec3 nc=mix(violet,blue,smoothstep(0.25,0.65,w1));
+ nc=mix(nc,magenta,smoothstep(0.45,0.85,w2)*0.65);
+ nc=mix(nc,gold,pow(smoothstep(0.5,0.92,neb),2.2));
+ col+=nc*neb*2.6;
+ col*=0.72+0.42*fbm(q*2.4-w1);
+ float d=length(uv-vec2(0.0,0.03));
+ vec3 g2=vec3(1.0,0.83,0.47);
+ col+=g2*(exp(-d*2.8)*1.15+exp(-d*d*40.0)*1.8)*(0.9+0.14*sin(t*0.9));
+ float ang=atan(uv.y,uv.x);
+ col+=g2*(0.5+0.5*sin(ang*12.0+t*0.4))*exp(-d*5.0)*0.16;
+ col+=vec3(0.85,0.9,1.0)*stars(uv+MO*0.02,11.0,0.965);
+ col+=vec3(0.95,0.95,1.0)*stars(uv*1.8+7.3,20.0,0.982)*0.75;
+ col+=g2*stars(uv*0.75+3.1,7.0,0.972)*0.7;
+ col*=1.0-0.40*dot(uv,uv);
+ col=col/(col+0.92); col=pow(col,vec3(0.80));
  gl_FragColor=vec4(col,1.0);
 }"""
 

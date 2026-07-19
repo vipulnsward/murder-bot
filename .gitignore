@@ -1,6 +1,9 @@
-*-venv/
 __pycache__/
-_*.png
+*.pyc
+evony-venv/
+evony_status.html
+hls/
 *.log
+state_*.png
 status_latest.png
 run_*.log

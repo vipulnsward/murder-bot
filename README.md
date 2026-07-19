@@ -1,46 +1,145 @@
-# Evony T1 Training Bot
+# Evony Troop Trainer
 
-Vision-based automation for **Evony: The King's Return** on BlueStacks (ADB), built to mass-train T1 ground troops (Warriors) toward 1,000,000,000, with automatic food top-up.
+Vision-based automation that trains troops in **Evony: The King's Return** running on
+a local Android emulator (BlueStacks). It drives the game entirely through ADB input
+(taps/swipes) and reads the screen with OpenCV template matching + Tesseract OCR — no
+game API, no memory hacks, no accessibility tree (Evony is a Unity/IL2CPP app, so the
+screen is the only interface).
 
-> Evony's ToS prohibits automation. Use only on accounts whose risk you accept.
+It ran a real campaign from **685.7M → 1.0B+ T1 Warriors** unattended, and now targets
+1.5B T1 then T2 ground.
 
-## Why vision (not API/accessibility)
-Evony is a Unity/IL2CPP app (`com.topgamesinc.evony.flexion`) — no accessibility tree, so Appium/Maestro can't read it. Everything here is **screenshot → OpenCV template match + Tesseract OCR → ADB tap**, which is deterministic, local, and free.
+> Evony's ToS prohibits automation. Use only on a self-owned account whose risk you accept.
 
-## Setup
+---
+
+## What's in here
+
+| File | What it does |
+|------|--------------|
+| `train_to_1b.py` | Main loop: train a full batch, Finish-All with speedups, repeat until the target count. |
+| `recovery_handler.py` | Self-healing playbook — dismisses event popups, re-navigates to the barracks, optional vision-LLM fallback. |
+| `food_topup.py` | Opens food resource items in controlled amounts (never "open all"). |
+| `status.py` / `config.py` | Shared OCR/state helpers and tuning constants. |
+| `gen_dashboard.py` | Renders `evony_status.html` — a branded live status dashboard (progress to target, rate, ETA, screenshot). |
+| `live_stream.py` | MJPEG live stream of the emulator screen on `:8088` + a `/stats` JSON endpoint (re-OCRs the count every 10s). |
+| `hls_stream.sh` | H.264 HLS variant of the stream (`adb screenrecord \| ffmpeg`) for smoother HD over a tunnel. |
+| `templates/` | Click-proof PNG templates for each UI element (train button, speedup button, popups, barracks, etc.). |
+| `kb/` | Researched knowledge base on Evony combat, resources, tasks, botting, buffs, self-healing. |
+
+---
+
+## Requirements
+
+- **BlueStacks** (or any Android emulator) with ADB debugging enabled, Evony installed and logged in.
+- **ADB** reachable at `127.0.0.1:5555` (BlueStacks default). Adjust `DEVICE` if yours differs.
+- **Python 3.12** with `opencv-python-headless` and `numpy`.
+- **Tesseract OCR** (`brew install tesseract`) for reading troop counts / food.
+- Streaming extras (optional): **cloudflared** (public URL) and **ffmpeg** (HLS).
+
 ```bash
-python3.12 -m venv evony-venv && source evony-venv/bin/activate
-pip install opencv-python-headless numpy       # + system `tesseract`
-adb connect 127.0.0.1:5555                      # BlueStacks
+python3.12 -m venv evony-venv
+source evony-venv/bin/activate
+pip install opencv-python-headless numpy pytesseract
+adb connect 127.0.0.1:5555      # confirm the emulator is attached
+adb devices
 ```
-Device assumed 1080x1920. Adjust coordinates/templates for other resolutions.
 
-## Scripts
-| File | Purpose |
-|---|---|
-| `train_to_1b.py` | **Autonomous orchestrator**: navigate → train T1 → auto food top-up when low → repeat until Own ≥ 1B. |
-| `evony_bot.py` | Training-only loop (assumes game left on the Warriors screen). |
-| `food_topup.py` | Standalone safe food top-up (open ~1B via 1M Food items). |
-| `status.py` | Reads a run log + screen, prints batches/troops/Own/rate/food; saves `status_latest.png`. |
-| `config.py` | Device, target, quantity, timings, coordinates. |
-| `templates/` | Button crops for state detection & click-proof location. |
-| `kb/` | Researched Evony reference (combat, resources, tasks, botting, project). |
+---
 
-## Verified flow
-**Train cycle:** idle Warriors → set qty 269,228 → Train → Training Speedup → **Finish All** (uses speedup items) → verify Own +269,228 → repeat.
-**Navigation:** city → Barracks `(500,800)` → radial Train `(179,679)` → T1 icon `(135,1237)`.
-**Food top-up (safe):** top-bar food link → Resources panel (food-only) → scroll → match **"1M Food"** label (never Safe Food / never gem-Buy) → open modal → **Minimum → `+` to ~1000 → OCR hard-cap (≤2000) → green-check → Use** → confirms food +~1B.
+## Usage
 
-## Safety gates (food)
-- Only the green **Use** button of the **"1M Food"** row (owned) — never a 💎 gem/Buy button, never "1M Safe Food".
-- Count is set from Minimum with `+` and **OCR-verified ≤ 2000 before Use** — the loop refuses to ever "open all".
+### 1. Train troops
 
-## Measured
-~3.3M troops/min, ~5s/cycle, +269,228/batch. The real ceiling is **speedup items + food**, not clicking — the bot converts stockpiles to troops; it can't manufacture them.
+Open the game to the **Warriors (T1) barracks training screen** first, then:
 
-## Run
 ```bash
-python train_to_1b.py                 # autonomous to 1B with auto food top-up (<100M)
-python food_topup.py --target 1000 --cap 2000 --dry-run   # test food top-up (no Use)
-python status.py run_1b.log           # status snapshot
+source evony-venv/bin/activate
+python train_to_1b.py
 ```
+
+It loops: tap **Train** → **Confirm** the capacity popup → wait for the batch →
+**Finish All** with speedups → back to idle → repeat, until `Own >= TARGET_OWN`.
+Progress is logged with a running count and ETA.
+
+**Tuning** (top of `train_to_1b.py`):
+
+```python
+DEVICE     = "127.0.0.1:5555"   # ADB target
+TARGET_OWN = 1_500_000_000      # stop when you own this many of the trained troop
+TRAIN_QTY  = 271766             # slider max the game resets to each batch
+```
+
+> **Why we Confirm instead of typing a number:** the game resets the slider to its max
+> (271,766) every batch, which exceeds current training capacity (269,228), so tapping
+> Train pops a "capacity exceeded → adjust to 269,228?" dialog. Tapping **Confirm** is
+> faster and far more reliable than typing into the quantity field. This is the single
+> biggest stability win in the project.
+
+### 2. Live dashboard (static HTML)
+
+```bash
+python gen_dashboard.py        # writes evony_status.html with a fresh screenshot + stats
+```
+
+Open `evony_status.html` in a browser, or regenerate it on a loop for a live view.
+
+### 3. Live stream + stats API
+
+```bash
+python live_stream.py          # serves on http://localhost:8088
+```
+
+- `/`       — combined dashboard page (live MJPEG video + auto-refreshing stats).
+- `/stream` — raw MJPEG (`multipart/x-mixed-replace`).
+- `/stats`  — JSON: `{own, food, running, pct, to_go, ...}`, re-OCR'd every 10s.
+
+Expose it publicly with Cloudflare (QUIC/UDP is often blocked, so force http2):
+
+```bash
+cloudflared tunnel --url http://localhost:8088 --protocol http2
+```
+
+### 4. Smooth HD stream (HLS)
+
+For higher quality than MJPEG, stream H.264 via screenrecord:
+
+```bash
+./hls_stream.sh                # writes hls/stream.m3u8 + segments
+```
+
+Serve the `hls/` directory and point an `<video>`/hls.js player (or the same tunnel) at it.
+
+### 5. Food top-up
+
+`food_topup.py` opens resource food items in **bounded amounts** (hard OCR cap, so it
+never "opens all food"). Call it when the trainer reports low food, or run it standalone.
+
+---
+
+## How it works
+
+1. **Capture** — `adb exec-out screencap -p` grabs the current frame.
+2. **Detect state** — `cv2.matchTemplate` against `templates/*.png` (match > ~0.9) tells us
+   which screen/popup we're on: idle barracks, mid-training (speedup button visible),
+   capacity popup, exit dialog, etc. Templates are cropped tight so they match across
+   camera pans and minor UI shifts.
+3. **Read numbers** — Tesseract OCR on fixed screen regions reads the owned-troop count
+   and food, with sanity bounds to reject misreads.
+4. **Act** — `adb input tap/swipe/text/keyevent` performs the click.
+5. **Recover** — if knocked off the training screen by an event popup, the recovery
+   playbook dismisses it (Cancel/Back only — never taps anything that could spend gems)
+   and re-locates the barracks by template before resuming.
+
+---
+
+## Notes & safety rails
+
+- **Never spends gems.** Recovery is dismiss/back-only; blind taps that once hit a gem
+  "Instant Finish" button were removed.
+- **Never "opens all" food.** Food top-up is hard-capped.
+- **Stale display resync:** if the in-game resource display desyncs, a force-stop +
+  relaunch (`am force-stop` / `monkey`) re-syncs it.
+- The `kb/` folder documents the game mechanics and design decisions behind these rails.
+
+This is a personal automation tool for a single self-owned account. Use responsibly.

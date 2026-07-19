@@ -11,7 +11,7 @@ DEVICE = "127.0.0.1:5555"
 HERE = os.path.dirname(os.path.abspath(__file__))
 TDIR = os.path.join(HERE, "templates")
 
-TARGET_OWN = 1_000_000_000
+TARGET_OWN = 1_500_000_000
 TRAIN_QTY = 271766
 MATCH = 0.85
 
@@ -112,7 +112,7 @@ def read_food_count(img):
 
 
 FOOD_BOX = (150, 8, 300, 64)
-FOOD_LOW = 500_000_000
+FOOD_LOW = 0
 
 
 def read_food_topbar(img):

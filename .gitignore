@@ -1,0 +1,6 @@
+*-venv/
+__pycache__/
+_*.png
+*.log
+status_latest.png
+run_*.log

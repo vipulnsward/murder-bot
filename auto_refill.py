@@ -134,7 +134,31 @@ def to_warriors():
     return m(cap(), "warriors_title")[0] > 0.9
 
 
+PKG = "com.topgamesinc.evony.flexion"
+
+
+def app_refresh():
+    print("app_refresh: force-stopping + relaunching", PKG)
+    adb("shell", "am", "force-stop", PKG)
+    time.sleep(3)
+    adb("shell", "monkey", "-p", PKG, "-c", "android.intent.category.LAUNCHER", "1")
+    for _ in range(12):
+        time.sleep(5)
+        img = cap()
+        if m(img, "warriors_title")[0] > 0.9 or m(img, "barracks_bldg")[0] > 0.85:
+            break
+        if m(img, "exit_dialog")[0] > 0.9:
+            tap(360, 1134, 0.8)
+        else:
+            adb("exec-out", "input", "keyevent", "4")
+    ok = to_warriors()
+    print("app_refresh: back on Warriors" if ok else "app_refresh: could not reach Warriors")
+    return ok
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "refresh":
+        sys.exit(0 if app_refresh() else 1)
     ok = refill()
     if not ok:
         sys.exit(1)

@@ -382,6 +382,11 @@ def main():
                 else:
                     auto_refill.to_warriors()
                     log("auto-refill failed; will retry")
+            elif fails == 8:
+                log("still stuck — app refresh (force-stop + relaunch) last resort")
+                if auto_refill.app_refresh():
+                    fails = 0
+                    log("app refresh OK; resumed on Warriors")
             else:
                 auto_refill.to_warriors()
             time.sleep(1.2)

@@ -18,7 +18,8 @@ It ran a real campaign from **685.7M → 1.0B+ T1 Warriors** unattended, and now
 | File | What it does |
 |------|--------------|
 | `train_to_1b.py` | Main loop: train a full batch, Finish-All with speedups, repeat until the target count. |
-| `recovery_handler.py` | Self-healing playbook — dismisses event popups, re-navigates to the barracks, optional vision-LLM fallback. |
+| `auto_refill.py` | Self-healing food refill: navigate to Resources, open ~5B food (bounded), walk back to the barracks. Also `app_refresh()` (force-stop + relaunch) as a last-resort recovery. |
+| `recovery_handler.py` | Recovery playbook — dismisses event popups, re-navigates to the barracks, optional vision-LLM fallback. |
 | `food_topup.py` | Opens food resource items in controlled amounts (never "open all"). |
 | `status.py` / `config.py` | Shared OCR/state helpers and tuning constants. |
 | `gen_dashboard.py` | Renders `evony_status.html` — a branded live status dashboard (progress to target, rate, ETA, screenshot). |
@@ -132,6 +133,32 @@ never "opens all food"). Call it when the trainer reports low food, or run it st
    and re-locates the barracks by template before resuming.
 
 ---
+
+## Self-healing (runs for hours unattended)
+
+Out of food, Evony forces the training quantity to 1 and puts a timer on the Train button,
+so `train_one_batch` returns `NAV`, not `NOFOOD`. The loop therefore refills on **sustained
+failure of any kind**, not a specific code:
+
+- **3 and 6 consecutive fails** → `auto_refill.refill()` opens ~5B food (5000 × 1M items) and
+  navigates back to the barracks. Bounded and gated so it never opens all food or taps a gem
+  button.
+- **8 fails** → `auto_refill.app_refresh()` force-stops and relaunches the app (resets the
+  camera to default zoom where templates match again), then re-navigates.
+- **10 fails** → stop for a human look (rare).
+
+The modal quantity is read with a **color mask** (orange-on-beige defeats grayscale
+thresholding): keep pixels where `r-g > 45 && r-b > 60`, invert, upscale, OCR.
+
+Run the refill or a refresh manually any time:
+
+```bash
+python auto_refill.py 5000     # open ~5B food and return to Warriors
+python auto_refill.py refresh  # force-stop + relaunch + navigate to Warriors
+```
+
+A 2-minute monitor loop restarts the bot if it dies, confirms each refill fired, and refreshes
+the dashboards. See `kb/11-self-healing-food-refill.md` for the full write-up.
 
 ## Notes & safety rails
 

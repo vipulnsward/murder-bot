@@ -18,6 +18,220 @@ PROFILE = {
     "troop": "T1 Warriors · Ground",
 }
 
+CSS = r"""
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:#070d18;color:#ece4cf;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+ line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.serif{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif}
+:root{--gold:#f0d27e;--gold2:#d8ad46;--ink:#f4eddc;--muted:#c3d0e3;--good:#8be0a6;--bad:#e2745e;
+ --glass:rgba(14,26,48,.64);--glass2:rgba(18,32,58,.56);--line:rgba(230,197,104,.26)}
+#core{position:fixed;inset:0;width:100vw;height:100vh;z-index:-2;display:block}
+.scrim{position:fixed;inset:0;z-index:-1;pointer-events:none;
+ background:radial-gradient(120% 90% at 50% 0%,rgba(4,8,16,.14) 22%,rgba(4,8,16,.62) 100%),
+ linear-gradient(180deg,rgba(6,11,22,.44),rgba(6,11,22,.72))}
+.top,.foot,.sect{text-shadow:0 1px 4px rgba(0,0,0,.75)}
+.wrap{max-width:960px;margin:0 auto;padding:30px 20px 60px;position:relative;z-index:1}
+.rise{opacity:0;transform:translateY(14px);animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:var(--d,0s)}
+@keyframes rise{to{opacity:1;transform:none}}
+.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.crest{width:58px;height:58px;border-radius:12px;object-fit:cover;border:1px solid var(--line);box-shadow:0 6px 22px rgba(0,0,0,.5)}
+.ava{position:relative;width:64px;height:64px;flex:0 0 auto}
+.portrait{width:64px;height:64px;border-radius:14px;object-fit:cover;border:1px solid rgba(230,197,104,.5);
+ box-shadow:0 6px 22px rgba(0,0,0,.55)}
+.crestbadge{position:absolute;right:-7px;bottom:-7px;width:30px;height:30px;border-radius:8px;object-fit:cover;
+ border:1px solid var(--gold);box-shadow:0 2px 8px rgba(0,0,0,.6)}
+.brand .name{font-size:1.5rem;font-weight:600;color:var(--gold);line-height:1.1;letter-spacing:.01em;
+ text-shadow:0 2px 18px rgba(230,197,104,.35)}
+.brand .sub{font-size:.72rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:3px}
+.pill{font:600 .7rem/1 ui-monospace,Menlo,monospace;letter-spacing:.12em;padding:8px 13px;border-radius:999px;
+ border:1px solid;backdrop-filter:blur(8px)}
+.pill.run{color:var(--good);border-color:rgba(116,212,147,.45);background:rgba(116,212,147,.12)}
+.pill.stop{color:var(--bad);border-color:rgba(226,116,94,.45);background:rgba(226,116,94,.12)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:currentColor;margin-right:7px;box-shadow:0 0 8px currentColor}
+.pill.run .dot{animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.updated{margin-left:auto;color:var(--muted);font:500 .78rem/1 ui-monospace,monospace}
+.empire{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.chip{background:var(--glass);border:1px solid var(--line);border-radius:12px;padding:9px 15px;
+ display:flex;flex-direction:column;gap:2px;min-width:78px;backdrop-filter:blur(10px)}
+.chip .cv{font:600 1.02rem/1.1 ui-monospace,Menlo,monospace;color:var(--gold)}
+.chip .cl{font-size:.6rem;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
+.hero{position:relative;overflow:hidden;border-radius:20px;border:1px solid var(--line);padding:30px 32px 26px;
+ margin-bottom:16px;background:linear-gradient(180deg,var(--glass),var(--glass2));backdrop-filter:blur(16px) saturate(1.15);
+ box-shadow:0 20px 60px rgba(0,0,0,.4);transition:transform .2s ease-out;will-change:transform}
+.hero .bg{position:absolute;inset:0;background-size:cover;background-position:center 28%;opacity:.12;
+ mask-image:linear-gradient(180deg,#000,transparent 85%)}
+.hero .in{position:relative}
+.eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:.66rem;font-weight:600;color:var(--gold2);
+ display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.badge{color:#0a1322;background:linear-gradient(180deg,#f2d885,#d9b24e);border-radius:999px;padding:3px 10px;
+ font-size:.6rem;letter-spacing:.06em;font-weight:700;box-shadow:0 2px 10px rgba(230,197,104,.4)}
+.own{font-weight:600;font-size:clamp(2.6rem,8.5vw,4.4rem);line-height:1;color:var(--gold);
+ font-variant-numeric:tabular-nums;margin:10px 0 4px;text-shadow:0 3px 26px rgba(230,197,104,.4)}
+.own small{color:var(--muted);font-size:.3em;font-weight:500}
+.subline{color:var(--muted);font-size:.92rem;margin-bottom:16px}
+.subline b{color:var(--ink);font-variant-numeric:tabular-nums}
+.track{height:14px;background:rgba(6,14,26,.7);border-radius:999px;overflow:hidden;border:1px solid var(--line);
+ box-shadow:inset 0 2px 5px rgba(0,0,0,.5)}
+.fill{height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--gold2),var(--gold),#fff2cf);
+ box-shadow:0 0 16px rgba(230,197,104,.6);transition:width 1.4s cubic-bezier(.2,.7,.2,1)}
+.pctrow{display:flex;justify-content:space-between;margin-top:10px;font:600 .8rem/1 ui-monospace,monospace;
+ color:var(--muted);font-variant-numeric:tabular-nums}
+.pctrow b{color:var(--gold)}
+.tagline{margin-top:16px;padding-top:15px;border-top:1px solid var(--line);text-align:center;
+ color:var(--gold2);letter-spacing:.15em;font-size:.7rem;text-transform:uppercase}
+.warn{margin-top:14px;padding:11px 15px;border-radius:12px;font-size:.86rem;color:var(--gold);
+ border:1px solid rgba(230,197,104,.4);background:rgba(230,197,104,.1)}
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;align-items:start}
+@media(max-width:660px){.cols{grid-template-columns:1fr}}
+.sect{font-size:.64rem;letter-spacing:.15em;text-transform:uppercase;color:var(--gold2);font-weight:600;
+ margin:2px 2px 10px;display:flex;align-items:center;gap:7px}
+.sect svg{width:14px;height:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:15px 16px;
+ display:flex;flex-direction:column;gap:4px;backdrop-filter:blur(10px);transition:transform .15s,border-color .15s}
+.stat:hover{transform:translateY(-2px);border-color:rgba(230,197,104,.4)}
+.stat .lbl{text-transform:uppercase;letter-spacing:.08em;font-size:.62rem;color:var(--muted);font-weight:600}
+.stat .val{font:600 1.32rem/1.1 ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;color:var(--ink)}
+.stat .sub{font-size:.68rem;color:var(--muted)}
+.shot{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:12px;
+ display:flex;flex-direction:column;gap:9px;backdrop-filter:blur(10px)}
+.shot img{width:100%;border-radius:11px;display:block;border:1px solid var(--line)}
+.shot .cap{text-align:center;font-size:.66rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.noimg{color:var(--muted);text-align:center;padding:44px 0}
+.foot{margin-top:24px;text-align:center;color:var(--muted);font-size:.72rem}
+.foot b{color:var(--gold2)}
+.road{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+@media(max-width:660px){.road{grid-template-columns:1fr}}
+.phase{background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:15px 17px;
+ backdrop-filter:blur(10px);position:relative;overflow:hidden}
+.phase.active{border-color:rgba(230,197,104,.45);box-shadow:0 0 22px rgba(230,197,104,.12)}
+.phase.active::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+ background:linear-gradient(180deg,var(--gold),var(--gold2))}
+.ph-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+.ph-n{font:700 .9rem/1 ui-monospace,monospace;color:var(--gold2);letter-spacing:.05em}
+.ph-st{font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--good);
+ border:1px solid rgba(116,212,147,.4);background:rgba(116,212,147,.1);border-radius:999px;padding:2px 9px}
+.ph-st.queued{color:var(--muted);border-color:var(--line);background:rgba(159,178,205,.08)}
+.ph-name{font:600 1.02rem/1.2 system-ui;color:var(--ink);margin-bottom:9px}
+.ph-bar{height:9px;background:rgba(6,14,26,.7);border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+.ph-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--gold2),var(--gold));
+ box-shadow:0 0 10px rgba(230,197,104,.5)}
+.ph-sub{font:600 .68rem/1.3 ui-monospace,monospace;color:var(--muted);margin-top:8px;font-variant-numeric:tabular-nums}
+@media(prefers-reduced-motion:reduce){.rise{animation:none;opacity:1;transform:none}.pill.run .dot{animation:none}
+ .fill{transition:none}.hero{transition:none}}
+"""
+
+FRAG = r"""precision highp float;
+uniform vec2 R; uniform float T; uniform float M; uniform float PIX; uniform vec2 MO;
+float hash(vec2 p){p=fract(p*vec2(123.34,345.45));p+=dot(p,p+34.345);return fract(p.x*p.y);}
+float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
+ float a=hash(i),b=hash(i+vec2(1.,0.)),c=hash(i+vec2(0.,1.)),d=hash(i+vec2(1.,1.));
+ return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);}
+float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<5;i++){s+=a*noise(p);p=p*2.02+vec2(1.7);a*=.5;}return s;}
+mat3 rotY(float a){float c=cos(a),s=sin(a);return mat3(c,0.,s,0.,1.,0.,-s,0.,c);}
+mat3 rotX(float a){float c=cos(a),s=sin(a);return mat3(1.,0.,0.,0.,c,-s,0.,s,c);}
+void main(){
+ vec2 fc=gl_FragCoord.xy;
+ if(PIX>1.5){fc=(floor(fc/PIX)+0.5)*PIX;}
+ vec2 uv=(fc-0.5*R)/R.y;
+ float t=T*M;
+ vec3 navy=vec3(0.03,0.065,0.13), navy2=vec3(0.013,0.028,0.065);
+ vec3 gold=vec3(0.86,0.70,0.36), gold2=vec3(1.0,0.86,0.55);
+ vec2 q=uv*1.5+MO*0.15;
+ float n=fbm(q+vec2(t*0.03,-t*0.02));
+ n=fbm(q+n*1.4+vec2(0.0,t*0.02));
+ vec3 col=mix(navy2,navy,smoothstep(0.15,0.95,n));
+ col+=gold*pow(max(n-0.55,0.0),2.0)*0.55;
+ col*=1.0-0.5*dot(uv,uv);
+ vec3 ro=vec3(0.0,0.0,3.2);
+ vec3 rd=normalize(vec3(uv+MO*0.05,-1.6));
+ mat3 rot=rotY(t*0.22)*rotX(0.5+sin(t*0.13)*0.14);
+ float rad=1.12;
+ float b=dot(ro,rd), c2=dot(ro,ro)-rad*rad, h=b*b-c2;
+ if(h>0.0){
+  h=sqrt(h); float tH=-b-h; vec3 p=ro+rd*tH; vec3 nr=normalize(p); vec3 pl=rot*p;
+  float e=fbm(pl.xy*2.1+pl.z*1.2+vec2(t*0.18)); e+=0.5*fbm(pl.yz*3.6-vec2(t*0.14));
+  float fres=pow(1.0-max(dot(nr,-rd),0.0),2.4);
+  float lat=abs(fract(pl.y*6.0)-0.5);
+  float lon=abs(fract((atan(pl.x,pl.z)/6.2831+0.5)*18.0)-0.5);
+  float grid=smoothstep(0.055,0.0,min(lat,lon))*0.55;
+  vec3 core=mix(gold*0.22,gold2,clamp(e,0.,1.));
+  core+=gold2*fres*1.35; core+=gold2*grid; core*=0.55+0.65*e;
+  core*=0.85+0.22*sin(t*1.1);
+  col=mix(col,core,clamp(0.28+0.85*e+fres,0.0,1.0));
+ }
+ float d=length(uv);
+ col+=gold*smoothstep(1.25,0.0,d)*0.05;
+ vec2 dp=uv*3.0;
+ for(int i=0;i<3;i++){float fi=float(i);
+  vec2 g=fract(dp*(1.0+fi*0.7)+vec2(t*(0.05+fi*0.03),t*0.02))-0.5;
+  col+=gold2*smoothstep(0.03,0.0,length(g))*0.28; dp*=1.7;}
+ col=pow(max(col,0.0),vec3(0.88));
+ gl_FragColor=vec4(col,1.0);
+}"""
+
+JS = r"""(function(){
+ var D=window.DATA||{};
+ var cvs=document.getElementById('core');
+ var reduce=matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
+ var gl=null; try{gl=cvs.getContext('webgl')||cvs.getContext('experimental-webgl');}catch(e){}
+ var frag=document.getElementById('frag').textContent;
+ var vert='attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}';
+ var prog,uR,uT,uM,uPIX,uMO,scale=0.62,mo=[0,0],moT=[0,0],start=null,pixStart=null;
+ function sh(t,s){var o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);
+  if(!gl.getShaderParameter(o,gl.COMPILE_STATUS)){console.warn(gl.getShaderInfoLog(o));return null;}return o;}
+ function resize(){var w=Math.max(2,Math.floor(innerWidth*scale)),h=Math.max(2,Math.floor(innerHeight*scale));
+  cvs.width=w;cvs.height=h;gl.viewport(0,0,w,h);}
+ function init(){if(!gl)return false;var vs=sh(gl.VERTEX_SHADER,vert),fs=sh(gl.FRAGMENT_SHADER,frag);
+  if(!vs||!fs)return false;prog=gl.createProgram();gl.attachShader(prog,vs);gl.attachShader(prog,fs);gl.linkProgram(prog);
+  if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){console.warn(gl.getProgramInfoLog(prog));return false;}
+  gl.useProgram(prog);var buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  var loc=gl.getAttribLocation(prog,'p');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  uR=gl.getUniformLocation(prog,'R');uT=gl.getUniformLocation(prog,'T');uM=gl.getUniformLocation(prog,'M');
+  uPIX=gl.getUniformLocation(prog,'PIX');uMO=gl.getUniformLocation(prog,'MO');resize();return true;}
+ function pixNow(ts){if(reduce)return 1;if(pixStart===null)pixStart=ts;
+  var k=Math.min((ts-pixStart)/1300,1);k=1-Math.pow(1-k,3);return 1+46*(1-k);}
+ function frame(ts){if(start===null)start=ts;var tsec=(ts-start)/1000;
+  moT[0]+=(mo[0]-moT[0])*0.05;moT[1]+=(mo[1]-moT[1])*0.05;
+  gl.uniform2f(uR,cvs.width,cvs.height);gl.uniform1f(uT,tsec);gl.uniform1f(uM,reduce?0:1);
+  gl.uniform1f(uPIX,pixNow(ts)*scale);gl.uniform2f(uMO,moT[0],moT[1]);
+  gl.drawArrays(gl.TRIANGLES,0,3);requestAnimationFrame(frame);}
+ if(init()){addEventListener('resize',resize);
+  addEventListener('pointermove',function(e){mo[0]=(e.clientX/innerWidth-0.5)*2;mo[1]=-(e.clientY/innerHeight-0.5)*2;});
+  requestAnimationFrame(frame);}
+ else{cvs.style.display='none';
+  document.body.style.background='radial-gradient(1000px 600px at 50% -10%,rgba(230,197,104,.12),transparent 60%),#070d18';}
+ function fmt(n){return Math.round(n).toLocaleString('en-US');}
+ function countUp(el,from,to,dur){if(!el)return;if(reduce){el.textContent=fmt(to);return;}var s=null;
+  function step(ts){if(s===null)s=ts;var k=Math.min((ts-s)/dur,1);k=1-Math.pow(1-k,3);
+   el.textContent=fmt(from+(to-from)*k);if(k<1)requestAnimationFrame(step);}requestAnimationFrame(step);}
+ var ov=document.getElementById('ownval');if(ov)countUp(ov,+ov.dataset.start,+ov.dataset.end,1600);
+ var tg=document.getElementById('togo');if(tg){var te=+tg.dataset.end;countUp(tg,te*1.03,te,1400);}
+ var pv=document.getElementById('pctv');if(pv){var pe=+pv.dataset.end;if(reduce){pv.textContent=pe.toFixed(1)+'%';}
+  else{var s2=null;(function pstep(){requestAnimationFrame(function(ts){if(s2===null)s2=ts;
+   var k=Math.min((ts-s2)/1400,1);k=1-Math.pow(1-k,3);pv.textContent=(pe*k).toFixed(1)+'%';if(k<1)pstep();});})();}}
+ var fl=document.getElementById('fill');if(fl){var pct=(D.pct||0);
+  setTimeout(function(){fl.style.width=(reduce?pct:pct).toFixed(2)+'%';},reduce?0:160);}
+ var hero=document.getElementById('hero');
+ if(hero&&!reduce){addEventListener('pointermove',function(e){
+  var rx=(e.clientY/innerHeight-0.5)*-4,ry=(e.clientX/innerWidth-0.5)*4;
+  hero.style.transform='perspective(1000px) rotateX('+rx+'deg) rotateY('+ry+'deg)';});}
+})();"""
+
+ICON_ROAD = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+             'stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4l1-1h9l-1 4 1 3H5"/>'
+             '<circle cx="12" cy="15" r="6"/><circle cx="12" cy="15" r="2"/></svg>')
+ICON_SWORDS = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+               'stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/>'
+               '<path d="m13 19 6-6"/><path d="m16 16 4 4"/><path d="M19 21l2-2"/>'
+               '<path d="M9.5 17.5 21 6V3h-3L6.5 14.5"/><path d="m5 14 4 4"/><path d="M5 19l-2-2"/></svg>')
+ICON_FEED = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+             'stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="15" rx="2"/>'
+             '<path d="m10 9 5 3-5 3z" fill="currentColor"/><path d="M8 21h8"/></svg>')
+
 
 def newest_log():
     logs = sorted(glob.glob(os.path.join(HERE, "run_*.log")), key=os.path.getmtime)
@@ -92,12 +306,14 @@ def human(n):
 
 
 def main():
+    import json
     log = newest_log()
     own, batches, rate = read_stats(log) if log else (None, 0, None)
     running = subprocess.run(["pgrep", "-f", "train_to_1b.py"],
                              capture_output=True).returncode == 0
     food = read_food()
-    to_go = (TARGET - own) if own else None
+    own = own or 0
+    to_go = max(TARGET - own, 0)
     pct = (own / TARGET * 100) if own else 0
     eta_h = (to_go / rate / 60) if (to_go and rate) else None
     food_batches = int(food / 43_500_000) if food else None
@@ -107,7 +323,10 @@ def main():
     state = "TRAINING" if running else "PAUSED"
     scls = "run" if running else "stop"
     warn = food is not None and food < 600_000_000
+    past1b = own >= 1_000_000_000
     P = PROFILE
+    trained_run = batches * QTY
+    start_own = max(own - trained_run, int(own * 0.985))
 
     def chip(v, l):
         return f'<div class="chip"><span class="cv">{v}</span><span class="cl">{l}</span></div>'
@@ -121,16 +340,17 @@ def main():
                       chip(P["server"], "Server")])
     session = "".join([
         stat("Batches this run", f"{batches:,}"),
-        stat("Trained this run", f"+{batches*QTY/1e6:.1f}M"),
+        stat("Trained this run", f"+{trained_run/1e6:.1f}M"),
         stat("Trained this session", f"+{sess/1e6:.1f}M", "since 685.7M"),
         stat("Rate", (human(rate) + "/min") if rate else "—", f"{3600/(rate/QTY):.1f}s / batch" if rate else ""),
         stat("Food reserve", human(food), f"~{food_batches} batches" if food_batches else ""),
-        stat("ETA to 1B", f"{eta_h:.1f} h" if eta_h else "—", "at current pace"),
+        stat("ETA to 1.5B", f"{eta_h:.1f} h" if eta_h else "—", "at current pace"),
     ])
     shot_html = (f'<img alt="Live game" src="{shot}">' if shot
                  else '<div class="noimg">screenshot unavailable</div>')
     warn_html = ('<div class="warn">⚠ Food reserve under 600M — an automated resupply is due shortly.</div>'
                  if warn else "")
+    badge = ('<span class="badge">★ 1B reached</span>' if past1b else "")
     mon = asset("avatar_b64.txt")
     if mon:
         avatar = (f'<div class="ava"><img class="portrait" alt="Monarch" src="{mon}">'
@@ -140,88 +360,32 @@ def main():
         avatar = (f'<img class="crest" alt="NFG crest" src="{crest}">' if crest
                   else '<div class="crest"></div>')
 
-    html = f"""<title>NFG · NEO — Training Command</title>
-<style>
-:root{{
- --navy:#0a1322;--panel:#12233d;--panel2:#16294a;--border:#274063;--ink:#ece4cf;
- --muted:#9db0cb;--gold:#e6c568;--gold2:#caa03a;--good:#74d493;--warn:#e6c568;--bad:#e2745e;--track:#0c1a2e;
-}}
-@media(prefers-color-scheme:light){{:root{{
- --navy:#eceff4;--panel:#ffffff;--panel2:#f5efe0;--border:#dcd2ba;--ink:#1d2b44;--muted:#5f6f8c;
- --gold:#b1861d;--gold2:#977016;--good:#2e9e57;--warn:#b1861d;--bad:#c0503e;--track:#e7ddc6;}}}}
-:root[data-theme="dark"]{{--navy:#0a1322;--panel:#12233d;--panel2:#16294a;--border:#274063;--ink:#ece4cf;
- --muted:#9db0cb;--gold:#e6c568;--gold2:#caa03a;--good:#74d493;--warn:#e6c568;--bad:#e2745e;--track:#0c1a2e;}}
-:root[data-theme="light"]{{--navy:#eceff4;--panel:#ffffff;--panel2:#f5efe0;--border:#dcd2ba;--ink:#1d2b44;
- --muted:#5f6f8c;--gold:#b1861d;--gold2:#977016;--good:#2e9e57;--warn:#b1861d;--bad:#c0503e;--track:#e7ddc6;}}
-*{{box-sizing:border-box;}}
-body{{margin:0;background:radial-gradient(1200px 620px at 50% -12%,color-mix(in srgb,var(--gold) 10%,transparent),transparent 60%),var(--navy);
- color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;}}
-.serif{{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;}}
-.wrap{{max-width:940px;margin:0 auto;padding:28px 20px 56px;}}
-.top{{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px;}}
-.crest{{width:58px;height:58px;border-radius:12px;object-fit:cover;
- border:1px solid color-mix(in srgb,var(--gold) 55%,var(--border));box-shadow:0 4px 16px rgba(0,0,0,.4);}}
-.ava{{position:relative;width:62px;height:62px;flex:0 0 auto;}}
-.portrait{{width:62px;height:62px;border-radius:12px;object-fit:cover;
- border:1px solid color-mix(in srgb,var(--gold) 60%,var(--border));box-shadow:0 4px 16px rgba(0,0,0,.45);}}
-.crestbadge{{position:absolute;right:-7px;bottom:-7px;width:28px;height:28px;border-radius:7px;
- object-fit:cover;border:1px solid var(--gold);box-shadow:0 2px 7px rgba(0,0,0,.55);}}
-.brand .name{{font-size:1.4rem;font-weight:600;color:var(--gold);letter-spacing:.01em;line-height:1.1;}}
-.brand .sub{{font-size:.74rem;color:var(--muted);letter-spacing:.09em;text-transform:uppercase;margin-top:2px;}}
-.pill{{font:600 .72rem/1 ui-monospace,Menlo,monospace;letter-spacing:.11em;padding:7px 12px;border-radius:999px;border:1px solid;}}
-.pill.run{{color:var(--good);border-color:color-mix(in srgb,var(--good) 45%,transparent);background:color-mix(in srgb,var(--good) 12%,transparent);}}
-.pill.stop{{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 45%,transparent);background:color-mix(in srgb,var(--bad) 12%,transparent);}}
-.dot{{display:inline-block;width:7px;height:7px;border-radius:50%;background:currentColor;margin-right:7px;}}
-.pill.run .dot{{animation:pulse 1.9s ease-in-out infinite;}}
-@keyframes pulse{{0%,100%{{opacity:1}}50%{{opacity:.3}}}}
-@media(prefers-reduced-motion:reduce){{.pill.run .dot{{animation:none;}}}}
-.updated{{margin-left:auto;color:var(--muted);font:500 .78rem/1 ui-monospace,monospace;}}
-.empire{{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}}
-.chip{{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);
- border-radius:11px;padding:9px 14px;display:flex;flex-direction:column;gap:1px;min-width:76px;}}
-.chip .cv{{font:600 1rem/1.1 ui-monospace,Menlo,monospace;color:var(--gold);}}
-.chip .cl{{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}}
-.hero{{position:relative;overflow:hidden;border-radius:18px;border:1px solid var(--border);padding:28px 30px 24px;
- margin-bottom:16px;background:linear-gradient(180deg,var(--panel),var(--panel2));}}
-.hero .bg{{position:absolute;inset:0;background-size:cover;background-position:center 30%;opacity:.15;
- mask-image:linear-gradient(180deg,#000,transparent);}}
-.hero .in{{position:relative;}}
-.eyebrow{{text-transform:uppercase;letter-spacing:.16em;font-size:.68rem;font-weight:600;color:var(--gold2);}}
-.own{{font-weight:600;font-size:clamp(2.5rem,8vw,4rem);line-height:1;color:var(--gold);
- font-variant-numeric:tabular-nums;margin:8px 0 4px;text-shadow:0 2px 20px color-mix(in srgb,var(--gold) 22%,transparent);}}
-.own small{{color:var(--muted);font-size:.32em;font-weight:500;}}
-.subline{{color:var(--muted);font-size:.92rem;margin-bottom:16px;}}
-.subline b{{color:var(--ink);font-variant-numeric:tabular-nums;}}
-.track{{height:13px;background:var(--track);border-radius:999px;overflow:hidden;border:1px solid var(--border);
- box-shadow:inset 0 1px 3px rgba(0,0,0,.3);}}
-.fill{{height:100%;width:{pct:.2f}%;border-radius:999px;background:linear-gradient(90deg,var(--gold2),var(--gold));
- box-shadow:0 0 12px color-mix(in srgb,var(--gold) 55%,transparent);}}
-.pctrow{{display:flex;justify-content:space-between;margin-top:9px;font:600 .8rem/1 ui-monospace,monospace;
- color:var(--muted);font-variant-numeric:tabular-nums;}}
-.pctrow b{{color:var(--gold);}}
-.tagline{{margin-top:15px;padding-top:14px;border-top:1px solid var(--border);text-align:center;
- color:var(--gold2);letter-spacing:.14em;font-size:.72rem;text-transform:uppercase;}}
-.warn{{margin-top:13px;padding:11px 14px;border-radius:11px;font-size:.86rem;color:var(--warn);
- border:1px solid color-mix(in srgb,var(--warn) 40%,transparent);background:color-mix(in srgb,var(--warn) 10%,transparent);}}
-.cols{{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;align-items:start;}}
-@media(max-width:660px){{.cols{{grid-template-columns:1fr;}}}}
-.sect{{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold2);font-weight:600;margin:2px 2px 10px;}}
-.grid{{display:grid;grid-template-columns:1fr 1fr;gap:12px;}}
-.stat{{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);
- border-radius:13px;padding:14px 16px;display:flex;flex-direction:column;gap:3px;}}
-.stat .lbl{{text-transform:uppercase;letter-spacing:.08em;font-size:.64rem;color:var(--muted);font-weight:600;}}
-.stat .val{{font:600 1.3rem/1.1 ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;color:var(--ink);}}
-.stat .sub{{font-size:.7rem;color:var(--muted);}}
-.shot{{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);
- border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:9px;}}
-.shot img{{width:100%;border-radius:10px;display:block;border:1px solid var(--border);}}
-.shot .cap{{text-align:center;font-size:.68rem;color:var(--muted);letter-spacing:.09em;text-transform:uppercase;}}
-.noimg{{color:var(--muted);text-align:center;padding:44px 0;}}
-.foot{{margin-top:22px;text-align:center;color:var(--muted);font-size:.74rem;}}
-.foot b{{color:var(--gold2);}}
-</style>
+    p1 = min(own / 1_500_000_000 * 100, 100) if own else 0
+    roadmap = f"""
+ <div class="sect">{ICON_ROAD} Campaign Roadmap</div>
+ <div class="road rise" style="--d:.14s">
+  <div class="phase active">
+   <div class="ph-top"><span class="ph-n">01</span><span class="ph-st">In progress</span></div>
+   <div class="ph-name">T1 Warriors → 1.5B</div>
+   <div class="ph-bar"><div class="ph-fill" style="width:{p1:.1f}%"></div></div>
+   <div class="ph-sub">{own:,} / 1,500,000,000 · {p1:.1f}%</div>
+  </div>
+  <div class="phase">
+   <div class="ph-top"><span class="ph-n">02</span><span class="ph-st queued">Queued</span></div>
+   <div class="ph-name">T2 Ground → 1B</div>
+   <div class="ph-bar"><div class="ph-fill" style="width:0%"></div></div>
+   <div class="ph-sub">0 / 1,000,000,000 · begins after Phase 01</div>
+  </div>
+ </div>"""
+
+    data = json.dumps({
+        "own": own, "startOwn": start_own, "target": TARGET, "pct": round(pct, 2),
+        "toGo": to_go, "qty": QTY,
+    })
+
+    body = f"""<canvas id="core"></canvas><div class="scrim"></div>
 <div class="wrap">
- <div class="top">
+ <div class="top rise" style="--d:0s">
   {avatar}
   <div class="brand">
    <div class="name serif">{P['name']}</div>
@@ -231,37 +395,49 @@ body{{margin:0;background:radial-gradient(1200px 620px at 50% -12%,color-mix(in 
   <div class="updated">{now}</div>
  </div>
 
- <div class="empire">{empire}</div>
+ <div class="empire rise" style="--d:.06s">{empire}</div>
 
- <div class="hero">
+ <div class="hero rise" style="--d:.12s" id="hero">
   <div class="bg" style="background-image:url('{banner}')"></div>
   <div class="in">
-   <div class="eyebrow">T1 Warriors mustered · goal 1,000,000,000</div>
-   <div class="own">{own:,}<small> / 1B</small></div>
-   <div class="subline"><b>{to_go:,}</b> to go · <b>{(to_go//QTY) if to_go else 0:,}</b> batches remaining</div>
-   <div class="track"><div class="fill"></div></div>
-   <div class="pctrow"><span><b>{pct:.1f}%</b> to goal</span><span>{(human(rate)+" / min") if rate else ""}</span></div>
+   <div class="eyebrow">T1 Warriors mustered · goal 1,500,000,000 {badge}</div>
+   <div class="own"><span id="ownval" data-start="{start_own}" data-end="{own}">{own:,}</span><small> / 1.5B</small></div>
+   <div class="subline"><b id="togo" data-end="{to_go}">{to_go:,}</b> to go · <b>{(to_go//QTY) if to_go else 0:,}</b> batches remaining</div>
+   <div class="track"><div class="fill" id="fill" style="--pct:{pct:.2f}"></div></div>
+   <div class="pctrow"><span><b id="pctv" data-end="{pct:.1f}">{pct:.1f}%</b> to goal</span><span>{(human(rate)+" / min") if rate else ""}</span></div>
    {warn_html}
    <div class="tagline">Together we build · Together we conquer</div>
   </div>
  </div>
 
- <div class="cols">
+{roadmap}
+
+ <div class="cols rise" style="--d:.18s">
   <div>
-   <div class="sect">Training Session</div>
+   <div class="sect">{ICON_SWORDS} Training Session</div>
    <div class="grid">{session}</div>
   </div>
   <div class="shot">
-   <div class="sect" style="margin-bottom:2px">Live Feed</div>
+   <div class="sect" style="margin-bottom:2px">{ICON_FEED} Live Feed</div>
    {shot_html}
    <div class="cap">BlueStacks · real-time</div>
   </div>
  </div>
 
- <div class="foot"><b>NFG</b> Vision Bot · ADB + OpenCV + Tesseract · auto-refreshed each minute</div>
+ <div class="foot rise" style="--d:.24s"><b>NFG</b> Vision Bot · ADB + OpenCV + Tesseract · auto-refreshed each minute</div>
 </div>
 """
-    open(os.path.join(HERE, "evony_status.html"), "w").write(html)
+
+    html = ("<title>NFG · NEO — Empire Core</title>\n<style>\n" + CSS + "\n</style>\n"
+            + body
+            + '\n<script type="x-shader/x-fragment" id="frag">\n' + FRAG + '\n</script>\n'
+            + "<script>window.DATA=" + data + ";</script>\n"
+            + "<script>\n" + JS + "\n</script>\n")
+    for uni, ent in [("·", "&middot;"), ("→", "&rarr;"), ("—", "&mdash;"),
+                     ("…", "&hellip;"), ("⚠", "&#9888;"), ("★", "&#9733;")]:
+        html = html.replace(uni, ent)
+    with open(os.path.join(HERE, "evony_status.html"), "w", encoding="utf-8") as f:
+        f.write(html)
     print(f"wrote evony_status.html | own={own} batches={batches} food={human(food)} running={running}")
 
 

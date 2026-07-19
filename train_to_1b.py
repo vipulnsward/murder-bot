@@ -27,7 +27,7 @@ QTY_REGION = (745, 1548, 1015, 1628)
 
 TOPBAR_FOOD_TAP = (200, 33)
 SCROLL = (540, 1400, 540, 500, 500)
-LABEL_TO_USE = (550, 80)
+LABEL_TO_USE = (525, 135)
 M_MINUS = (162, 1058)
 M_PLUS = (900, 1058)
 M_MIN_BTN = (311, 1328)
@@ -36,8 +36,8 @@ M_USE_PROBES = [(690, 1305), (840, 1305), (690, 1352), (840, 1352)]
 M_COUNT = (300, 1150, 770, 1205)
 CLOSE_X = (1010, 594)
 
-FOOD_TARGET = 2000
-FOOD_CAP = 2500
+FOOD_TARGET = 3000
+FOOD_CAP = 3200
 
 
 def log(m):
@@ -106,9 +106,18 @@ def read_qty(img):
 
 
 def read_food_count(img):
-    o = ocr(img, M_COUNT, "0123456789,/")
-    h = o.split("/")[0].replace(",", "").strip()
-    return int(h) if h.isdigit() else None
+    x1, y1, x2, y2 = M_COUNT
+    c = img[y1:y2, x1:x2].astype(int)
+    b, g, r = c[:, :, 0], c[:, :, 1], c[:, :, 2]
+    mask = (((r - g) > 45) & ((r - b) > 60)).astype("uint8") * 255
+    inv = 255 - mask
+    inv = cv2.resize(inv, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
+    cv2.imwrite(os.path.join(HERE, "_fcnt.png"), inv)
+    o = subprocess.run(["tesseract", os.path.join(HERE, "_fcnt.png"), "stdout",
+                        "--psm", "7", "-c", "tessedit_char_whitelist=0123456789,/"],
+                       capture_output=True, text=True).stdout.strip()
+    d = re.sub(r"[^0-9]", "", o.split("/")[0])
+    return int(d) if d else None
 
 
 FOOD_BOX = (150, 8, 300, 64)
@@ -295,9 +304,11 @@ def main():
     log(f"target={TARGET_OWN:,} qty={TRAIN_QTY:,} food_target={FOOD_TARGET}")
     if goto_warriors() is None:
         log("warning: not on Warriors screen at start; loop will recover")
+    import auto_refill
     ok_batches = 0
     topups = 0
     fails = 0
+    nofood = 0
     cyc = 0
     while True:
         cyc += 1
@@ -328,36 +339,36 @@ def main():
         if r == "OK":
             ok_batches += 1
             fails = 0
+            nofood = 0
             log(f"batch {ok_batches} ok")
         elif r == "NOFOOD":
             fimg = screencap()
             if vis(fimg, "cap_popup"):
                 tap(*CAP_CONFIRM, d=0.6)
                 fails = 0
+                nofood = 0
                 continue
-            food = read_food_topbar(fimg)
-            if not low_food and (food is None or food >= FOOD_LOW):
-                log(f"train didn't start; food ~{(food or 0)/1e6:.0f}M ok — retry (no nav)")
-                fails += 1
-                time.sleep(1.5)
+            nofood += 1
+            if nofood < 3:
+                log(f"train didn't start ({nofood}/3) — retry in place")
+                time.sleep(1.2)
                 continue
-            log(f"food genuinely low — top-up #{topups+1}")
-            done = False
-            for attempt in range(2):
-                if topup_food():
-                    done = True
-                    break
-                goto_warriors()
-            if done:
+            log(f"out of food — auto-refill #{topups+1}")
+            if auto_refill.refill(target=5000) and auto_refill.to_warriors():
                 topups += 1
-                goto_warriors()
                 fails = 0
+                nofood = 0
+                log("auto-refill OK; resumed on Warriors")
             else:
+                auto_refill.to_warriors()
                 fails += 1
-            time.sleep(2)
+                nofood = 0
+                log("auto-refill failed; will retry")
+            time.sleep(1.5)
         else:
             fails += 1
-            goto_warriors()
+            nofood = 0
+            auto_refill.to_warriors()
             time.sleep(1.5)
     log(f"ended: {ok_batches} batches, {topups} food top-ups (~{ok_batches*TRAIN_QTY:,} troops).")
 

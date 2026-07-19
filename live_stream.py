@@ -19,6 +19,36 @@ QTY = 269228
 TARGET = 1_500_000_000
 SESSION_START = 685_654_504
 
+try:
+    from gen_dashboard import FRAG
+except Exception:
+    FRAG = ""
+
+BG_JS = r"""(function(){
+ var cvs=document.getElementById('core'); if(!cvs)return;
+ var reduce=matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
+ var gl=null; try{gl=cvs.getContext('webgl')||cvs.getContext('experimental-webgl');}catch(e){}
+ var frag=document.getElementById('frag').textContent;
+ var vert='attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}';
+ var prog,uR,uT,uM,uPIX,uMO,scale=0.58,mo=[0,0],moT=[0,0],start=null,pixStart=null;
+ function sh(t,s){var o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);
+  if(!gl.getShaderParameter(o,gl.COMPILE_STATUS)){console.warn(gl.getShaderInfoLog(o));return null;}return o;}
+ function resize(){var w=Math.max(2,Math.floor(innerWidth*scale)),h=Math.max(2,Math.floor(innerHeight*scale));cvs.width=w;cvs.height=h;gl.viewport(0,0,w,h);}
+ function init(){if(!gl)return false;var vs=sh(gl.VERTEX_SHADER,vert),fs=sh(gl.FRAGMENT_SHADER,frag);if(!vs||!fs)return false;
+  prog=gl.createProgram();gl.attachShader(prog,vs);gl.attachShader(prog,fs);gl.linkProgram(prog);
+  if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){console.warn(gl.getProgramInfoLog(prog));return false;}gl.useProgram(prog);
+  var buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  var loc=gl.getAttribLocation(prog,'p');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  uR=gl.getUniformLocation(prog,'R');uT=gl.getUniformLocation(prog,'T');uM=gl.getUniformLocation(prog,'M');
+  uPIX=gl.getUniformLocation(prog,'PIX');uMO=gl.getUniformLocation(prog,'MO');resize();return true;}
+ function pixNow(ts){if(reduce)return 1;if(pixStart===null)pixStart=ts;var k=Math.min((ts-pixStart)/1300,1);k=1-Math.pow(1-k,3);return 1+46*(1-k);}
+ function frame(ts){if(start===null)start=ts;var tsec=(ts-start)/1000;moT[0]+=(mo[0]-moT[0])*0.05;moT[1]+=(mo[1]-moT[1])*0.05;
+  gl.uniform2f(uR,cvs.width,cvs.height);gl.uniform1f(uT,tsec);gl.uniform1f(uM,reduce?0:1);gl.uniform1f(uPIX,pixNow(ts)*scale);gl.uniform2f(uMO,moT[0],moT[1]);
+  gl.drawArrays(gl.TRIANGLES,0,3);requestAnimationFrame(frame);}
+ if(init()){addEventListener('resize',resize);addEventListener('pointermove',function(e){mo[0]=(e.clientX/innerWidth-0.5)*2;mo[1]=-(e.clientY/innerHeight-0.5)*2;});requestAnimationFrame(frame);}
+ else{cvs.style.display='none';}
+})();"""
+
 _latest = {"jpg": None, "food": None, "own": None}
 
 
@@ -128,9 +158,12 @@ def page():
     return ("""<!doctype html><html><head><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1"><title>NFG - Live Command</title>
 <style>
-:root{--navy:#0a1322;--panel:#12233d;--panel2:#16294a;--bd:#274063;--ink:#ece4cf;--muted:#9db0cb;--gold:#e6c568;--good:#74d493;--bad:#e2745e;--track:#0c1a2e}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(1000px 500px at 50% -10%,rgba(230,197,104,.09),transparent 60%),var(--navy);color:var(--ink);font-family:system-ui,sans-serif;line-height:1.5}
-.wrap{max-width:900px;margin:0 auto;padding:22px 16px 46px}
+:root{--navy:#070d18;--panel:rgba(16,30,54,.66);--panel2:rgba(20,34,60,.58);--bd:rgba(230,197,104,.24);--ink:#f3ecda;--muted:#c2cfe2;--gold:#f0d27e;--good:#8be0a6;--bad:#e2745e;--track:rgba(6,14,26,.78)}
+*{box-sizing:border-box}body{margin:0;background:#070d18;color:var(--ink);font-family:system-ui,sans-serif;line-height:1.5;overflow-x:hidden}
+#core{position:fixed;inset:0;width:100vw;height:100vh;z-index:-2;display:block}
+.scrim{position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(120% 90% at 50% 0%,rgba(4,8,16,.15) 20%,rgba(4,8,16,.62)),linear-gradient(180deg,rgba(6,11,22,.42),rgba(6,11,22,.72))}
+.wrap{max-width:900px;margin:0 auto;padding:22px 16px 46px;position:relative;z-index:1}
+.top,.cap,.tag{text-shadow:0 1px 4px rgba(0,0,0,.78)}
 .top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
 .av{position:relative;width:54px;height:54px}.av img{width:54px;height:54px;border-radius:11px;object-fit:cover;border:1px solid rgba(230,197,104,.6)}
 .bdg{position:absolute;right:-6px;bottom:-6px;width:24px;height:24px;border-radius:6px;border:1px solid var(--gold)}
@@ -141,10 +174,10 @@ def page():
 .stop{color:var(--bad);border-color:rgba(226,116,94,.5);background:rgba(226,116,94,.12)}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:currentColor;margin-right:6px;animation:p 1.7s infinite}@keyframes p{50%{opacity:.3}}
 .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;align-items:start}@media(max-width:680px){.grid{grid-template-columns:1fr}}
-.feed{background:var(--panel);border:1px solid var(--bd);border-radius:16px;padding:10px}
+.feed{background:var(--panel);border:1px solid var(--bd);border-radius:16px;padding:10px;backdrop-filter:blur(13px) saturate(1.15);box-shadow:0 18px 50px rgba(0,0,0,.4)}
 .feed img{width:100%;border-radius:10px;display:block;border:1px solid var(--bd)}
 .cap{text-align:center;font-size:.66rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;padding:7px 0 3px}
-.card{background:var(--panel);border:1px solid var(--bd);border-radius:16px;padding:20px}
+.card{background:var(--panel);border:1px solid var(--bd);border-radius:16px;padding:20px;backdrop-filter:blur(13px) saturate(1.15);box-shadow:0 18px 50px rgba(0,0,0,.4)}
 .eye{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:600}
 .own{font:600 clamp(2rem,7vw,3rem)/1 ui-monospace,monospace;color:var(--gold);font-variant-numeric:tabular-nums;margin:6px 0 3px}
 .own small{color:var(--muted);font-size:.34em}
@@ -153,11 +186,16 @@ def page():
 .fill{height:100%;background:linear-gradient(90deg,#caa03a,var(--gold));border-radius:999px;transition:width .6s}
 .pr{display:flex;justify-content:space-between;margin-top:8px;font:600 .78rem/1 ui-monospace,monospace;color:var(--muted)}.pr b{color:var(--gold)}
 .mini{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
-.st{background:var(--panel2);border:1px solid var(--bd);border-radius:11px;padding:11px 13px}
+.st{background:var(--panel2);border:1px solid var(--bd);border-radius:11px;padding:11px 13px;backdrop-filter:blur(9px)}
 .st .l{font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .st .v{font:600 1.05rem/1.1 ui-monospace,monospace;color:var(--ink)}
 .tag{margin-top:14px;padding-top:12px;border-top:1px solid var(--bd);text-align:center;color:#caa03a;letter-spacing:.13em;font-size:.68rem;text-transform:uppercase}
-</style></head><body><div class=wrap>
+.road{margin-top:14px;display:flex;flex-direction:column;gap:7px}
+.ph{display:flex;align-items:center;gap:8px;font:600 .76rem/1.2 system-ui;color:var(--muted);padding:9px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--panel2)}
+.ph.act{color:var(--ink);border-color:rgba(230,197,104,.45);box-shadow:0 0 14px rgba(230,197,104,.1)}
+.phn{font:700 .72rem/1 ui-monospace,monospace;color:#caa03a}
+.phs{margin-left:auto;font-size:.56rem;letter-spacing:.09em;text-transform:uppercase;color:var(--gold);border:1px solid rgba(230,197,104,.35);border-radius:999px;padding:2px 8px}
+</style></head><body><canvas id=core></canvas><div class=scrim></div><div class=wrap>
 <div class=top>
  <div class=av><img src=\"""" + av + """\">""" + (f'<img class=bdg src="{crest}">' if (av and crest and av != crest) else "") + """</div>
  <div><div class=name>NeoIsTlatoani</div><div class=sub>[NFG] &middot; K49 &middot; Live Command</div></div>
@@ -166,8 +204,8 @@ def page():
 <div class=grid>
  <div class=feed><img id=vid src="/stream" alt="live game"><div class=cap>BlueStacks &middot; live feed</div></div>
  <div class=card>
-  <div class=eye>T1 Warriors &middot; goal 1B</div>
-  <div class=own id=own>&mdash;<small> / 1B</small></div>
+  <div class=eye>T1 Warriors &middot; goal 1.5B <span style="color:#f2d885;font-weight:700">&#9733; 1B done</span></div>
+  <div class=own id=own>&mdash;<small> / 1.5B</small></div>
   <div class=sl id=sl>&nbsp;</div>
   <div class=track><div class=fill id=fill style=width:0></div></div>
   <div class=pr><span id=pct><b>&mdash;</b></span><span id=rate></span></div>
@@ -177,13 +215,17 @@ def page():
    <div class=st><div class=l>This session</div><div class=v id=se>&mdash;</div></div>
    <div class=st><div class=l>To go</div><div class=v id=tg>&mdash;</div></div>
   </div>
+  <div class=road>
+   <div class="ph act"><span class=phn>01</span> T1 Warriors &rarr; 1.5B <span class=phs>Now</span></div>
+   <div class=ph><span class=phn>02</span> T2 Ground &rarr; 1B <span class=phs>Next</span></div>
+  </div>
   <div class=tag>Together we build &middot; Together we conquer</div>
  </div>
 </div></div>
 <script>
 function h(n){if(n==null)return'\\u2014';if(n>=1e9)return(n/1e9).toFixed(2)+'B';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(0)+'K';return''+Math.round(n)}
 async function up(){try{let s=await(await fetch('/stats')).json();
-document.getElementById('own').innerHTML=s.own.toLocaleString()+'<small> / 1B</small>';
+document.getElementById('own').innerHTML=s.own.toLocaleString()+'<small> / 1.5B</small>';
 document.getElementById('sl').innerHTML='<b>'+s.to_go.toLocaleString()+'</b> to go &middot; <b>'+Math.floor(s.to_go/269228).toLocaleString()+'</b> batches';
 document.getElementById('fill').style.width=s.pct+'%';
 document.getElementById('pct').innerHTML='<b>'+s.pct.toFixed(1)+'%</b> to goal';
@@ -202,7 +244,10 @@ V.onerror=function(){setTimeout(rc,1200);};
 document.addEventListener('visibilitychange',function(){if(!document.hidden){rc();up();}});
 window.addEventListener('focus',rc);
 window.addEventListener('online',rc);
-</script></body></html>""").encode()
+</script>
+<script type="x-shader/x-fragment" id="frag">""" + FRAG + """</script>
+<script>""" + BG_JS + """</script>
+</body></html>""").encode()
 
 
 class H(http.server.BaseHTTPRequestHandler):

@@ -28,13 +28,14 @@ SCROLL = (540, 1400, 540, 500, 500)
 LABEL_TO_USE = (550, 80)
 M_MINUS = (162, 1058)
 M_PLUS = (900, 1058)
+M_MIN_BTN = (311, 1328)
 M_USE = (765, 1329)
 M_USE_PROBES = [(690, 1305), (840, 1305), (690, 1352), (840, 1352)]
 M_COUNT = (300, 1150, 770, 1205)
 CLOSE_X = (1010, 594)
 
-FOOD_TARGET = 1000
-FOOD_CAP = 2000
+FOOD_TARGET = 2000
+FOOD_CAP = 2500
 
 
 def log(m):
@@ -223,26 +224,38 @@ def topup_food(target=FOOD_TARGET, cap=FOOD_CAP):
     if not (px[1] > px[2] and px[1] > px[0]):
         log("topup ABORT: 1M Use not green")
         return False
-    tap(ux, uy, d=1.0)
+    tap(ux, uy, d=1.4)
 
     cnt = None
-    for _ in range(6):
+    for _ in range(8):
+        time.sleep(0.4)
         cnt = read_food_count(screencap())
         if cnt is not None:
             break
-        time.sleep(0.4)
     if cnt is None:
         log("topup ABORT: modal not detected")
         tap(*CLOSE_X); return False
 
-    for _ in range(8):
-        tap(*M_MINUS, d=0.12)
-    time.sleep(0.3)
-    cnt = read_food_count(screencap())
-    if cnt is None:
-        log("topup ABORT: count unreadable at min"); tap(*CLOSE_X); return False
+    tap(*M_MIN_BTN, d=0.5)
+    cnt = None
+    for _ in range(6):
+        time.sleep(0.3)
+        cnt = read_food_count(screencap())
+        if cnt is not None and cnt <= 5:
+            break
+    if cnt is None or cnt > 5:
+        adb("shell", "input", "swipe", "840", "1058", "150", "1058", "400")
+        for _ in range(5):
+            time.sleep(0.3)
+            cnt = read_food_count(screencap())
+            if cnt is not None and cnt <= 50:
+                break
+    if cnt is None or cnt > 50:
+        log("topup ABORT: could not reach minimum"); tap(*CLOSE_X); return False
+    log(f"at minimum (count={cnt}); +{target - cnt} to reach {target}")
     for _ in range(max(0, target - cnt)):
         adb("shell", "input", "tap", str(M_PLUS[0]), str(M_PLUS[1]))
+        time.sleep(0.02)
     time.sleep(0.4)
     img = screencap()
     cnt = read_food_count(img)
@@ -264,50 +277,56 @@ def main():
         log("FATAL: could not reach Warriors screen"); return
     ok_batches = 0
     topups = 0
-    skips = 0
+    fails = 0
     while True:
         img = screencap()
         idle = on_warriors_idle(img)[0]
         own = read_own(img) if idle else None
         if own is not None and own >= TARGET_OWN:
-            log(f"DONE: Own {own:,} >= {TARGET_OWN:,}. total batches={ok_batches}")
+            log(f"DONE: Own {own:,} >= {TARGET_OWN:,}. batches={ok_batches} topups={topups}")
             break
+        if fails >= 10:
+            log(f"STOP: {fails} consecutive failures — needs a human look."); break
+
+        low_food = False
         if idle:
             food = read_food_topbar(img)
             if food is not None and food < FOOD_LOW:
-                log(f"food ~{food/1e6:.0f}M < {FOOD_LOW//1_000_000}M — proactive top-up (#{topups+1})")
-                if not topup_food():
-                    log("STOP: food top-up failed"); break
-                topups += 1
-                if topups >= a.max_topups:
-                    log(f"reached max-topups={a.max_topups}"); break
-                if goto_warriors() is None:
-                    log("STOP: could not return to Warriors after topup"); break
-                continue
-        r = train_one_batch()
+                low_food = True
+                log(f"food ~{food/1e6:.0f}M < {FOOD_LOW//1_000_000}M — top-up #{topups+1}")
+
+        if low_food:
+            r = "NOFOOD"
+        else:
+            r = train_one_batch()
+
         if r == "OK":
             ok_batches += 1
-            skips = 0
+            fails = 0
             if ok_batches % 5 == 0:
                 o = read_own(screencap())
                 log(f"batches={ok_batches} own={o:,}" if o else f"batches={ok_batches}")
         elif r == "NOFOOD":
-            log(f"food out after {ok_batches} batches — topping up (#{topups+1})")
-            if not topup_food():
-                log("STOP: food top-up failed"); break
-            topups += 1
-            if topups >= a.max_topups:
-                log(f"reached max-topups={a.max_topups}"); break
-            if goto_warriors() is None:
-                log("STOP: could not return to Warriors after topup"); break
-        elif r == "NAV":
-            if goto_warriors() is None:
-                log("STOP: lost navigation"); break
-        else:
-            skips += 1
-            if skips >= 4:
-                log("STOP: too many consecutive skips"); break
+            if not low_food:
+                log(f"food out after {ok_batches} batches — top-up #{topups+1}")
+            done = False
+            for attempt in range(2):
+                if topup_food():
+                    done = True
+                    break
+                log(f"top-up attempt {attempt+1} failed; recovering")
+                goto_warriors()
+            if done:
+                topups += 1
+                if goto_warriors() is not None:
+                    fails = 0
+                    continue
+            fails += 1
             time.sleep(2)
+        else:
+            fails += 1
+            goto_warriors()
+            time.sleep(1.5)
     log(f"ended: {ok_batches} batches, {topups} food top-ups (~{ok_batches*TRAIN_QTY:,} troops).")
 
 

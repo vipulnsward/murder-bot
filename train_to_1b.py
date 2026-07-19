@@ -368,8 +368,23 @@ def main():
         else:
             fails += 1
             nofood = 0
-            auto_refill.to_warriors()
-            time.sleep(1.5)
+            fimg = screencap()
+            if vis(fimg, "cap_popup"):
+                tap(*CAP_CONFIRM, d=0.6)
+                fails = max(0, fails - 1)
+                continue
+            if fails in (3, 6):
+                log(f"stuck ({fails} fails, r={r}) — auto-refill #{topups+1} (likely out of food)")
+                if auto_refill.refill(target=5000) and auto_refill.to_warriors():
+                    topups += 1
+                    fails = 0
+                    log("auto-refill OK; resumed on Warriors")
+                else:
+                    auto_refill.to_warriors()
+                    log("auto-refill failed; will retry")
+            else:
+                auto_refill.to_warriors()
+            time.sleep(1.2)
     log(f"ended: {ok_batches} batches, {topups} food top-ups (~{ok_batches*TRAIN_QTY:,} troops).")
 
 

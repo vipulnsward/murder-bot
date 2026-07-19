@@ -11,7 +11,7 @@ D = "127.0.0.1:5555"
 try:
     TARGET_ITEMS = int(sys.argv[1])
 except (IndexError, ValueError):
-    TARGET_ITEMS = 5000
+    TARGET_ITEMS = 2000
 
 import train_to_1b as T
 
@@ -96,15 +96,16 @@ def refill(target=TARGET_ITEMS):
         print("REFILL FAIL: minimum not reached", cnt)
         tap(1010, 594)
         return False
-    for _ in range(5):
+    for _ in range(14):
         cnt = T.read_food_count(cap()) or 0
         if cnt >= target:
             break
-        taps = int((target - cnt) / 0.8) + 40
+        rem = target - cnt
+        taps = rem if rem <= 250 else min(int(rem / 0.85), 900)
         adb("shell", "i=0; while [ $i -lt %d ]; do input tap 900 1058; i=$((i+1)); done" % taps)
-        time.sleep(0.3)
+        time.sleep(0.25)
     cnt = T.read_food_count(cap())
-    if cnt is None or cnt <= 0 or cnt > target * 1.5:
+    if cnt is None or cnt <= 0 or cnt > target * 1.3:
         print("REFILL FAIL: unsafe count", cnt)
         tap(1010, 594)
         return False

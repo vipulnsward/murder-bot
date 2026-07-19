@@ -13,7 +13,9 @@ import numpy as np
 
 DEVICE = "127.0.0.1:5555"
 PORT = 8088
-FPS = 1.3
+FPS = 3.0
+WIDTH = 640
+QUALITY = 80
 HERE = os.path.dirname(os.path.abspath(__file__))
 QTY = 269228
 TARGET = 1_500_000_000
@@ -49,7 +51,7 @@ BG_JS = r"""(function(){
  else{cvs.style.display='none';}
 })();"""
 
-_latest = {"jpg": None, "food": None, "own": None}
+_latest = {"jpg": None, "food": None, "own": None, "seq": 0}
 
 
 def grab_raw():
@@ -93,23 +95,26 @@ def ocr_own(img):
 def capture_loop():
     last = 0.0
     while True:
+        t0 = time.monotonic()
         img = grab_raw()
         if img is not None:
             h, w = img.shape[:2]
-            small = cv2.resize(img, (460, int(h * 460 / w)))
-            ok, jpg = cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, 68])
+            small = cv2.resize(img, (WIDTH, int(h * WIDTH / w)), interpolation=cv2.INTER_AREA)
+            ok, jpg = cv2.imencode(".jpg", small,
+                                   [cv2.IMWRITE_JPEG_QUALITY, QUALITY, cv2.IMWRITE_JPEG_OPTIMIZE, 1])
             if ok:
                 _latest["jpg"] = jpg.tobytes()
-            now = time.monotonic()
-            if now - last >= 10:
+                _latest["seq"] += 1
+            if t0 - last >= 10:
                 f = read_food(img)
                 if f:
                     _latest["food"] = f
                 o = ocr_own(img)
                 if o:
                     _latest["own"] = o
-                last = now
-        time.sleep(1.0 / FPS)
+                last = t0
+        dt = time.monotonic() - t0
+        time.sleep(max(0.0, 1.0 / FPS - dt))
 
 
 def stats():
@@ -167,15 +172,20 @@ def page():
 .top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
 .av{position:relative;width:54px;height:54px}.av img{width:54px;height:54px;border-radius:11px;object-fit:cover;border:1px solid rgba(230,197,104,.6)}
 .bdg{position:absolute;right:-6px;bottom:-6px;width:24px;height:24px;border-radius:6px;border:1px solid var(--gold)}
-.name{font:600 1.2rem/1.1 "Iowan Old Style",Palatino,Georgia,serif;color:var(--gold)}
-.sub{font-size:.72rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.brand{flex:1 1 auto;min-width:0}
+.name{font:600 1.2rem/1.1 "Iowan Old Style",Palatino,Georgia,serif;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub{font-size:.72rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{flex:0 0 auto}
+@media(max-width:460px){.top{gap:9px}.av{width:44px;height:44px}.av img{width:44px;height:44px}
+ .name{font-size:1.02rem}.sub{font-size:.58rem;letter-spacing:.04em}
+ .pill{padding:6px 9px;font-size:.6rem;letter-spacing:.06em}.wrap{padding:16px 12px 40px}}
 .pill{margin-left:auto;font:600 .7rem/1 ui-monospace,monospace;letter-spacing:.1em;padding:7px 12px;border-radius:999px;border:1px solid}
 .run{color:var(--good);border-color:rgba(116,212,147,.5);background:rgba(116,212,147,.12)}
 .stop{color:var(--bad);border-color:rgba(226,116,94,.5);background:rgba(226,116,94,.12)}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:currentColor;margin-right:6px;animation:p 1.7s infinite}@keyframes p{50%{opacity:.3}}
 .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;align-items:start}@media(max-width:680px){.grid{grid-template-columns:1fr}}
 .feed{background:var(--panel);border:1px solid var(--bd);border-radius:16px;padding:10px;backdrop-filter:blur(13px) saturate(1.15);box-shadow:0 18px 50px rgba(0,0,0,.4)}
-.feed img{width:100%;border-radius:10px;display:block;border:1px solid var(--bd)}
+.feed img,.feed video{width:100%;border-radius:10px;display:block;border:1px solid var(--bd);background:#05070d}
 .cap{text-align:center;font-size:.66rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;padding:7px 0 3px}
 .card{background:var(--panel);border:1px solid var(--bd);border-radius:16px;padding:20px;backdrop-filter:blur(13px) saturate(1.15);box-shadow:0 18px 50px rgba(0,0,0,.4)}
 .eye{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:600}
@@ -198,11 +208,11 @@ def page():
 </style></head><body><canvas id=core></canvas><div class=scrim></div><div class=wrap>
 <div class=top>
  <div class=av><img src=\"""" + av + """\">""" + (f'<img class=bdg src="{crest}">' if (av and crest and av != crest) else "") + """</div>
- <div><div class=name>NeoIsTlatoani</div><div class=sub>[NFG] &middot; K49 &middot; Live Command</div></div>
+ <div class=brand><div class=name>NeoIsTlatoani</div><div class=sub>[NFG] &middot; K49 &middot; Live Command</div></div>
  <div id=pill class="pill run"><span class=dot></span>LIVE</div>
 </div>
 <div class=grid>
- <div class=feed><img id=vid src="/stream" alt="live game"><div class=cap>BlueStacks &middot; live feed</div></div>
+ <div class=feed><video id=vid autoplay muted playsinline loop></video><div class=cap>BlueStacks &middot; live feed &middot; HD 30fps</div></div>
  <div class=card>
   <div class=eye>T1 Warriors &middot; goal 1.5B <span style="color:#f2d885;font-weight:700">&#9733; 1B done</span></div>
   <div class=own id=own>&mdash;<small> / 1.5B</small></div>
@@ -239,11 +249,34 @@ p.innerHTML='<span class=dot></span>'+(s.running?'LIVE':'PAUSED');
 }catch(e){}}
 up();setInterval(up,10000);
 var V=document.getElementById('vid');
-function rc(){V.src='/stream?t='+Date.now();}
-V.onerror=function(){setTimeout(rc,1200);};
-document.addEventListener('visibilitychange',function(){if(!document.hidden){rc();up();}});
-window.addEventListener('focus',rc);
-window.addEventListener('online',rc);
+V.muted=true;V.defaultMuted=true;V.setAttribute('playsinline','');V.setAttribute('autoplay','');
+var HLSURL='/hls/stream.m3u8',hls=null,native=V.canPlayType('application/vnd.apple.mpegurl');
+function tryplay(){var p=V.play();if(p&&p.catch)p.catch(function(){});}
+['click','touchstart','keydown'].forEach(function(e){document.addEventListener(e,tryplay,{once:true,passive:true});});
+function attach(){
+ if(!(window.Hls&&Hls.isSupported()))return;
+ if(hls){try{hls.destroy();}catch(e){}}
+ hls=new Hls({lowLatencyMode:true,liveSyncDurationCount:2,liveMaxLatencyDurationCount:6,maxBufferLength:6,backBufferLength:4,manifestLoadingMaxRetry:8,levelLoadingMaxRetry:8,fragLoadingMaxRetry:8});
+ hls.loadSource(HLSURL);hls.attachMedia(V);
+ hls.on(Hls.Events.MANIFEST_PARSED,function(){V.play().catch(function(){});});
+ hls.on(Hls.Events.ERROR,function(ev,d){if(!d.fatal)return;
+  if(d.type==='networkError'){setTimeout(function(){try{hls.startLoad();}catch(e){start();}},1500);}
+  else if(d.type==='mediaError'){try{hls.recoverMediaError();}catch(e){start();}}
+  else{setTimeout(start,2500);}});
+}
+function start(){
+ if(native){V.src=HLSURL;V.play().catch(function(){});return;}
+ if(window.Hls){attach();}
+ else{var s=document.createElement('script');s.src='/hls.js';s.onload=attach;s.onerror=function(){setTimeout(start,3000);};document.head.appendChild(s);}
+}
+start();
+function resync(){if(native){V.load();V.play().catch(function(){});}else if(hls){try{hls.startLoad();}catch(e){start();}V.play().catch(function(){});}else{start();}up();}
+V.addEventListener('stalled',function(){setTimeout(resync,1200);});
+V.addEventListener('error',function(){setTimeout(start,2000);});
+document.addEventListener('visibilitychange',function(){if(!document.hidden)resync();});
+window.addEventListener('focus',resync);
+window.addEventListener('online',resync);
+window.addEventListener('pageshow',function(e){if(e.persisted)resync();});
 </script>
 <script type="x-shader/x-fragment" id="frag">""" + FRAG + """</script>
 <script>""" + BG_JS + """</script>
@@ -255,17 +288,64 @@ class H(http.server.BaseHTTPRequestHandler):
         if self.path.startswith("/stream"):
             self.send_response(200)
             self.send_header("Content-Type", "multipart/x-mixed-replace; boundary=frame")
+            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+            self.send_header("Pragma", "no-cache")
+            self.end_headers()
+            last_seq = -1
+            try:
+                while True:
+                    s = _latest["seq"]
+                    j = _latest["jpg"]
+                    if j is not None and s != last_seq:
+                        last_seq = s
+                        self.wfile.write(b"--frame\r\nContent-Type: image/jpeg\r\nContent-Length: "
+                                         + str(len(j)).encode() + b"\r\n\r\n" + j + b"\r\n")
+                        self.wfile.flush()
+                    else:
+                        time.sleep(0.02)
+            except (BrokenPipeError, ConnectionResetError, OSError):
+                return
+        elif self.path.startswith("/seq"):
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
             self.send_header("Cache-Control", "no-cache")
             self.end_headers()
             try:
-                while True:
-                    j = _latest["jpg"]
-                    if j:
-                        self.wfile.write(b"--frame\r\nContent-Type: image/jpeg\r\nContent-Length: "
-                                         + str(len(j)).encode() + b"\r\n\r\n" + j + b"\r\n")
-                    time.sleep(1.0 / FPS)
-            except (BrokenPipeError, ConnectionResetError):
-                return
+                self.wfile.write(str(_latest["seq"]).encode())
+            except OSError:
+                pass
+        elif self.path.startswith("/hls.js"):
+            try:
+                data = open(os.path.join(HERE, "hls.min.js"), "rb").read()
+            except OSError:
+                self.send_response(404); self.end_headers(); return
+            self.send_response(200)
+            self.send_header("Content-Type", "application/javascript")
+            self.send_header("Cache-Control", "max-age=86400")
+            self.end_headers()
+            try:
+                self.wfile.write(data)
+            except OSError:
+                pass
+        elif self.path.startswith("/hls/"):
+            name = self.path.split("?")[0].split("/")[-1]
+            p = os.path.join(HERE, "hls", name)
+            if not re.match(r"^[\w.\-]+$", name) or not os.path.exists(p):
+                self.send_response(404); self.end_headers(); return
+            try:
+                data = open(p, "rb").read()
+            except OSError:
+                self.send_response(404); self.end_headers(); return
+            self.send_response(200)
+            self.send_header("Content-Type",
+                             "application/vnd.apple.mpegurl" if name.endswith(".m3u8") else "video/mp2t")
+            self.send_header("Cache-Control", "no-cache" if name.endswith(".m3u8") else "max-age=15")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            try:
+                self.wfile.write(data)
+            except OSError:
+                pass
         elif self.path.startswith("/stats"):
             body = json.dumps(stats()).encode()
             self.send_response(200)

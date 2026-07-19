@@ -300,8 +300,10 @@ def topup_food(target=FOOD_TARGET, cap=FOOD_CAP):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--max-topups", type=int, default=100)
+    ap.add_argument("--target", type=int, default=TARGET_OWN)
     a = ap.parse_args()
-    log(f"target={TARGET_OWN:,} qty={TRAIN_QTY:,} food_target={FOOD_TARGET}")
+    target = a.target
+    log(f"target={target:,} qty={TRAIN_QTY:,} food_target={FOOD_TARGET}")
     if goto_warriors() is None:
         log("warning: not on Warriors screen at start; loop will recover")
     import auto_refill
@@ -322,9 +324,9 @@ def main():
         if idle and do_check:
             own = read_own(img)
             if own is not None:
-                log(f"batches={ok_batches} own={own:,} (to 1B: {max(0, TARGET_OWN - own):,})")
-                if own >= TARGET_OWN:
-                    log(f"DONE: Own {own:,} >= {TARGET_OWN:,}. batches={ok_batches} topups={topups}")
+                log(f"batches={ok_batches} own={own:,} (to target: {max(0, target - own):,})")
+                if own >= target:
+                    log(f"DONE: Own {own:,} >= {target:,}. batches={ok_batches} topups={topups}")
                     break
             food = read_food_topbar(img)
             if food is not None and food < FOOD_LOW:
@@ -354,7 +356,7 @@ def main():
                 time.sleep(1.2)
                 continue
             log(f"out of food — auto-refill #{topups+1}")
-            if auto_refill.refill(target=5000) and auto_refill.to_warriors():
+            if auto_refill.refill(target=2000) and auto_refill.to_warriors():
                 topups += 1
                 fails = 0
                 nofood = 0
@@ -375,7 +377,7 @@ def main():
                 continue
             if fails in (3, 6):
                 log(f"stuck ({fails} fails, r={r}) — auto-refill #{topups+1} (likely out of food)")
-                if auto_refill.refill(target=5000) and auto_refill.to_warriors():
+                if auto_refill.refill(target=2000) and auto_refill.to_warriors():
                     topups += 1
                     fails = 0
                     log("auto-refill OK; resumed on Warriors")

@@ -18,6 +18,7 @@ MATCH = 0.85
 BARRACKS_TAP = (500, 800)
 RADIAL_TRAIN_TAP = (179, 679)
 T1_ICON_TAP = (135, 1237)
+CANCEL_TAP = (360, 1134)
 QTY_FIELD_TAP = (880, 1588)
 OK_TAP = (975, 1852)
 OWN_REGION = (330, 1070, 760, 1140)
@@ -53,7 +54,7 @@ def screencap():
     return cv2.imdecode(np.frombuffer(raw, np.uint8), cv2.IMREAD_COLOR)
 
 
-def tap(x, y, d=0.28):
+def tap(x, y, d=0.2):
     adb("shell", "input", "tap", str(int(x)), str(int(y)))
     time.sleep(d)
 
@@ -110,7 +111,7 @@ def read_food_count(img):
 
 
 FOOD_BOX = (150, 8, 300, 64)
-FOOD_LOW = 100_000_000
+FOOD_LOW = 500_000_000
 
 
 def read_food_topbar(img):
@@ -133,16 +134,34 @@ def on_warriors_idle(img=None):
     return vis(img, "warriors_title") and vis(img, "train_btn_idle"), img
 
 
-def goto_warriors(tries=4):
+def to_city():
+    for _ in range(6):
+        img = screencap()
+        if vis(img, "exit_dialog"):
+            tap(*CANCEL_TAP, d=0.7)
+            return
+        if vis(img, "modal_speedup_title"):
+            tap(*CLOSE_X, d=0.5)
+            continue
+        back()
+
+
+def goto_warriors(tries=6):
     for _ in range(tries):
-        ok, img = on_warriors_idle()
-        if ok:
+        img = screencap()
+        if on_warriors_idle(img)[0]:
             return img
-        for _ in range(3):
-            back()
+        if vis(img, "exit_dialog"):
+            tap(*CANCEL_TAP, d=0.7)
+            continue
+        if vis(img, "radial_train"):
+            tap(*RADIAL_TRAIN_TAP, d=1.4)
+            tap(*T1_ICON_TAP, d=0.8)
+            continue
+        to_city()
         tap(*BARRACKS_TAP, d=1.2)
-        s, _, _ = locate(screencap(), "radial_train")
-        if s >= MATCH:
+        r = screencap()
+        if vis(r, "radial_train"):
             tap(*RADIAL_TRAIN_TAP, d=1.4)
             tap(*T1_ICON_TAP, d=0.8)
     ok, img = on_warriors_idle()
@@ -166,7 +185,7 @@ def wait_for(name, timeout=10):
         img = screencap()
         if vis(img, name):
             return img
-        time.sleep(0.3)
+        time.sleep(0.25)
     return None
 
 
@@ -203,8 +222,7 @@ def use_green(img):
 
 
 def topup_food(target=FOOD_TARGET, cap=FOOD_CAP):
-    for _ in range(3):
-        back()
+    to_city()
     tap(*TOPBAR_FOOD_TAP, d=1.1)
     found = None
     for _ in range(4):
@@ -278,18 +296,23 @@ def main():
     ok_batches = 0
     topups = 0
     fails = 0
+    cyc = 0
     while True:
+        cyc += 1
+        do_check = (cyc % 10 == 1)
         img = screencap()
         idle = on_warriors_idle(img)[0]
-        own = read_own(img) if idle else None
-        if own is not None and own >= TARGET_OWN:
-            log(f"DONE: Own {own:,} >= {TARGET_OWN:,}. batches={ok_batches} topups={topups}")
-            break
         if fails >= 10:
             log(f"STOP: {fails} consecutive failures — needs a human look."); break
 
         low_food = False
-        if idle:
+        if idle and do_check:
+            own = read_own(img)
+            if own is not None:
+                log(f"batches={ok_batches} own={own:,} (to 1B: {max(0, TARGET_OWN - own):,})")
+                if own >= TARGET_OWN:
+                    log(f"DONE: Own {own:,} >= {TARGET_OWN:,}. batches={ok_batches} topups={topups}")
+                    break
             food = read_food_topbar(img)
             if food is not None and food < FOOD_LOW:
                 low_food = True
@@ -303,9 +326,6 @@ def main():
         if r == "OK":
             ok_batches += 1
             fails = 0
-            if ok_batches % 5 == 0:
-                o = read_own(screencap())
-                log(f"batches={ok_batches} own={o:,}" if o else f"batches={ok_batches}")
         elif r == "NOFOOD":
             if not low_food:
                 log(f"food out after {ok_batches} batches — top-up #{topups+1}")

@@ -12,13 +12,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 TDIR = os.path.join(HERE, "templates")
 
 TARGET_OWN = 1_000_000_000
-TRAIN_QTY = 269228
+TRAIN_QTY = 271766
 MATCH = 0.85
 
 BARRACKS_TAP = (500, 800)
 RADIAL_TRAIN_TAP = (179, 679)
 T1_ICON_TAP = (135, 1237)
 CANCEL_TAP = (360, 1134)
+CAP_CONFIRM = (714, 1134)
 QTY_FIELD_TAP = (880, 1588)
 OK_TAP = (975, 1852)
 OWN_REGION = (330, 1070, 760, 1140)
@@ -149,23 +150,19 @@ def to_city():
 def goto_warriors(tries=6):
     for _ in range(tries):
         img = screencap()
-        if on_warriors_idle(img)[0]:
+        if on_warriors_idle(img)[0] or vis(img, "speedup_btn"):
             return img
         if vis(img, "exit_dialog"):
             tap(*CANCEL_TAP, d=0.7)
             continue
-        if vis(img, "radial_train"):
-            tap(*RADIAL_TRAIN_TAP, d=1.4)
-            tap(*T1_ICON_TAP, d=0.8)
+        if vis(img, "cap_popup"):
+            tap(*CAP_CONFIRM, d=0.7)
             continue
-        to_city()
-        tap(*BARRACKS_TAP, d=1.2)
-        r = screencap()
-        if vis(r, "radial_train"):
-            tap(*RADIAL_TRAIN_TAP, d=1.4)
-            tap(*T1_ICON_TAP, d=0.8)
-    ok, img = on_warriors_idle()
-    return img if ok else None
+        back()
+    img = screencap()
+    if on_warriors_idle(img)[0] or vis(img, "speedup_btn"):
+        return img
+    return None
 
 
 def set_train_qty(img):
@@ -190,19 +187,24 @@ def wait_for(name, timeout=10):
 
 
 def train_one_batch():
-    ok, img = on_warriors_idle()
-    if not ok:
-        return "NAV"
-    set_train_qty(img)
     img = screencap()
-    s, _, c = locate(img, "train_btn_idle")
-    if s < MATCH:
+    if vis(img, "speedup_btn"):
+        busy = img
+    elif on_warriors_idle(img)[0]:
+        s, _, c = locate(img, "train_btn_idle")
+        if s < MATCH:
+            return "NAV"
+        tap(*c)
+        time.sleep(0.7)
+        p = screencap()
+        if vis(p, "cap_popup"):
+            tap(*CAP_CONFIRM, d=0.6)
+        busy = wait_for("speedup_btn", 8)
+        if busy is None:
+            return "NOFOOD"
+    else:
         return "NAV"
-    tap(*c)
-    busy = wait_for("speedup_btn", 8)
-    if busy is None:
-        return "NOFOOD"
-    s, _, c = locate(busy, "speedup_btn")
+    _, _, c = locate(busy, "speedup_btn")
     tap(*c)
     modal = wait_for("modal_speedup_title", 8)
     if modal is None:
@@ -292,7 +294,7 @@ def main():
     a = ap.parse_args()
     log(f"target={TARGET_OWN:,} qty={TRAIN_QTY:,} food_target={FOOD_TARGET}")
     if goto_warriors() is None:
-        log("FATAL: could not reach Warriors screen"); return
+        log("warning: not on Warriors screen at start; loop will recover")
     ok_batches = 0
     topups = 0
     fails = 0
@@ -326,22 +328,32 @@ def main():
         if r == "OK":
             ok_batches += 1
             fails = 0
+            log(f"batch {ok_batches} ok")
         elif r == "NOFOOD":
-            if not low_food:
-                log(f"food out after {ok_batches} batches — top-up #{topups+1}")
+            fimg = screencap()
+            if vis(fimg, "cap_popup"):
+                tap(*CAP_CONFIRM, d=0.6)
+                fails = 0
+                continue
+            food = read_food_topbar(fimg)
+            if not low_food and (food is None or food >= FOOD_LOW):
+                log(f"train didn't start; food ~{(food or 0)/1e6:.0f}M ok — retry (no nav)")
+                fails += 1
+                time.sleep(1.5)
+                continue
+            log(f"food genuinely low — top-up #{topups+1}")
             done = False
             for attempt in range(2):
                 if topup_food():
                     done = True
                     break
-                log(f"top-up attempt {attempt+1} failed; recovering")
                 goto_warriors()
             if done:
                 topups += 1
-                if goto_warriors() is not None:
-                    fails = 0
-                    continue
-            fails += 1
+                goto_warriors()
+                fails = 0
+            else:
+                fails += 1
             time.sleep(2)
         else:
             fails += 1

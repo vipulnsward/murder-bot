@@ -20,6 +20,9 @@ import cv2
 
 API_URL = "https://api.anthropic.com/v1/messages"
 MODEL = "claude-sonnet-5"
+OLLAMA_URL = "http://localhost:11434/api/chat"
+OLLAMA_MODEL = "qwen2.5vl:7b"  # validated on Evony screens; llava:7b was too weak
+PROVIDER = os.environ.get("EVONY_LLM_PROVIDER", "ollama")  # 'ollama' (local, free) or 'anthropic'
 DEVICE_W, DEVICE_H = 1080, 1920
 SEND_W, SEND_H = 540, 960  # half-scale to cut tokens; coords scaled back x2
 
@@ -74,12 +77,37 @@ def _encode(image_path_or_bgr):
     return base64.b64encode(buf).decode()
 
 
-def decide(image, goal="reach the training screen", extra_context="", model=MODEL, timeout=40):
-    """Return a validated action dict. Safety is enforced in code, not just the prompt."""
+def decide(image, goal="reach the training screen", extra_context="",
+           provider=None, model=None, timeout=120):
+    """Return a validated action dict. Safety is enforced in code, not just the prompt.
+    provider: 'ollama' (local llava, free) or 'anthropic'."""
+    provider = provider or PROVIDER
     b64 = _encode(image)
+    user_text = f"Goal: {goal}\n{extra_context}\nWhat ONE action? Respond with ONLY the JSON object."
+    if provider == "ollama":
+        txt = _call_ollama(b64, user_text, model or OLLAMA_MODEL, timeout)
+    else:
+        txt = _call_anthropic(b64, user_text, model or MODEL, timeout)
+    return _enforce_safety(_parse(txt))
+
+
+def _call_ollama(b64, user_text, model, timeout):
+    body = json.dumps({
+        "model": model, "stream": False, "format": "json", "options": {"temperature": 0},
+        "messages": [
+            {"role": "system", "content": SYSTEM},
+            {"role": "user", "content": user_text, "images": [b64]},
+        ],
+    }).encode()
+    req = urllib.request.Request(OLLAMA_URL, data=body, headers={"content-type": "application/json"})
+    r = urllib.request.urlopen(req, timeout=timeout)
+    return json.loads(r.read()).get("message", {}).get("content", "")
+
+
+def _call_anthropic(b64, user_text, model, timeout):
     user = [
         {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": b64}},
-        {"type": "text", "text": f"Goal: {goal}\n{extra_context}\nWhat ONE action? JSON only."},
+        {"type": "text", "text": user_text},
     ]
     body = json.dumps({
         "model": model, "max_tokens": 400, "system": SYSTEM,
@@ -90,9 +118,7 @@ def decide(image, goal="reach the training screen", extra_context="", model=MODE
         "anthropic-version": "2023-06-01", "content-type": "application/json",
     })
     r = urllib.request.urlopen(req, timeout=timeout)
-    txt = "".join(b.get("text", "") for b in json.loads(r.read()).get("content", []))
-    act = _parse(txt)
-    return _enforce_safety(act)
+    return "".join(b.get("text", "") for b in json.loads(r.read()).get("content", []))
 
 
 def _parse(txt):

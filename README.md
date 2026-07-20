@@ -6,6 +6,11 @@ a local Android emulator (BlueStacks). It drives the game entirely through ADB i
 game API, no memory hacks, no accessibility tree (Evony is a Unity/IL2CPP app, so the
 screen is the only interface).
 
+> **Beyond training:** the bot now has a multi-feature orchestrator — defense, base
+> development, daily upkeep, alliance, gathering, rallies, monsters — with local
+> Holo1.5 vision, humanized input, and a human activity schedule. See
+> **[ORCHESTRATOR.md](ORCHESTRATOR.md)**.
+
 Campaigns run so far, all unattended: **685.7M → 1.5B T1 Warriors**, then a switch to
 T2 ground that reached **500M Conscripts** (final 501,481,135; 294 batches, 8 food refills,
 0 failures). A push toward **1B** is paused at 511M — the bot is fine, but food is the ceiling: current

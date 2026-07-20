@@ -79,22 +79,20 @@ def ensure_training(screencap, tap, back, tries=14, min_score=0.85):
         if s in READY:
             return s, img
         if s == "speedup_modal":
-            # A batch is training; clear it with Finish All (speedup items), then continue.
-            fa, fc = _match(img, "finish_all_btn")
-            tap(*(fc if fa >= 0.80 else FINISH_ALL), d=1.8)
+            # GEM-SAFE: never auto-tap "Finish All" (it spends gems on oversized/stacked
+            # batches). Close the modal and reach the training screen, where the normal
+            # loop clears a normal batch with speedup ITEMS.
+            tap(*CLOSE_X, d=0.5)
         elif s == "exit_dialog":
             tap(*CANCEL_TAP, d=0.7)
         elif s == "resources":
             tap(*CLOSE_X, d=0.5)
             back(0.8)
         elif s == "barracks_radial":
-            # If the dial shows Speed Up, a batch is training -> open it and Finish All.
-            sp, spc = _match(img, "radial_speedup")
-            if sp >= 0.80:
-                tap(*spc, d=1.6)
-            else:
-                _, c = _match(img, "radial_train")
-                tap(*c, d=1.4) if c != (0, 0) else tap(*VIEW_FALLBACK, d=1.4)
+            # Go to the training screen (View/Train). Never auto-open Speed Up -> Finish
+            # All from recovery (gem risk); the training loop handles a busy barracks.
+            _, c = _match(img, "radial_train")
+            tap(*c, d=1.4) if c != (0, 0) else tap(*VIEW_FALLBACK, d=1.4)
         elif s == "city":
             sc, c = _match(img, "barracks_bldg")
             tap(*c, d=1.4)          # open the barracks radial

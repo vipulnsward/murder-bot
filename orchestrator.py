@@ -31,30 +31,37 @@ DEVICE = "127.0.0.1:5555"
 
 
 class Ctx:
-    """Shared context handed to every task: device I/O + a logger."""
+    """Shared context handed to every task: device I/O + a logger.
+
+    Taps/swipes go through the Humanizer (kb/30): jittered center-biased points,
+    ranged delays, WindMouse curved swipes, and self-policing (repeated-tap tell
+    -> humanize.TooManyClicks, which the run loop turns into a pause+notify)."""
 
     def __init__(self, device=DEVICE, logger=print):
         self.device = device
         self._log = logger
+        import humanize
+        self.hz = humanize.Humanizer(device)
 
     def screencap(self):
         return fast_screenshot.grab(self.device)
 
-    def tap(self, x, y, d=0.3):
-        import subprocess
-        subprocess.run(["adb", "-s", self.device, "shell", "input", "tap", str(int(x)), str(int(y))])
-        time.sleep(d)
+    def tap(self, x, y, d=0.3, label="", radius=10):
+        self.hz.tap_point(x, y, radius=radius, label=label)   # humanized; may raise TooManyClicks
 
     def swipe(self, x1, y1, x2, y2, ms=400, d=0.3):
-        import subprocess
-        subprocess.run(["adb", "-s", self.device, "shell", "input", "swipe",
-                        *map(lambda v: str(int(v)), (x1, y1, x2, y2, ms))])
-        time.sleep(d)
+        r = 6
+        self.hz.swipe((x1 - r, y1 - r, x1 + r, y1 + r), (x2 - r, y2 - r, x2 + r, y2 + r))
 
     def back(self, d=0.9):
         import subprocess
         subprocess.run(["adb", "-s", self.device, "shell", "input", "keyevent", "4"])
-        time.sleep(d)
+        time.sleep(time_module_uniform(d))
+
+
+def time_module_uniform(d):
+    import random
+    return max(0.0, d + random.uniform(-0.15, 0.35))
 
     def log(self, msg):
         self._log(f"[{time.strftime('%H:%M:%S')}] {msg}")
@@ -168,6 +175,11 @@ def run(device=DEVICE, tasks=None, max_ticks=None, logger=print,
             ran = sched.run_due()
             stuck = 0 if ran else stuck
         except Exception as e:
+            import humanize
+            cause = getattr(e, "cause", e)
+            if isinstance(cause, humanize.TooManyClicks):
+                CTX.log(f"SELF-DETECTED BOT-TELL ({cause}) — pausing for human (kb/30 fail-safe).")
+                return "stopped"
             stuck += 1
             CTX.log(f"task not ready ({stuck}/{stuck_threshold}): {e}")
             ran = None

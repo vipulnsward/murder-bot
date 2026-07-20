@@ -228,7 +228,10 @@ def train_one_batch():
     modal = wait_for("modal_speedup_title", 8)
     if modal is None:
         return "SKIP"
-    s, _, c = locate(modal, "finish_all_btn")
+    # GEM-SAFETY: complete the batch with "Use" (applies speedup ITEMS only) —
+    # never "Finish All", which can dip into GEMS on large/stacked batches. If
+    # Use doesn't fully complete it, we return SKIP and retry — never spend gems.
+    s, _, c = locate(modal, "use_btn")
     if s < MATCH:
         return "SKIP"
     tap(*c)

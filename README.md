@@ -8,8 +8,10 @@ screen is the only interface).
 
 Campaigns run so far, all unattended: **685.7M → 1.5B T1 Warriors**, then a switch to
 T2 ground that reached **500M Conscripts** (final 501,481,135; 294 batches, 8 food refills,
-0 failures). A push toward **1B** is paused at 511M — the bot is fine, but food inventory
-runs out ~544M short of 1B (see `kb/13`). Resuming to 1B is a restock problem, not a bot one.
+0 failures). A push toward **1B** is paused at 511M — the bot is fine, but food is the ceiling: current
+inventory reaches only ~629M (spending 1M-Food + the spendable **Safe Food** stash), and 1B is
+~80B food short — a gathering grind or paid packs, not a bot problem. For a bulk count, **T1**
+(160 food, 0 stone) is the cheaper tier. See `kb/13` (budget) and `kb/14` (sourcing + tiers).
 
 > Evony's ToS prohibits automation. Use only on a self-owned account whose risk you accept.
 

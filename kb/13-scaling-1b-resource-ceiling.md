@@ -27,14 +27,17 @@ stone = 1,834 × 10.8M                ≈  19.8 B
 | Resource | Stock | Covers | Troop headroom |
 |----------|-------|--------|----------------|
 | **1M Food** items (bot uses these) | ~8,065 (~8.1B) + ~1.3B top-bar ≈ **9.4B** | ~159 batches | **+43M → ~544M** |
-| 1M **Safe** Food items (bot does NOT use) | ~19,364 (~19.4B) — *spendable-on-training unverified* | +475 batches if usable | +132M → ~630M |
+| 1M **Safe** Food items (spendable — see kb/14) | ~19,364 boxes (~19.4B) | +329 batches | +89M |
+| **Usable food total** | **~28.4B** | **~475 batches** | **+129M → ~629M** |
 | Stone | ~30B | ~2,778 batches | +755M |
 | Gems | ~8.19M | — | (Instant-Finish only; not a food source) |
 
-Food is short by **~99B** (108B needed vs ~9.4B usable). Stone is comfortable. So the honest
-ceiling with current inventory is **~544M** (1M Food only), or **~630M** if the Safe Food
-stash turns out to be spendable on training. **1B is not reachable without acquiring ~100B
-more food.**
+Food is short by **~80B** (108B needed vs ~28.4B usable). Stone is comfortable. `kb/14`
+confirmed **Safe Food is normal, spendable food** (just plunder/upkeep-protected), so the real
+ceiling on current inventory is **~629M** (once the bot also opens the "1M Safe Food" row), not
+544M. **1B still needs ~80B more food** — a months-long gathering grind or paid packs; see
+`kb/14` for how to source it and why **T1** (160 food, 0 stone) is the cheaper tier for a bulk
+count.
 
 ## Refill cadence (empirical, from the 500M run)
 

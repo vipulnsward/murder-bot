@@ -137,9 +137,10 @@ def default_tasks():
         # perceive/claim are [LIVE-CAPTURE]. All-free actions (gem-safe). Disabled until wired.
         Task("daily_collect", __import__("daily_collect").make_task(notify=_notify),
              interval=600, priority=30, enabled=False),
-        Task("alliance", lambda: _stub("alliance",
-             "Alliance Help auto-tap + Science donation + Gift claim, every ~4h.")(CTX),
-             interval=14400, priority=25, enabled=False),
+        # alliance: help-all/gift/donate policy DONE + tested (alliance.AlliancePolicy);
+        # GEM-SAFE donation guard (never a gem tier). [LIVE-CAPTURE] perceive/act.
+        Task("alliance", __import__("alliance").make_task(notify=_notify),
+             interval=1800, priority=25, enabled=False),
         # auto_shield: decision policy is DONE + tested (auto_shield.ShieldPolicy);
         # perceive()/apply_shield() are [LIVE-CAPTURE] stubs that fail loud -> stays
         # disabled until wired on a clean session (kb/26). notify -> human on no-items.

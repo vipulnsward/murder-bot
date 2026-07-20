@@ -158,12 +158,19 @@ CTX = None  # set by run()
 
 
 def run(device=DEVICE, tasks=None, max_ticks=None, logger=print,
-        llm_fallback=False, stuck_threshold=6):
+        llm_fallback=False, stuck_threshold=6, macro="default", idle_cap_s=None):
     """Main loop. STOPS on the account-disconnect screen (never taps Quit/Restart).
     max_ticks bounds the loop for tests; None = run forever. If llm_fallback is on,
-    a stuck deterministic layer escalates to the LLM vision agent (costs credits)."""
+    a stuck deterministic layer escalates to the LLM vision agent (costs credits).
+
+    `macro` gates activity to a plausible human rhythm (kb/30): during a scheduled
+    sleep block or micro-break the loop idles WITHOUT tapping. Pass "default" for a
+    fresh MacroSchedule, an instance to customize, or False/None to run 24/7."""
     global CTX
     CTX = Ctx(device, logger)
+    if macro == "default":
+        import macro_schedule
+        macro = macro_schedule.MacroSchedule()
     sched = Scheduler()
     for t in (tasks or default_tasks()):
         if t.enabled:
@@ -174,8 +181,21 @@ def run(device=DEVICE, tasks=None, max_ticks=None, logger=print,
 
     ticks = 0
     stuck = 0
+    last_macro = None
     while max_ticks is None or ticks < max_ticks:
         ticks += 1
+        if macro:
+            mstate = macro.state()[0]
+            if mstate != "active":
+                if mstate != last_macro:
+                    CTX.log(f"macro schedule -> {mstate}; idling (no taps).")
+                last_macro = mstate
+                nap = macro.idle_sleep_s()
+                time.sleep(nap if idle_cap_s is None else min(nap, idle_cap_s))
+                continue
+            if last_macro not in (None, "active"):
+                CTX.log("macro schedule -> active; resuming.")
+            last_macro = "active"
         img = CTX.screencap()
         if screen_fsm.is_disconnect(img):
             CTX.log("DISCONNECT (account taken — likely easy-bot.club). Stopping; will NOT tap.")
@@ -210,48 +230,48 @@ def run(device=DEVICE, tasks=None, max_ticks=None, logger=print,
 
 
 if __name__ == "__main__":
-    import sys
+    import os
 
-    # dry-run self-test: fake device I/O, verify scheduling + disconnect guard,
-    # no ADB, no real taps.
-    log = []
-    calls = {"train": 0}
+    # dry-run tests of run() itself: fake device I/O (no ADB, no real taps),
+    # verify (A) macro gating idles without acting and (B) the disconnect guard.
+    os.environ["EVONY_NOTIFY_MAC"] = "0"   # don't fire real banners during the test
 
-    def fake_training(ctx):
-        calls["train"] += 1
-        return None
-
-    # a disconnect appears on tick 8
-    frame = {"n": 0}
-    class FakeCtx(Ctx):
-        def __init__(self): self.device = "test"; self._log = log.append
-        def screencap(self):
-            frame["n"] += 1
-            return "DISCONNECT_FRAME" if frame["n"] >= 8 else "OK_FRAME"
-
+    import fast_screenshot as FS
     import screen_fsm as F
-    F.is_disconnect = lambda img, min_score=0.85: img == "DISCONNECT_FRAME"
     import watchdog as W
+
+    grabs = {"n": 0}
+    def fake_grab(device):
+        grabs["n"] += 1
+        return "DISCONNECT_FRAME" if grabs["n"] >= 4 else "OK_FRAME"
+    FS.grab = fake_grab
+    F.is_disconnect = lambda img, min_score=0.85: img == "DISCONNECT_FRAME"
     W.Watchdog = lambda *a, **k: type("W", (), {"tick": lambda s: "ok"})()
 
-    tasks = [Task("training", lambda: fake_training(None), interval=1, priority=10, enabled=True)]
+    trains = {"n": 0}
+    def fake_train(ctx):
+        trains["n"] += 1
+        return None
+    tasks = [Task("training", lambda: fake_train(CTX), interval=1, priority=10, enabled=True)]
 
-    CTX = FakeCtx()
-    clock = {"t": 1000.0}
-    sched = Scheduler(clock=lambda: clock["t"])
-    for t in tasks:
-        sched.add(t)
-    ticks = 0
-    result = None
-    while ticks < 30:
-        ticks += 1
-        img = CTX.screencap()
-        if F.is_disconnect(img):
-            result = "disconnect"; break
-        sched.run_due()
-        clock["t"] += 1.0
+    # A) macro=SLEEP -> loop idles every tick: never screencaps, never trains.
+    class SleepMacro:
+        def state(self, now=None): return ("sleep", 100.0)
+        def idle_sleep_s(self, now=None): return 0.0
+    grabs["n"] = trains["n"] = 0
+    ra = run(max_ticks=5, tasks=tasks, macro=SleepMacro(), idle_cap_s=0.0, logger=lambda m: None)
+    a_ok = ra == "done" and grabs["n"] == 0 and trains["n"] == 0
+    print(f"A macro=sleep -> result={ra} screencaps={grabs['n']} trains={trains['n']} ok={a_ok}")
 
-    ok = result == "disconnect" and calls["train"] >= 5
-    print(f"training ran {calls['train']}x before disconnect at tick {ticks}")
+    # B) macro=ACTIVE -> screencaps + trains, then hits the disconnect frame -> STOP (no tap).
+    class ActiveMacro:
+        def state(self, now=None): return ("active", 100.0)
+        def idle_sleep_s(self, now=None): return 0.0
+    grabs["n"] = trains["n"] = 0
+    rb = run(max_ticks=20, tasks=tasks, macro=ActiveMacro(), logger=lambda m: None)
+    b_ok = rb == "disconnect" and trains["n"] >= 1 and grabs["n"] >= 1
+    print(f"B macro=active -> result={rb} screencaps={grabs['n']} trains={trains['n']} ok={b_ok}")
+
+    ok = a_ok and b_ok
     print("SELF-TEST:", "PASS" if ok else "FAIL")
     raise SystemExit(0 if ok else 1)

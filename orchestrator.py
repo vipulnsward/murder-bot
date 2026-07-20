@@ -133,9 +133,10 @@ def default_tasks():
     return [
         Task("training", lambda: training_task(CTX), interval=6, priority=10, enabled=True),
         # --- roadmap stubs (disabled until their UI templates exist) ---
-        Task("daily_collect", lambda: _stub("daily_collect",
-             "Claim mail, in-city resources, wheel, eggs, patrol, free chests on a timer.")(CTX),
-             interval=3600, priority=30, enabled=False),
+        # daily_collect: red-dot claim policy DONE + tested (daily_collect.DailyCollector);
+        # perceive/claim are [LIVE-CAPTURE]. All-free actions (gem-safe). Disabled until wired.
+        Task("daily_collect", __import__("daily_collect").make_task(notify=_notify),
+             interval=600, priority=30, enabled=False),
         Task("alliance", lambda: _stub("alliance",
              "Alliance Help auto-tap + Science donation + Gift claim, every ~4h.")(CTX),
              interval=14400, priority=25, enabled=False),

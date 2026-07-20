@@ -1,0 +1,5981 @@
+{
+  "screens": [
+    {
+      "file": "status_after.png",
+      "label": "speedup_modal",
+      "gems": null,
+      "n_text": 26,
+      "text_signature": [
+        "1 hour speedup for training",
+        "10 minute speedup for training",
+        "15 minute speedup for training",
+        "30 minute speedup for training",
+        "buy",
+        "chf 86.48",
+        "finish all",
+        "remaining time: 2d 15:56",
+        "speedup settings",
+        "the crazy speedup sale is",
+        "time to reduce: 2d 16:00",
+        "total 47,000 hour speedup",
+        "training speedup",
+        "training timer by 10 minutes."
+      ],
+      "buttons": [
+        {
+          "text": "Training Speedup",
+          "x": 543,
+          "y": 66,
+          "conf": 0.98
+        },
+        {
+          "text": "Here!",
+          "x": 267,
+          "y": 366,
+          "conf": 1.0
+        },
+        {
+          "text": "Buy",
+          "x": 853,
+          "y": 372,
+          "conf": 0.99
+        },
+        {
+          "text": "CHF 86.48",
+          "x": 855,
+          "y": 409,
+          "conf": 0.94
+        },
+        {
+          "text": "42,759",
+          "x": 198,
+          "y": 694,
+          "conf": 1.0
+        },
+        {
+          "text": "49,133",
+          "x": 198,
+          "y": 949,
+          "conf": 0.99
+        },
+        {
+          "text": "35,162",
+          "x": 199,
+          "y": 1202,
+          "conf": 1.0
+        },
+        {
+          "text": "384",
+          "x": 337,
+          "y": 1507,
+          "conf": 1.0
+        },
+        {
+          "text": "Speedup Settings",
+          "x": 280,
+          "y": 1719,
+          "conf": 1.0
+        },
+        {
+          "text": "Finish All",
+          "x": 291,
+          "y": 1840,
+          "conf": 0.98
+        },
+        {
+          "text": "Use",
+          "x": 791,
+          "y": 1838,
+          "conf": 1.0
+        }
+      ]
+    },
+    {
+      "file": "status_afterbb.png",
+      "label": "barracks_radial",
+      "gems": 7794779,
+      "n_text": 47,
+      "text_signature": [
+        "1 5.2b",
+        "3d 14:27",
+        "7d 15:26",
+        "7d 15:27",
+        "a visitor is waiting at",
+        "alliance",
+        "barracks",
+        "blazon",
+        "cancel",
+        "center",
+        "citizen",
+        "conscripts",
+        "detail",
+        "duty"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 38,
+          "conf": 1.0
+        },
+        {
+          "text": "478.5M",
+          "x": 277,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "9.6B",
+          "x": 427,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "28.6B",
+          "x": 628,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 814,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "1 5.2B",
+          "x": 960,
+          "y": 36,
+          "conf": 0.93
+        },
+        {
+          "text": "X115.2B",
+          "x": 258,
+          "y": 94,
+          "conf": 1.0
+        },
+        {
+          "text": "122/156",
+          "x": 557,
+          "y": 94,
+          "conf": 1.0
+        },
+        {
+          "text": "7,794,779",
+          "x": 920,
+          "y": 101,
+          "conf": 1.0
+        },
+        {
+          "text": "VIP23",
+          "x": 269,
+          "y": 144,
+          "conf": 0.99
+        },
+        {
+          "text": "the city gate!",
+          "x": 541,
+          "y": 186,
+          "conf": 0.96
+        },
+        {
+          "text": "Login Gifts",
+          "x": 983,
+          "y": 299,
+          "conf": 1.0
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 404,
+          "conf": 1.0
+        },
+        {
+          "text": "f",
+          "x": 993,
+          "y": 419,
+          "conf": 0.75
+        },
+        {
+          "text": "Follow Us",
+          "x": 989,
+          "y": 482,
+          "conf": 0.99
+        },
+        {
+          "text": "Quests",
+          "x": 86,
+          "y": 585,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 988,
+          "y": 643,
+          "conf": 1.0
+        },
+        {
+          "text": "Center",
+          "x": 985,
+          "y": 683,
+          "conf": 1.0
+        },
+        {
+          "text": "Duty",
+          "x": 531,
+          "y": 735,
+          "conf": 1.0
+        },
+        {
+          "text": "View",
+          "x": 360,
+          "y": 762,
+          "conf": 1.0
+        },
+        {
+          "text": "Blazon",
+          "x": 697,
+          "y": 799,
+          "conf": 1.0
+        },
+        {
+          "text": "7d 15:26",
+          "x": 989,
+          "y": 835,
+          "conf": 0.96
+        },
+        {
+          "text": "Instant Finish",
+          "x": 228,
+          "y": 879,
+          "conf": 0.96
+        },
+        {
+          "text": "5,612",
+          "x": 227,
+          "y": 909,
+          "conf": 1.0
+        },
+        {
+          "text": "Smelter",
+          "x": 802,
+          "y": 939,
+          "conf": 1.0
+        },
+        {
+          "text": "3d 14:27",
+          "x": 490,
+          "y": 953,
+          "conf": 0.99
+        },
+        {
+          "text": "Conscripts",
+          "x": 485,
+          "y": 992,
+          "conf": 0.99
+        },
+        {
+          "text": "Speed Up",
+          "x": 175,
+          "y": 1048,
+          "conf": 0.95
+        },
+        {
+          "text": "Barracks",
+          "x": 467,
+          "y": 1115,
+          "conf": 1.0
+        },
+        {
+          "text": "Cancel",
+          "x": 819,
+          "y": 1115,
+          "conf": 1.0
+        },
+        {
+          "text": "Detail",
+          "x": 219,
+          "y": 1218,
+          "conf": 0.99
+        },
+        {
+          "text": "Citizen",
+          "x": 741,
+          "y": 1273,
+          "conf": 1.0
+        },
+        {
+          "text": "FOR SALE",
+          "x": 961,
+          "y": 1438,
+          "conf": 0.91
+        },
+        {
+          "text": "Alliance",
+          "x": 988,
+          "y": 1516,
+          "conf": 0.97
+        },
+        {
+          "text": "300",
+          "x": 337,
+          "y": 1567,
+          "conf": 1.0
+        },
+        {
+          "text": "LEVEL",
+          "x": 332,
+          "y": 1583,
+          "conf": 0.99
+        },
+        {
+          "text": "10",
+          "x": 1042,
+          "y": 1580,
+          "conf": 1.0
+        },
+        {
+          "text": "Mysterious",
+          "x": 300,
+          "y": 1692,
+          "conf": 0.99
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1684,
+          "conf": 1.0
+        },
+        {
+          "text": "Valuable",
+          "x": 707,
+          "y": 1695,
+          "conf": 0.99
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 98,
+          "y": 1712,
+          "conf": 0.97
+        },
+        {
+          "text": "7d 15:27",
+          "x": 502,
+          "y": 1708,
+          "conf": 0.95
+        },
+        {
+          "text": "Realm",
+          "x": 299,
+          "y": 1728,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 706,
+          "y": 1729,
+          "conf": 1.0
+        }
+      ]
+    },
+    {
+      "file": "status_assess.png",
+      "label": "city",
+      "gems": 7794779,
+      "n_text": 34,
+      "text_signature": [
+        "1 5.2b",
+        "3d 14:27",
+        "7d 15:24",
+        "a visitor is waiting at",
+        "alliance",
+        "center",
+        "conscripts",
+        "event",
+        "f",
+        "follow us",
+        "for sale",
+        "login gifts",
+        "lucky raffle",
+        "mail"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 38,
+          "conf": 1.0
+        },
+        {
+          "text": "478.5M",
+          "x": 277,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "9.6B",
+          "x": 427,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "28.6B",
+          "x": 628,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 814,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "1 5.2B",
+          "x": 960,
+          "y": 35,
+          "conf": 0.95
+        },
+        {
+          "text": "X115.2B",
+          "x": 258,
+          "y": 94,
+          "conf": 0.99
+        },
+        {
+          "text": "122/156",
+          "x": 558,
+          "y": 94,
+          "conf": 1.0
+        },
+        {
+          "text": "7,794,779",
+          "x": 920,
+          "y": 102,
+          "conf": 1.0
+        },
+        {
+          "text": "VIP23",
+          "x": 269,
+          "y": 144,
+          "conf": 0.99
+        },
+        {
+          "text": "the city gate!",
+          "x": 541,
+          "y": 186,
+          "conf": 0.94
+        },
+        {
+          "text": "Login Gifts",
+          "x": 983,
+          "y": 299,
+          "conf": 1.0
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 404,
+          "conf": 1.0
+        },
+        {
+          "text": "f",
+          "x": 993,
+          "y": 419,
+          "conf": 0.78
+        },
+        {
+          "text": "Follow Us",
+          "x": 988,
+          "y": 482,
+          "conf": 0.99
+        },
+        {
+          "text": "Quests",
+          "x": 85,
+          "y": 585,
+          "conf": 0.98
+        },
+        {
+          "text": "Event",
+          "x": 988,
+          "y": 643,
+          "conf": 1.0
+        },
+        {
+          "text": "Center",
+          "x": 985,
+          "y": 683,
+          "conf": 1.0
+        },
+        {
+          "text": "7d 15:24",
+          "x": 985,
+          "y": 835,
+          "conf": 0.99
+        },
+        {
+          "text": "3d 14:27",
+          "x": 490,
+          "y": 953,
+          "conf": 0.99
+        },
+        {
+          "text": "Conscripts",
+          "x": 485,
+          "y": 992,
+          "conf": 0.99
+        },
+        {
+          "text": "FOR SALE",
+          "x": 961,
+          "y": 1438,
+          "conf": 0.93
+        },
+        {
+          "text": "Alliance",
+          "x": 988,
+          "y": 1516,
+          "conf": 0.97
+        },
+        {
+          "text": "10",
+          "x": 1043,
+          "y": 1580,
+          "conf": 1.0
+        },
+        {
+          "text": "Mysterious",
+          "x": 300,
+          "y": 1692,
+          "conf": 1.0
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1685,
+          "conf": 1.0
+        },
+        {
+          "text": "Valuable",
+          "x": 706,
+          "y": 1695,
+          "conf": 0.99
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 98,
+          "y": 1712,
+          "conf": 0.97
+        },
+        {
+          "text": "7d 15:24",
+          "x": 503,
+          "y": 1708,
+          "conf": 0.95
+        },
+        {
+          "text": "Realm",
+          "x": 299,
+          "y": 1728,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 706,
+          "y": 1729,
+          "conf": 1.0
+        }
+      ]
+    },
+    {
+      "file": "status_bar.png",
+      "label": "barracks_radial",
+      "gems": 8194180,
+      "n_text": 48,
+      "text_signature": [
+        "1 5.2b",
+        "2d 15:58",
+        "3-- 7d 22:08",
+        "7d 22:08",
+        "a visitor is waiting at",
+        "alliance",
+        "barracks",
+        "blazon",
+        "cancel",
+        "center",
+        "citizen",
+        "conscripts",
+        "detail",
+        "duty"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 38,
+          "conf": 1.0
+        },
+        {
+          "text": "2.8B",
+          "x": 253,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "8.3B",
+          "x": 430,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "32.6B",
+          "x": 628,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 815,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "1 5.2B",
+          "x": 959,
+          "y": 36,
+          "conf": 0.93
+        },
+        {
+          "text": "X114.9B",
+          "x": 257,
+          "y": 94,
+          "conf": 0.98
+        },
+        {
+          "text": "122/156",
+          "x": 557,
+          "y": 93,
+          "conf": 1.0
+        },
+        {
+          "text": "8,194,180",
+          "x": 920,
+          "y": 103,
+          "conf": 1.0
+        },
+        {
+          "text": "VIP23",
+          "x": 271,
+          "y": 144,
+          "conf": 0.99
+        },
+        {
+          "text": "the city gate!",
+          "x": 540,
+          "y": 186,
+          "conf": 0.98
+        },
+        {
+          "text": "7d 22:08",
+          "x": 778,
+          "y": 280,
+          "conf": 0.98
+        },
+        {
+          "text": "3-- 7d 22:08",
+          "x": 954,
+          "y": 279,
+          "conf": 0.86
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 404,
+          "conf": 1.0
+        },
+        {
+          "text": "04:30:52",
+          "x": 774,
+          "y": 476,
+          "conf": 0.99
+        },
+        {
+          "text": "Login Gifts",
+          "x": 982,
+          "y": 484,
+          "conf": 1.0
+        },
+        {
+          "text": "Quests",
+          "x": 87,
+          "y": 585,
+          "conf": 1.0
+        },
+        {
+          "text": "f",
+          "x": 992,
+          "y": 604,
+          "conf": 0.81
+        },
+        {
+          "text": "Follow Us",
+          "x": 988,
+          "y": 666,
+          "conf": 0.99
+        },
+        {
+          "text": "Event",
+          "x": 987,
+          "y": 829,
+          "conf": 1.0
+        },
+        {
+          "text": "Center",
+          "x": 985,
+          "y": 867,
+          "conf": 1.0
+        },
+        {
+          "text": "Duty",
+          "x": 531,
+          "y": 1080,
+          "conf": 1.0
+        },
+        {
+          "text": "View",
+          "x": 361,
+          "y": 1108,
+          "conf": 1.0
+        },
+        {
+          "text": "Blazon",
+          "x": 697,
+          "y": 1145,
+          "conf": 1.0
+        },
+        {
+          "text": "00:02:59",
+          "x": 987,
+          "y": 1177,
+          "conf": 0.99
+        },
+        {
+          "text": "InstantFinish",
+          "x": 228,
+          "y": 1226,
+          "conf": 0.98
+        },
+        {
+          "text": "4,292",
+          "x": 227,
+          "y": 1254,
+          "conf": 1.0
+        },
+        {
+          "text": "Smelter",
+          "x": 803,
+          "y": 1286,
+          "conf": 0.99
+        },
+        {
+          "text": "2d 15:58",
+          "x": 489,
+          "y": 1299,
+          "conf": 0.94
+        },
+        {
+          "text": "Conscripts",
+          "x": 485,
+          "y": 1337,
+          "conf": 0.99
+        },
+        {
+          "text": "Speed Up",
+          "x": 175,
+          "y": 1394,
+          "conf": 1.0
+        },
+        {
+          "text": "Barracks",
+          "x": 467,
+          "y": 1462,
+          "conf": 1.0
+        },
+        {
+          "text": "Cancel",
+          "x": 818,
+          "y": 1462,
+          "conf": 1.0
+        },
+        {
+          "text": "Alliance",
+          "x": 989,
+          "y": 1517,
+          "conf": 0.98
+        },
+        {
+          "text": "Detail",
+          "x": 218,
+          "y": 1563,
+          "conf": 0.94
+        },
+        {
+          "text": "300",
+          "x": 336,
+          "y": 1567,
+          "conf": 1.0
+        },
+        {
+          "text": "23",
+          "x": 1042,
+          "y": 1580,
+          "conf": 1.0
+        },
+        {
+          "text": "Citizen",
+          "x": 723,
+          "y": 1618,
+          "conf": 1.0
+        },
+        {
+          "text": "Mysterious",
+          "x": 300,
+          "y": 1692,
+          "conf": 0.99
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1685,
+          "conf": 1.0
+        },
+        {
+          "text": "Valuable",
+          "x": 707,
+          "y": 1695,
+          "conf": 0.99
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 97,
+          "y": 1712,
+          "conf": 1.0
+        },
+        {
+          "text": "7d22:08",
+          "x": 495,
+          "y": 1708,
+          "conf": 0.98
+        },
+        {
+          "text": "Realm",
+          "x": 299,
+          "y": 1729,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 706,
+          "y": 1729,
+          "conf": 0.99
+        }
+      ]
+    },
+    {
+      "file": "status_cleared.png",
+      "label": "city",
+      "gems": 7794779,
+      "n_text": 35,
+      "text_signature": [
+        "-7d 15:25",
+        "1 5.2b",
+        "3d 14:27",
+        "7d 15.26",
+        "a visitor is waiting at",
+        "alliance",
+        "center",
+        "conscripts",
+        "event",
+        "f",
+        "follow us",
+        "for sale",
+        "login gifts",
+        "lucky raffle"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 38,
+          "conf": 1.0
+        },
+        {
+          "text": "478.5M",
+          "x": 277,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "9.6B",
+          "x": 427,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "28.6B",
+          "x": 627,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 814,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "1 5.2B",
+          "x": 960,
+          "y": 35,
+          "conf": 0.96
+        },
+        {
+          "text": "X115.2B",
+          "x": 258,
+          "y": 94,
+          "conf": 0.99
+        },
+        {
+          "text": "122/156",
+          "x": 558,
+          "y": 94,
+          "conf": 1.0
+        },
+        {
+          "text": "7,794,779",
+          "x": 920,
+          "y": 102,
+          "conf": 1.0
+        },
+        {
+          "text": "VIP23",
+          "x": 269,
+          "y": 144,
+          "conf": 0.99
+        },
+        {
+          "text": "the city gate!",
+          "x": 541,
+          "y": 186,
+          "conf": 0.94
+        },
+        {
+          "text": "Login Gifts",
+          "x": 983,
+          "y": 299,
+          "conf": 1.0
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 404,
+          "conf": 1.0
+        },
+        {
+          "text": "f",
+          "x": 993,
+          "y": 419,
+          "conf": 0.78
+        },
+        {
+          "text": "Follow Us",
+          "x": 988,
+          "y": 482,
+          "conf": 0.99
+        },
+        {
+          "text": "Quests",
+          "x": 86,
+          "y": 585,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 988,
+          "y": 643,
+          "conf": 1.0
+        },
+        {
+          "text": "Center",
+          "x": 985,
+          "y": 682,
+          "conf": 1.0
+        },
+        {
+          "text": "-7d 15:25",
+          "x": 975,
+          "y": 834,
+          "conf": 0.99
+        },
+        {
+          "text": "3d 14:27",
+          "x": 490,
+          "y": 953,
+          "conf": 1.0
+        },
+        {
+          "text": "Conscripts",
+          "x": 485,
+          "y": 992,
+          "conf": 0.99
+        },
+        {
+          "text": "FOR SALE",
+          "x": 961,
+          "y": 1438,
+          "conf": 0.93
+        },
+        {
+          "text": "Alliance",
+          "x": 988,
+          "y": 1516,
+          "conf": 0.97
+        },
+        {
+          "text": "300",
+          "x": 337,
+          "y": 1567,
+          "conf": 1.0
+        },
+        {
+          "text": "10",
+          "x": 1043,
+          "y": 1580,
+          "conf": 1.0
+        },
+        {
+          "text": "Mysterious",
+          "x": 300,
+          "y": 1692,
+          "conf": 0.99
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1685,
+          "conf": 1.0
+        },
+        {
+          "text": "Valuable",
+          "x": 706,
+          "y": 1695,
+          "conf": 0.99
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 98,
+          "y": 1712,
+          "conf": 0.98
+        },
+        {
+          "text": "7d 15.26",
+          "x": 503,
+          "y": 1708,
+          "conf": 0.98
+        },
+        {
+          "text": "Realm",
+          "x": 299,
+          "y": 1727,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 705,
+          "y": 1729,
+          "conf": 1.0
+        }
+      ]
+    },
+    {
+      "file": "status_dial.png",
+      "label": "barracks_radial",
+      "gems": 8180979,
+      "n_text": 47,
+      "text_signature": [
+        "1 5.2b",
+        "3d 14:55",
+        "7d 16:01--7d 16:02",
+        "7d 16:02",
+        "a visitor is waiting at",
+        "alliance",
+        "barracks",
+        "blazon",
+        "cancel",
+        "center",
+        "citizen",
+        "conscripts",
+        "detail",
+        "duty"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 38,
+          "conf": 1.0
+        },
+        {
+          "text": "473.9M",
+          "x": 277,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "9.6B",
+          "x": 429,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "28.6B",
+          "x": 628,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 814,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "1 5.2B",
+          "x": 960,
+          "y": 35,
+          "conf": 0.92
+        },
+        {
+          "text": "X115.2B",
+          "x": 258,
+          "y": 94,
+          "conf": 1.0
+        },
+        {
+          "text": "122/156",
+          "x": 558,
+          "y": 94,
+          "conf": 1.0
+        },
+        {
+          "text": "8,180,979",
+          "x": 920,
+          "y": 103,
+          "conf": 1.0
+        },
+        {
+          "text": "VIP23",
+          "x": 269,
+          "y": 144,
+          "conf": 0.99
+        },
+        {
+          "text": "the city gate!",
+          "x": 541,
+          "y": 186,
+          "conf": 0.95
+        },
+        {
+          "text": "7d 16:01--7d 16:02",
+          "x": 882,
+          "y": 278,
+          "conf": 0.93
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 404,
+          "conf": 1.0
+        },
+        {
+          "text": "Login Gifts",
+          "x": 982,
+          "y": 484,
+          "conf": 1.0
+        },
+        {
+          "text": "Quests",
+          "x": 86,
+          "y": 585,
+          "conf": 1.0
+        },
+        {
+          "text": "f",
+          "x": 992,
+          "y": 604,
+          "conf": 0.78
+        },
+        {
+          "text": "Follow Us",
+          "x": 988,
+          "y": 666,
+          "conf": 0.95
+        },
+        {
+          "text": "Duty",
+          "x": 531,
+          "y": 735,
+          "conf": 1.0
+        },
+        {
+          "text": "View",
+          "x": 360,
+          "y": 762,
+          "conf": 1.0
+        },
+        {
+          "text": "Blazon",
+          "x": 697,
+          "y": 799,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 988,
+          "y": 829,
+          "conf": 1.0
+        },
+        {
+          "text": "Center",
+          "x": 985,
+          "y": 867,
+          "conf": 1.0
+        },
+        {
+          "text": "Instant Finish",
+          "x": 228,
+          "y": 879,
+          "conf": 0.96
+        },
+        {
+          "text": "5,645",
+          "x": 226,
+          "y": 908,
+          "conf": 1.0
+        },
+        {
+          "text": "Smelter",
+          "x": 802,
+          "y": 939,
+          "conf": 1.0
+        },
+        {
+          "text": "3d 14:55",
+          "x": 490,
+          "y": 953,
+          "conf": 0.97
+        },
+        {
+          "text": "Conscripts",
+          "x": 485,
+          "y": 992,
+          "conf": 0.99
+        },
+        {
+          "text": "Speed Up",
+          "x": 175,
+          "y": 1048,
+          "conf": 0.95
+        },
+        {
+          "text": "Barracks",
+          "x": 467,
+          "y": 1116,
+          "conf": 1.0
+        },
+        {
+          "text": "Cancel",
+          "x": 819,
+          "y": 1115,
+          "conf": 1.0
+        },
+        {
+          "text": "Detail",
+          "x": 219,
+          "y": 1218,
+          "conf": 0.99
+        },
+        {
+          "text": "Citizen",
+          "x": 741,
+          "y": 1273,
+          "conf": 1.0
+        },
+        {
+          "text": "FOF",
+          "x": 935,
+          "y": 1461,
+          "conf": 0.8
+        },
+        {
+          "text": "Alliance",
+          "x": 988,
+          "y": 1516,
+          "conf": 0.97
+        },
+        {
+          "text": "300",
+          "x": 337,
+          "y": 1567,
+          "conf": 1.0
+        },
+        {
+          "text": "LEVEL",
+          "x": 332,
+          "y": 1583,
+          "conf": 0.99
+        },
+        {
+          "text": "Mysterious",
+          "x": 300,
+          "y": 1692,
+          "conf": 0.99
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1685,
+          "conf": 1.0
+        },
+        {
+          "text": "Valuable",
+          "x": 707,
+          "y": 1695,
+          "conf": 0.99
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 97,
+          "y": 1712,
+          "conf": 0.98
+        },
+        {
+          "text": "7d 16:02",
+          "x": 502,
+          "y": 1708,
+          "conf": 1.0
+        },
+        {
+          "text": "Realm",
+          "x": 300,
+          "y": 1727,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 706,
+          "y": 1729,
+          "conf": 1.0
+        },
+        {
+          "text": "golden Japanese Subs",
+          "x": 249,
+          "y": 1873,
+          "conf": 0.96
+        }
+      ]
+    },
+    {
+      "file": "status_fa.png",
+      "label": "disconnect",
+      "gems": 8181029,
+      "n_text": 39,
+      "text_signature": [
+        "7d 22:54",
+        "a visitor is waiting at",
+        "alliance",
+        "c",
+        "center",
+        "event",
+        "follow us",
+        "for sale",
+        "login gifts",
+        "lucky raffle",
+        "mail",
+        "mysterious",
+        "quests",
+        "quit"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "670.2M",
+          "x": 278,
+          "y": 33,
+          "conf": 1.0
+        },
+        {
+          "text": "9.6B",
+          "x": 405,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "29B",
+          "x": 587,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 815,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "15.2B",
+          "x": 959,
+          "y": 35,
+          "conf": 0.91
+        },
+        {
+          "text": "X115.1B",
+          "x": 258,
+          "y": 93,
+          "conf": 0.99
+        },
+        {
+          "text": "122/156",
+          "x": 557,
+          "y": 93,
+          "conf": 1.0
+        },
+        {
+          "text": "8,181,029",
+          "x": 920,
+          "y": 102,
+          "conf": 1.0
+        },
+        {
+          "text": "1",
+          "x": 190,
+          "y": 143,
+          "conf": 0.63
+        },
+        {
+          "text": "VIP23",
+          "x": 265,
+          "y": 144,
+          "conf": 0.99
+        },
+        {
+          "text": "the city gate!",
+          "x": 540,
+          "y": 185,
+          "conf": 0.99
+        },
+        {
+          "text": "Login Gifts",
+          "x": 984,
+          "y": 299,
+          "conf": 0.98
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 403,
+          "conf": 0.99
+        },
+        {
+          "text": "C",
+          "x": 994,
+          "y": 417,
+          "conf": 0.64
+        },
+        {
+          "text": "Follow Us",
+          "x": 988,
+          "y": 481,
+          "conf": 0.97
+        },
+        {
+          "text": "Quests",
+          "x": 86,
+          "y": 585,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 987,
+          "y": 643,
+          "conf": 0.99
+        },
+        {
+          "text": "Center",
+          "x": 986,
+          "y": 682,
+          "conf": 0.98
+        },
+        {
+          "text": "7d22:54",
+          "x": 988,
+          "y": 834,
+          "conf": 0.98
+        },
+        {
+          "text": "your account is safe.",
+          "x": 536,
+          "y": 991,
+          "conf": 0.99
+        },
+        {
+          "text": "Quit",
+          "x": 365,
+          "y": 1136,
+          "conf": 1.0
+        },
+        {
+          "text": "Restart",
+          "x": 718,
+          "y": 1135,
+          "conf": 1.0
+        },
+        {
+          "text": "FOR SALE",
+          "x": 957,
+          "y": 1440,
+          "conf": 0.93
+        },
+        {
+          "text": "Alliance",
+          "x": 988,
+          "y": 1516,
+          "conf": 0.97
+        },
+        {
+          "text": "300",
+          "x": 337,
+          "y": 1567,
+          "conf": 1.0
+        },
+        {
+          "text": "12",
+          "x": 1043,
+          "y": 1580,
+          "conf": 1.0
+        },
+        {
+          "text": "Mysterious",
+          "x": 300,
+          "y": 1692,
+          "conf": 0.99
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1684,
+          "conf": 0.99
+        },
+        {
+          "text": "Valuable",
+          "x": 710,
+          "y": 1694,
+          "conf": 0.98
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 99,
+          "y": 1713,
+          "conf": 0.98
+        },
+        {
+          "text": "7d 22:54",
+          "x": 503,
+          "y": 1707,
+          "conf": 0.91
+        },
+        {
+          "text": "Realm",
+          "x": 299,
+          "y": 1728,
+          "conf": 0.99
+        },
+        {
+          "text": "Event",
+          "x": 705,
+          "y": 1729,
+          "conf": 0.99
+        }
+      ]
+    },
+    {
+      "file": "status_fresh.png",
+      "label": "city",
+      "gems": 8180979,
+      "n_text": 35,
+      "text_signature": [
+        "1 5.2b",
+        "3d 14:54",
+        "7d 16:00--7d 16:01",
+        "7d 16:01",
+        "a visitor is waiting at",
+        "alliance",
+        "center",
+        "conscripts",
+        "event",
+        "f",
+        "follow us",
+        "for sale",
+        "golden japanese subs",
+        "login gifts"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 38,
+          "conf": 1.0
+        },
+        {
+          "text": "473.9M",
+          "x": 277,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "9.6B",
+          "x": 427,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "28.6B",
+          "x": 628,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 814,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "1 5.2B",
+          "x": 960,
+          "y": 35,
+          "conf": 0.95
+        },
+        {
+          "text": "X115.2B",
+          "x": 258,
+          "y": 94,
+          "conf": 1.0
+        },
+        {
+          "text": "122/156",
+          "x": 558,
+          "y": 94,
+          "conf": 1.0
+        },
+        {
+          "text": "8,180,979",
+          "x": 920,
+          "y": 103,
+          "conf": 1.0
+        },
+        {
+          "text": "VIP23",
+          "x": 269,
+          "y": 144,
+          "conf": 0.99
+        },
+        {
+          "text": "the city gate!",
+          "x": 541,
+          "y": 186,
+          "conf": 0.93
+        },
+        {
+          "text": "7d 16:00--7d 16:01",
+          "x": 880,
+          "y": 279,
+          "conf": 0.93
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 404,
+          "conf": 1.0
+        },
+        {
+          "text": "Login Gifts",
+          "x": 982,
+          "y": 484,
+          "conf": 1.0
+        },
+        {
+          "text": "Quests",
+          "x": 86,
+          "y": 585,
+          "conf": 1.0
+        },
+        {
+          "text": "f",
+          "x": 992,
+          "y": 604,
+          "conf": 0.78
+        },
+        {
+          "text": "Follow Us",
+          "x": 988,
+          "y": 666,
+          "conf": 0.99
+        },
+        {
+          "text": "Event",
+          "x": 988,
+          "y": 828,
+          "conf": 1.0
+        },
+        {
+          "text": "Center",
+          "x": 985,
+          "y": 867,
+          "conf": 1.0
+        },
+        {
+          "text": "3d 14:54",
+          "x": 491,
+          "y": 953,
+          "conf": 0.99
+        },
+        {
+          "text": "Conscripts",
+          "x": 485,
+          "y": 992,
+          "conf": 0.99
+        },
+        {
+          "text": "FOR SALE",
+          "x": 961,
+          "y": 1438,
+          "conf": 0.92
+        },
+        {
+          "text": "Alliance",
+          "x": 988,
+          "y": 1516,
+          "conf": 0.97
+        },
+        {
+          "text": "4",
+          "x": 1044,
+          "y": 1580,
+          "conf": 0.72
+        },
+        {
+          "text": "Mysterious",
+          "x": 300,
+          "y": 1692,
+          "conf": 0.99
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1685,
+          "conf": 1.0
+        },
+        {
+          "text": "Valuable",
+          "x": 707,
+          "y": 1695,
+          "conf": 0.99
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 98,
+          "y": 1712,
+          "conf": 0.96
+        },
+        {
+          "text": "7d 16:01",
+          "x": 501,
+          "y": 1708,
+          "conf": 0.99
+        },
+        {
+          "text": "Realm",
+          "x": 300,
+          "y": 1727,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 706,
+          "y": 1729,
+          "conf": 1.0
+        },
+        {
+          "text": "golden Japanese Subs",
+          "x": 249,
+          "y": 1873,
+          "conf": 0.96
+        }
+      ]
+    },
+    {
+      "file": "status_if1.png",
+      "label": "city",
+      "gems": 8194180,
+      "n_text": 41,
+      "text_signature": [
+        "2d 15:53",
+        "7d 22:03",
+        "7d 22:04",
+        "a visitor is waiting at",
+        "alliance",
+        "c",
+        "center",
+        "conscripts",
+        "event",
+        "follow us",
+        "login gifts",
+        "lucky raffle",
+        "mail",
+        "mysterious"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 36,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "2.8B",
+          "x": 253,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "8.3B",
+          "x": 413,
+          "y": 35,
+          "conf": 0.99
+        },
+        {
+          "text": "32.6B",
+          "x": 625,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 815,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "15.2B",
+          "x": 959,
+          "y": 35,
+          "conf": 0.9
+        },
+        {
+          "text": "X114.9B",
+          "x": 258,
+          "y": 93,
+          "conf": 0.99
+        },
+        {
+          "text": "122/156",
+          "x": 556,
+          "y": 92,
+          "conf": 1.0
+        },
+        {
+          "text": "8,194,180",
+          "x": 920,
+          "y": 102,
+          "conf": 1.0
+        },
+        {
+          "text": "VIP23C",
+          "x": 275,
+          "y": 144,
+          "conf": 0.98
+        },
+        {
+          "text": "the city gate!",
+          "x": 540,
+          "y": 186,
+          "conf": 0.96
+        },
+        {
+          "text": "7d 22:03",
+          "x": 776,
+          "y": 279,
+          "conf": 0.99
+        },
+        {
+          "text": "7d 22:04",
+          "x": 987,
+          "y": 279,
+          "conf": 0.99
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 403,
+          "conf": 1.0
+        },
+        {
+          "text": "04:26:01",
+          "x": 776,
+          "y": 476,
+          "conf": 0.99
+        },
+        {
+          "text": "Login Gifts",
+          "x": 982,
+          "y": 483,
+          "conf": 0.96
+        },
+        {
+          "text": "Quests",
+          "x": 87,
+          "y": 585,
+          "conf": 1.0
+        },
+        {
+          "text": "C",
+          "x": 994,
+          "y": 602,
+          "conf": 0.68
+        },
+        {
+          "text": "Follow Us",
+          "x": 988,
+          "y": 665,
+          "conf": 0.96
+        },
+        {
+          "text": "Center",
+          "x": 989,
+          "y": 867,
+          "conf": 0.97
+        },
+        {
+          "text": "training?",
+          "x": 264,
+          "y": 948,
+          "conf": 1.0
+        },
+        {
+          "text": "Okay",
+          "x": 540,
+          "y": 1063,
+          "conf": 1.0
+        },
+        {
+          "text": "4,287",
+          "x": 562,
+          "y": 1105,
+          "conf": 1.0
+        },
+        {
+          "text": "00:00:02",
+          "x": 988,
+          "y": 1178,
+          "conf": 0.97
+        },
+        {
+          "text": "2d 15:53",
+          "x": 490,
+          "y": 1298,
+          "conf": 0.92
+        },
+        {
+          "text": "Conscripts",
+          "x": 486,
+          "y": 1337,
+          "conf": 0.98
+        },
+        {
+          "text": "Alliance",
+          "x": 987,
+          "y": 1516,
+          "conf": 0.95
+        },
+        {
+          "text": "300",
+          "x": 336,
+          "y": 1567,
+          "conf": 1.0
+        },
+        {
+          "text": "26",
+          "x": 1042,
+          "y": 1579,
+          "conf": 1.0
+        },
+        {
+          "text": "Mysterious",
+          "x": 302,
+          "y": 1692,
+          "conf": 0.99
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1684,
+          "conf": 0.99
+        },
+        {
+          "text": "r7d 22:03",
+          "x": 482,
+          "y": 1706,
+          "conf": 0.86
+        },
+        {
+          "text": "Valuable",
+          "x": 709,
+          "y": 1695,
+          "conf": 0.98
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 98,
+          "y": 1712,
+          "conf": 0.96
+        },
+        {
+          "text": "Realm",
+          "x": 298,
+          "y": 1728,
+          "conf": 0.99
+        },
+        {
+          "text": "Event",
+          "x": 706,
+          "y": 1729,
+          "conf": 0.99
+        }
+      ]
+    },
+    {
+      "file": "status_if2.png",
+      "label": "city",
+      "gems": 8189894,
+      "n_text": 35,
+      "text_signature": [
+        "1 5.2b",
+        "7d 22:03",
+        "7d 22:03 - 7d 22:03",
+        "a visitor is waiting at",
+        "alliance",
+        "center",
+        "event",
+        "f",
+        "follow us",
+        "loaih gifts",
+        "lucky raffle",
+        "mail",
+        "mysterious",
+        "quests"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 38,
+          "conf": 1.0
+        },
+        {
+          "text": "2.8B",
+          "x": 253,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "8.3B",
+          "x": 427,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "32.6B",
+          "x": 628,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 815,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "1 5.2B",
+          "x": 959,
+          "y": 36,
+          "conf": 0.91
+        },
+        {
+          "text": "X114.9B",
+          "x": 256,
+          "y": 93,
+          "conf": 0.99
+        },
+        {
+          "text": "122/156",
+          "x": 556,
+          "y": 93,
+          "conf": 1.0
+        },
+        {
+          "text": "8,189,894",
+          "x": 920,
+          "y": 102,
+          "conf": 1.0
+        },
+        {
+          "text": "VIP23",
+          "x": 271,
+          "y": 144,
+          "conf": 0.99
+        },
+        {
+          "text": "the city gate!",
+          "x": 540,
+          "y": 186,
+          "conf": 0.96
+        },
+        {
+          "text": "7d 22:03 - 7d 22:03",
+          "x": 881,
+          "y": 279,
+          "conf": 0.95
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 403,
+          "conf": 1.0
+        },
+        {
+          "text": "the City.",
+          "x": 549,
+          "y": 472,
+          "conf": 0.99
+        },
+        {
+          "text": "04:25.37",
+          "x": 777,
+          "y": 476,
+          "conf": 0.95
+        },
+        {
+          "text": "Loaih Gifts",
+          "x": 981,
+          "y": 482,
+          "conf": 0.97
+        },
+        {
+          "text": "Quests",
+          "x": 87,
+          "y": 585,
+          "conf": 1.0
+        },
+        {
+          "text": "f",
+          "x": 992,
+          "y": 604,
+          "conf": 0.81
+        },
+        {
+          "text": "Follow Us",
+          "x": 988,
+          "y": 665,
+          "conf": 0.99
+        },
+        {
+          "text": "Event",
+          "x": 987,
+          "y": 829,
+          "conf": 1.0
+        },
+        {
+          "text": "Center",
+          "x": 986,
+          "y": 867,
+          "conf": 1.0
+        },
+        {
+          "text": "Alliance",
+          "x": 988,
+          "y": 1517,
+          "conf": 0.92
+        },
+        {
+          "text": "300",
+          "x": 337,
+          "y": 1567,
+          "conf": 1.0
+        },
+        {
+          "text": "26",
+          "x": 1042,
+          "y": 1574,
+          "conf": 1.0
+        },
+        {
+          "text": "Mysterious",
+          "x": 300,
+          "y": 1692,
+          "conf": 1.0
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1684,
+          "conf": 1.0
+        },
+        {
+          "text": "Valuable",
+          "x": 707,
+          "y": 1695,
+          "conf": 0.99
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 97,
+          "y": 1712,
+          "conf": 1.0
+        },
+        {
+          "text": "7d 22:03",
+          "x": 493,
+          "y": 1708,
+          "conf": 0.99
+        },
+        {
+          "text": "Realm",
+          "x": 299,
+          "y": 1728,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 706,
+          "y": 1729,
+          "conf": 0.99
+        }
+      ]
+    },
+    {
+      "file": "status_latest.png",
+      "label": "training_idle",
+      "gems": null,
+      "n_text": 14,
+      "text_signature": [
+        "1 5.2b",
+        "3d 16:03",
+        "conscripts",
+        "instant train",
+        "own: 513,526,484",
+        "train"
+      ],
+      "buttons": [
+        {
+          "text": "650M",
+          "x": 235,
+          "y": 31,
+          "conf": 1.0
+        },
+        {
+          "text": "8.3B",
+          "x": 404,
+          "y": 33,
+          "conf": 1.0
+        },
+        {
+          "text": "28.9B",
+          "x": 596,
+          "y": 32,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 778,
+          "y": 31,
+          "conf": 1.0
+        },
+        {
+          "text": "1 5.2B",
+          "x": 922,
+          "y": 31,
+          "conf": 0.95
+        },
+        {
+          "text": "Conscripts",
+          "x": 567,
+          "y": 996,
+          "conf": 1.0
+        },
+        {
+          "text": "Own: 513,526,484",
+          "x": 542,
+          "y": 1089,
+          "conf": 0.98
+        },
+        {
+          "text": "59.2M",
+          "x": 167,
+          "y": 1455,
+          "conf": 1.0
+        },
+        {
+          "text": "10.8M",
+          "x": 674,
+          "y": 1454,
+          "conf": 1.0
+        },
+        {
+          "text": "269241",
+          "x": 910,
+          "y": 1590,
+          "conf": 1.0
+        },
+        {
+          "text": "Instant Train",
+          "x": 274,
+          "y": 1815,
+          "conf": 0.99
+        },
+        {
+          "text": "Train",
+          "x": 804,
+          "y": 1812,
+          "conf": 1.0
+        },
+        {
+          "text": "5,709",
+          "x": 295,
+          "y": 1862,
+          "conf": 0.97
+        },
+        {
+          "text": "3d 16:03",
+          "x": 831,
+          "y": 1860,
+          "conf": 1.0
+        }
+      ]
+    },
+    {
+      "file": "status_menu.png",
+      "label": "disconnect",
+      "gems": 8180979,
+      "n_text": 39,
+      "text_signature": [
+        "7d 15:47",
+        "a visitor is waiting at",
+        "alliance",
+        "center",
+        "event",
+        "f",
+        "follow us",
+        "for sale",
+        "login gifts",
+        "lucky raffle",
+        "mail",
+        "mysterious",
+        "quests",
+        "quit"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "473.9M",
+          "x": 278,
+          "y": 33,
+          "conf": 1.0
+        },
+        {
+          "text": "9.6B",
+          "x": 406,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "28.6B",
+          "x": 602,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 815,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "15.2B",
+          "x": 959,
+          "y": 35,
+          "conf": 0.93
+        },
+        {
+          "text": "X115.2B",
+          "x": 257,
+          "y": 92,
+          "conf": 0.99
+        },
+        {
+          "text": "122/156",
+          "x": 557,
+          "y": 93,
+          "conf": 0.99
+        },
+        {
+          "text": "8,180,979",
+          "x": 920,
+          "y": 101,
+          "conf": 0.99
+        },
+        {
+          "text": "VIP23",
+          "x": 265,
+          "y": 143,
+          "conf": 1.0
+        },
+        {
+          "text": "1",
+          "x": 190,
+          "y": 143,
+          "conf": 0.63
+        },
+        {
+          "text": "the city gate!",
+          "x": 540,
+          "y": 185,
+          "conf": 0.99
+        },
+        {
+          "text": "Login Gifts",
+          "x": 983,
+          "y": 299,
+          "conf": 0.97
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 403,
+          "conf": 0.99
+        },
+        {
+          "text": "Follow Us",
+          "x": 988,
+          "y": 481,
+          "conf": 0.96
+        },
+        {
+          "text": "Quests",
+          "x": 86,
+          "y": 585,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 987,
+          "y": 643,
+          "conf": 0.99
+        },
+        {
+          "text": "Center",
+          "x": 986,
+          "y": 682,
+          "conf": 1.0
+        },
+        {
+          "text": "7d-15:46",
+          "x": 990,
+          "y": 834,
+          "conf": 0.9
+        },
+        {
+          "text": "your account is safe.",
+          "x": 536,
+          "y": 991,
+          "conf": 0.98
+        },
+        {
+          "text": "Quit",
+          "x": 365,
+          "y": 1136,
+          "conf": 1.0
+        },
+        {
+          "text": "Restart",
+          "x": 718,
+          "y": 1135,
+          "conf": 1.0
+        },
+        {
+          "text": "FOR SALE",
+          "x": 957,
+          "y": 1440,
+          "conf": 0.89
+        },
+        {
+          "text": "Alliance",
+          "x": 988,
+          "y": 1516,
+          "conf": 0.98
+        },
+        {
+          "text": "300",
+          "x": 337,
+          "y": 1567,
+          "conf": 1.0
+        },
+        {
+          "text": "14",
+          "x": 1045,
+          "y": 1579,
+          "conf": 1.0
+        },
+        {
+          "text": "Mysterious",
+          "x": 301,
+          "y": 1692,
+          "conf": 0.99
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1684,
+          "conf": 0.99
+        },
+        {
+          "text": "7d 15:47",
+          "x": 502,
+          "y": 1708,
+          "conf": 0.93
+        },
+        {
+          "text": "Valuable",
+          "x": 710,
+          "y": 1695,
+          "conf": 0.95
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 99,
+          "y": 1713,
+          "conf": 0.98
+        },
+        {
+          "text": "Realm",
+          "x": 299,
+          "y": 1728,
+          "conf": 0.99
+        },
+        {
+          "text": "Event",
+          "x": 705,
+          "y": 1729,
+          "conf": 0.99
+        }
+      ]
+    },
+    {
+      "file": "status_modal.png",
+      "label": "resources",
+      "gems": null,
+      "n_text": 31,
+      "text_signature": [
+        "0 / 340b",
+        "1,000,000 food.",
+        "100,000 food.",
+        "100k fo0d box",
+        "1m food",
+        "1m safe food",
+        "5,000,000 fo0d.",
+        "500k food box",
+        "5m food box",
+        "gathering warehouse",
+        "resources",
+        "safe resource capacity:",
+        "use ( 76,075)",
+        "use (250)"
+      ],
+      "buttons": [
+        {
+          "text": "Resources",
+          "x": 545,
+          "y": 67,
+          "conf": 1.0
+        },
+        {
+          "text": "150",
+          "x": 185,
+          "y": 206,
+          "conf": 1.0
+        },
+        {
+          "text": "8.3B",
+          "x": 440,
+          "y": 205,
+          "conf": 1.0
+        },
+        {
+          "text": "37.5B",
+          "x": 699,
+          "y": 205,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 958,
+          "y": 205,
+          "conf": 1.0
+        },
+        {
+          "text": "Gathering Warehouse",
+          "x": 279,
+          "y": 284,
+          "conf": 1.0
+        },
+        {
+          "text": "0 / 340B",
+          "x": 797,
+          "y": 306,
+          "conf": 0.94
+        },
+        {
+          "text": "Capacity:",
+          "x": 159,
+          "y": 333,
+          "conf": 1.0
+        },
+        {
+          "text": "93",
+          "x": 854,
+          "y": 407,
+          "conf": 1.0
+        },
+        {
+          "text": "100K Fo0d Box",
+          "x": 454,
+          "y": 499,
+          "conf": 0.96
+        },
+        {
+          "text": "Use it to gain",
+          "x": 426,
+          "y": 600,
+          "conf": 1.0
+        },
+        {
+          "text": "Use (504)",
+          "x": 852,
+          "y": 598,
+          "conf": 0.99
+        },
+        {
+          "text": "100k",
+          "x": 176,
+          "y": 614,
+          "conf": 0.97
+        },
+        {
+          "text": "100,000 Food.",
+          "x": 435,
+          "y": 650,
+          "conf": 0.98
+        },
+        {
+          "text": "500K Food Box",
+          "x": 454,
+          "y": 825,
+          "conf": 0.93
+        },
+        {
+          "text": "Use it to gain",
+          "x": 426,
+          "y": 927,
+          "conf": 0.99
+        },
+        {
+          "text": "Use (250)",
+          "x": 851,
+          "y": 925,
+          "conf": 0.99
+        },
+        {
+          "text": "500k",
+          "x": 178,
+          "y": 942,
+          "conf": 0.96
+        },
+        {
+          "text": "500,000Food.",
+          "x": 435,
+          "y": 978,
+          "conf": 0.93
+        },
+        {
+          "text": "1M Food",
+          "x": 393,
+          "y": 1153,
+          "conf": 0.92
+        },
+        {
+          "text": "Use ( 76,075)",
+          "x": 851,
+          "y": 1234,
+          "conf": 0.96
+        },
+        {
+          "text": "Use it to gain",
+          "x": 427,
+          "y": 1255,
+          "conf": 0.97
+        },
+        {
+          "text": "1M",
+          "x": 180,
+          "y": 1270,
+          "conf": 1.0
+        },
+        {
+          "text": "1,000,000 Food.",
+          "x": 452,
+          "y": 1306,
+          "conf": 0.97
+        },
+        {
+          "text": "5M Food Box",
+          "x": 427,
+          "y": 1510,
+          "conf": 1.0
+        },
+        {
+          "text": "Use it to gain",
+          "x": 419,
+          "y": 1561,
+          "conf": 0.99
+        },
+        {
+          "text": "6,000",
+          "x": 873,
+          "y": 1566,
+          "conf": 1.0
+        },
+        {
+          "text": "5M",
+          "x": 174,
+          "y": 1589,
+          "conf": 1.0
+        },
+        {
+          "text": "5,000,000 Fo0d.",
+          "x": 445,
+          "y": 1604,
+          "conf": 0.92
+        },
+        {
+          "text": "1M Safe Food",
+          "x": 441,
+          "y": 1788,
+          "conf": 0.98
+        }
+      ]
+    },
+    {
+      "file": "status_now.png",
+      "label": "barracks_radial",
+      "gems": 8180979,
+      "n_text": 41,
+      "text_signature": [
+        "1 5.2b",
+        "7d 16:58",
+        "7d 16:58-- 7d 16:58",
+        "[ esp] km t: mmom",
+        "a visitor is waiting at",
+        "alliance",
+        "barracks",
+        "blazon",
+        "center",
+        "citizen",
+        "detail",
+        "duty",
+        "event",
+        "f"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 38,
+          "conf": 1.0
+        },
+        {
+          "text": "494.3M",
+          "x": 277,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "9.6B",
+          "x": 427,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "28.9B",
+          "x": 628,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 814,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "1 5.2B",
+          "x": 960,
+          "y": 35,
+          "conf": 0.97
+        },
+        {
+          "text": "X115.1B",
+          "x": 258,
+          "y": 94,
+          "conf": 1.0
+        },
+        {
+          "text": "122/156",
+          "x": 557,
+          "y": 94,
+          "conf": 1.0
+        },
+        {
+          "text": "8,180,979",
+          "x": 920,
+          "y": 103,
+          "conf": 1.0
+        },
+        {
+          "text": "VIP23",
+          "x": 269,
+          "y": 144,
+          "conf": 0.99
+        },
+        {
+          "text": "the city gate!",
+          "x": 541,
+          "y": 185,
+          "conf": 0.95
+        },
+        {
+          "text": "7d 16:58-- 7d 16:58",
+          "x": 883,
+          "y": 280,
+          "conf": 0.96
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 404,
+          "conf": 1.0
+        },
+        {
+          "text": "Login Gifts",
+          "x": 981,
+          "y": 484,
+          "conf": 1.0
+        },
+        {
+          "text": "Quests",
+          "x": 86,
+          "y": 586,
+          "conf": 1.0
+        },
+        {
+          "text": "f",
+          "x": 992,
+          "y": 604,
+          "conf": 0.78
+        },
+        {
+          "text": "Follow Us",
+          "x": 988,
+          "y": 666,
+          "conf": 0.94
+        },
+        {
+          "text": "Blazon",
+          "x": 534,
+          "y": 734,
+          "conf": 1.0
+        },
+        {
+          "text": "Duty",
+          "x": 357,
+          "y": 764,
+          "conf": 1.0
+        },
+        {
+          "text": "Smelter",
+          "x": 695,
+          "y": 798,
+          "conf": 0.99
+        },
+        {
+          "text": "Event",
+          "x": 987,
+          "y": 829,
+          "conf": 1.0
+        },
+        {
+          "text": "Center",
+          "x": 986,
+          "y": 867,
+          "conf": 1.0
+        },
+        {
+          "text": "Train",
+          "x": 229,
+          "y": 879,
+          "conf": 0.96
+        },
+        {
+          "text": "Citizen",
+          "x": 803,
+          "y": 940,
+          "conf": 1.0
+        },
+        {
+          "text": "Detail",
+          "x": 175,
+          "y": 1045,
+          "conf": 0.98
+        },
+        {
+          "text": "Barracks",
+          "x": 467,
+          "y": 1116,
+          "conf": 1.0
+        },
+        {
+          "text": "00:00:40",
+          "x": 989,
+          "y": 1177,
+          "conf": 0.99
+        },
+        {
+          "text": "Upgrade",
+          "x": 219,
+          "y": 1220,
+          "conf": 1.0
+        },
+        {
+          "text": "FOR SAL",
+          "x": 953,
+          "y": 1445,
+          "conf": 0.93
+        },
+        {
+          "text": "Alliance",
+          "x": 988,
+          "y": 1516,
+          "conf": 0.97
+        },
+        {
+          "text": "13",
+          "x": 1042,
+          "y": 1580,
+          "conf": 1.0
+        },
+        {
+          "text": "Mysterious",
+          "x": 300,
+          "y": 1692,
+          "conf": 0.99
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1685,
+          "conf": 1.0
+        },
+        {
+          "text": "Valuable",
+          "x": 706,
+          "y": 1695,
+          "conf": 0.99
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 97,
+          "y": 1712,
+          "conf": 1.0
+        },
+        {
+          "text": "7d 16:58",
+          "x": 503,
+          "y": 1708,
+          "conf": 0.93
+        },
+        {
+          "text": "Realm",
+          "x": 299,
+          "y": 1728,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 706,
+          "y": 1729,
+          "conf": 1.0
+        },
+        {
+          "text": "[ ESP] KM t: MMOM",
+          "x": 228,
+          "y": 1829,
+          "conf": 0.92
+        }
+      ]
+    },
+    {
+      "file": "status_post.png",
+      "label": "city",
+      "gems": 8180979,
+      "n_text": 36,
+      "text_signature": [
+        "1 5.2b",
+        "3d 14:57",
+        "7d 16:03 -- 7d 16:04",
+        "7d 16:04",
+        "a visitor is waiting at",
+        "alliance",
+        "center",
+        "conscripts",
+        "event",
+        "f",
+        "follow us",
+        "for",
+        "golden japanese subs",
+        "l4begendary hyara"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 38,
+          "conf": 1.0
+        },
+        {
+          "text": "4",
+          "x": 231,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "L4Begendary Hyara",
+          "x": 532,
+          "y": 40,
+          "conf": 0.96
+        },
+        {
+          "text": "89.5B",
+          "x": 815,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "1 5.2B",
+          "x": 959,
+          "y": 35,
+          "conf": 0.93
+        },
+        {
+          "text": "X1",
+          "x": 211,
+          "y": 94,
+          "conf": 0.83
+        },
+        {
+          "text": "Lost Power2/156",
+          "x": 504,
+          "y": 93,
+          "conf": 0.99
+        },
+        {
+          "text": "8,180,979",
+          "x": 920,
+          "y": 103,
+          "conf": 1.0
+        },
+        {
+          "text": "VIP23",
+          "x": 269,
+          "y": 145,
+          "conf": 0.99
+        },
+        {
+          "text": "the city gate!",
+          "x": 541,
+          "y": 186,
+          "conf": 0.98
+        },
+        {
+          "text": "7d 16:03 -- 7d 16:04",
+          "x": 883,
+          "y": 279,
+          "conf": 0.94
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 404,
+          "conf": 1.0
+        },
+        {
+          "text": "Login Gifts",
+          "x": 982,
+          "y": 484,
+          "conf": 1.0
+        },
+        {
+          "text": "Quests",
+          "x": 85,
+          "y": 585,
+          "conf": 0.98
+        },
+        {
+          "text": "f",
+          "x": 992,
+          "y": 604,
+          "conf": 0.78
+        },
+        {
+          "text": "Follow Us",
+          "x": 988,
+          "y": 666,
+          "conf": 0.95
+        },
+        {
+          "text": "Event",
+          "x": 988,
+          "y": 829,
+          "conf": 1.0
+        },
+        {
+          "text": "Center",
+          "x": 985,
+          "y": 867,
+          "conf": 1.0
+        },
+        {
+          "text": "3d 14:57",
+          "x": 490,
+          "y": 953,
+          "conf": 1.0
+        },
+        {
+          "text": "Conscripts",
+          "x": 485,
+          "y": 992,
+          "conf": 0.99
+        },
+        {
+          "text": "00:00:04",
+          "x": 989,
+          "y": 1177,
+          "conf": 0.99
+        },
+        {
+          "text": "FOR",
+          "x": 939,
+          "y": 1459,
+          "conf": 0.99
+        },
+        {
+          "text": "Alliance",
+          "x": 988,
+          "y": 1516,
+          "conf": 0.97
+        },
+        {
+          "text": "300",
+          "x": 337,
+          "y": 1567,
+          "conf": 1.0
+        },
+        {
+          "text": "13",
+          "x": 1042,
+          "y": 1580,
+          "conf": 1.0
+        },
+        {
+          "text": "Mysterious",
+          "x": 300,
+          "y": 1692,
+          "conf": 0.99
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1684,
+          "conf": 1.0
+        },
+        {
+          "text": "7d 16:04",
+          "x": 502,
+          "y": 1708,
+          "conf": 1.0
+        },
+        {
+          "text": "Valuable",
+          "x": 705,
+          "y": 1695,
+          "conf": 0.99
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 98,
+          "y": 1712,
+          "conf": 0.96
+        },
+        {
+          "text": "Realm",
+          "x": 300,
+          "y": 1727,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 705,
+          "y": 1729,
+          "conf": 1.0
+        },
+        {
+          "text": "golden Japanese Subs",
+          "x": 249,
+          "y": 1873,
+          "conf": 1.0
+        }
+      ]
+    },
+    {
+      "file": "status_probe.png",
+      "label": "city",
+      "gems": 8189894,
+      "n_text": 35,
+      "text_signature": [
+        "- 7d 17:07",
+        "1 5.2b",
+        "2d 16:50",
+        "7d 17:08",
+        "a visitor is waiting at",
+        "alliance",
+        "center",
+        "conscripts",
+        "event",
+        "f",
+        "login gifts",
+        "lucky raffle",
+        "mail",
+        "mysterious"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 38,
+          "conf": 1.0
+        },
+        {
+          "text": "606.9M",
+          "x": 277,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "8.3B",
+          "x": 431,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "28.9B",
+          "x": 628,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 814,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "1 5.2B",
+          "x": 960,
+          "y": 36,
+          "conf": 0.95
+        },
+        {
+          "text": "X115.1B",
+          "x": 258,
+          "y": 94,
+          "conf": 1.0
+        },
+        {
+          "text": "122/156",
+          "x": 558,
+          "y": 94,
+          "conf": 1.0
+        },
+        {
+          "text": "8,189,894",
+          "x": 920,
+          "y": 103,
+          "conf": 1.0
+        },
+        {
+          "text": "VIP23",
+          "x": 270,
+          "y": 143,
+          "conf": 1.0
+        },
+        {
+          "text": "the city gate!",
+          "x": 541,
+          "y": 186,
+          "conf": 0.95
+        },
+        {
+          "text": "Login Gifts",
+          "x": 983,
+          "y": 299,
+          "conf": 1.0
+        },
+        {
+          "text": "f",
+          "x": 993,
+          "y": 418,
+          "conf": 0.65
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 404,
+          "conf": 1.0
+        },
+        {
+          "text": "the City.",
+          "x": 547,
+          "y": 535,
+          "conf": 1.0
+        },
+        {
+          "text": "Quests",
+          "x": 85,
+          "y": 585,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 988,
+          "y": 643,
+          "conf": 1.0
+        },
+        {
+          "text": "Center",
+          "x": 985,
+          "y": 682,
+          "conf": 1.0
+        },
+        {
+          "text": "- 7d 17:07",
+          "x": 975,
+          "y": 834,
+          "conf": 0.92
+        },
+        {
+          "text": "2d 16:50",
+          "x": 489,
+          "y": 952,
+          "conf": 0.92
+        },
+        {
+          "text": "Conscripts",
+          "x": 484,
+          "y": 992,
+          "conf": 0.98
+        },
+        {
+          "text": "Alliance",
+          "x": 988,
+          "y": 1516,
+          "conf": 0.96
+        },
+        {
+          "text": "300",
+          "x": 337,
+          "y": 1567,
+          "conf": 1.0
+        },
+        {
+          "text": "91",
+          "x": 1040,
+          "y": 1580,
+          "conf": 1.0
+        },
+        {
+          "text": "Mysterious",
+          "x": 300,
+          "y": 1692,
+          "conf": 0.99
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1684,
+          "conf": 1.0
+        },
+        {
+          "text": "Valuable",
+          "x": 706,
+          "y": 1695,
+          "conf": 0.99
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 98,
+          "y": 1712,
+          "conf": 0.97
+        },
+        {
+          "text": "7d 17:08",
+          "x": 502,
+          "y": 1708,
+          "conf": 0.97
+        },
+        {
+          "text": "Realm",
+          "x": 299,
+          "y": 1727,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 705,
+          "y": 1729,
+          "conf": 1.0
+        }
+      ]
+    },
+    {
+      "file": "status_probe2.png",
+      "label": "city",
+      "gems": 8194180,
+      "n_text": 37,
+      "text_signature": [
+        "-- 7d 22:09",
+        "1 5.2b",
+        "2d 15:59",
+        "7d 22:09",
+        "a visitor is waiting at",
+        "alliance",
+        "center",
+        "conscripts",
+        "event",
+        "f",
+        "follow us",
+        "login gifts",
+        "lucky raffle",
+        "mail"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 38,
+          "conf": 1.0
+        },
+        {
+          "text": "2.8B",
+          "x": 254,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "8.3B",
+          "x": 430,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "32.6B",
+          "x": 628,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 815,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "1 5.2B",
+          "x": 959,
+          "y": 36,
+          "conf": 0.93
+        },
+        {
+          "text": "X114.9B",
+          "x": 256,
+          "y": 93,
+          "conf": 0.99
+        },
+        {
+          "text": "122/156",
+          "x": 557,
+          "y": 93,
+          "conf": 1.0
+        },
+        {
+          "text": "8,194,180",
+          "x": 920,
+          "y": 103,
+          "conf": 1.0
+        },
+        {
+          "text": "VIP23",
+          "x": 271,
+          "y": 144,
+          "conf": 0.99
+        },
+        {
+          "text": "the city gate!",
+          "x": 540,
+          "y": 186,
+          "conf": 0.98
+        },
+        {
+          "text": "7d 22:09",
+          "x": 777,
+          "y": 279,
+          "conf": 0.99
+        },
+        {
+          "text": "-- 7d 22:09",
+          "x": 955,
+          "y": 279,
+          "conf": 0.91
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 403,
+          "conf": 1.0
+        },
+        {
+          "text": "04:31:39",
+          "x": 775,
+          "y": 476,
+          "conf": 0.98
+        },
+        {
+          "text": "Login Gifts",
+          "x": 982,
+          "y": 484,
+          "conf": 1.0
+        },
+        {
+          "text": "Quests",
+          "x": 87,
+          "y": 585,
+          "conf": 1.0
+        },
+        {
+          "text": "f",
+          "x": 992,
+          "y": 604,
+          "conf": 0.81
+        },
+        {
+          "text": "Follow Us",
+          "x": 988,
+          "y": 666,
+          "conf": 0.95
+        },
+        {
+          "text": "Event",
+          "x": 988,
+          "y": 829,
+          "conf": 1.0
+        },
+        {
+          "text": "Center",
+          "x": 986,
+          "y": 868,
+          "conf": 1.0
+        },
+        {
+          "text": "00:00:34",
+          "x": 989,
+          "y": 1176,
+          "conf": 1.0
+        },
+        {
+          "text": "2d 15:59",
+          "x": 489,
+          "y": 1299,
+          "conf": 0.94
+        },
+        {
+          "text": "Conscripts",
+          "x": 485,
+          "y": 1337,
+          "conf": 0.99
+        },
+        {
+          "text": "Alliance",
+          "x": 988,
+          "y": 1517,
+          "conf": 0.92
+        },
+        {
+          "text": "300",
+          "x": 337,
+          "y": 1567,
+          "conf": 1.0
+        },
+        {
+          "text": "22",
+          "x": 1042,
+          "y": 1580,
+          "conf": 1.0
+        },
+        {
+          "text": "Mysterious",
+          "x": 301,
+          "y": 1692,
+          "conf": 0.99
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1684,
+          "conf": 1.0
+        },
+        {
+          "text": "Valuable",
+          "x": 707,
+          "y": 1695,
+          "conf": 0.99
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 97,
+          "y": 1712,
+          "conf": 1.0
+        },
+        {
+          "text": "7d 22:09",
+          "x": 496,
+          "y": 1708,
+          "conf": 0.93
+        },
+        {
+          "text": "Realm",
+          "x": 299,
+          "y": 1728,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 706,
+          "y": 1729,
+          "conf": 0.99
+        }
+      ]
+    },
+    {
+      "file": "status_r2.png",
+      "label": "disconnect",
+      "gems": 8180979,
+      "n_text": 38,
+      "text_signature": [
+        "7d 17:04",
+        "a visitor is waiting at",
+        "alliance",
+        "c",
+        "center",
+        "event",
+        "follow us",
+        "for sale",
+        "login gifts",
+        "lucky raffle",
+        "mail",
+        "mysterious",
+        "quests",
+        "quit"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "670.4M",
+          "x": 278,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "9.6B",
+          "x": 406,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "29B",
+          "x": 587,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 815,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "15.2B",
+          "x": 959,
+          "y": 35,
+          "conf": 0.91
+        },
+        {
+          "text": "X115.1B",
+          "x": 258,
+          "y": 93,
+          "conf": 0.99
+        },
+        {
+          "text": "122/156",
+          "x": 557,
+          "y": 93,
+          "conf": 1.0
+        },
+        {
+          "text": "8,180,979",
+          "x": 920,
+          "y": 102,
+          "conf": 0.99
+        },
+        {
+          "text": "12",
+          "x": 190,
+          "y": 142,
+          "conf": 0.74
+        },
+        {
+          "text": "VIP23",
+          "x": 266,
+          "y": 143,
+          "conf": 0.99
+        },
+        {
+          "text": "the city gate!",
+          "x": 540,
+          "y": 185,
+          "conf": 0.97
+        },
+        {
+          "text": "Login Gifts",
+          "x": 984,
+          "y": 299,
+          "conf": 0.98
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 403,
+          "conf": 0.99
+        },
+        {
+          "text": "Follow Us",
+          "x": 988,
+          "y": 481,
+          "conf": 0.96
+        },
+        {
+          "text": "Quests",
+          "x": 86,
+          "y": 585,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 987,
+          "y": 643,
+          "conf": 0.99
+        },
+        {
+          "text": "Center",
+          "x": 986,
+          "y": 682,
+          "conf": 1.0
+        },
+        {
+          "text": "ld17:04",
+          "x": 990,
+          "y": 834,
+          "conf": 0.89
+        },
+        {
+          "text": "your account is safe.",
+          "x": 536,
+          "y": 991,
+          "conf": 1.0
+        },
+        {
+          "text": "Quit",
+          "x": 365,
+          "y": 1136,
+          "conf": 1.0
+        },
+        {
+          "text": "Restart",
+          "x": 718,
+          "y": 1135,
+          "conf": 1.0
+        },
+        {
+          "text": "FOR SALE",
+          "x": 957,
+          "y": 1440,
+          "conf": 0.93
+        },
+        {
+          "text": "Alliance",
+          "x": 988,
+          "y": 1516,
+          "conf": 0.97
+        },
+        {
+          "text": "12",
+          "x": 1043,
+          "y": 1580,
+          "conf": 1.0
+        },
+        {
+          "text": "Mysterious",
+          "x": 300,
+          "y": 1692,
+          "conf": 0.98
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1684,
+          "conf": 0.99
+        },
+        {
+          "text": "7d 17:04",
+          "x": 503,
+          "y": 1708,
+          "conf": 0.9
+        },
+        {
+          "text": "Valuable",
+          "x": 710,
+          "y": 1695,
+          "conf": 0.97
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 99,
+          "y": 1713,
+          "conf": 0.96
+        },
+        {
+          "text": "Realm",
+          "x": 299,
+          "y": 1728,
+          "conf": 0.99
+        },
+        {
+          "text": "Event",
+          "x": 705,
+          "y": 1729,
+          "conf": 0.99
+        }
+      ]
+    },
+    {
+      "file": "status_r3.png",
+      "label": "barracks_radial",
+      "gems": 8180979,
+      "n_text": 45,
+      "text_signature": [
+        "1 5.2b",
+        "7d 17:04",
+        "a visitor is waiting at",
+        "alliance",
+        "barracks",
+        "blazon",
+        "center",
+        "citizen",
+        "detail",
+        "duty",
+        "event",
+        "f",
+        "foh",
+        "follow us"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 38,
+          "conf": 1.0
+        },
+        {
+          "text": "670.4M",
+          "x": 277,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "9.6B",
+          "x": 427,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "29B",
+          "x": 614,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 814,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "1 5.2B",
+          "x": 960,
+          "y": 35,
+          "conf": 0.91
+        },
+        {
+          "text": "X115.1B",
+          "x": 258,
+          "y": 94,
+          "conf": 1.0
+        },
+        {
+          "text": "122/156",
+          "x": 557,
+          "y": 93,
+          "conf": 1.0
+        },
+        {
+          "text": "8,180,979",
+          "x": 920,
+          "y": 103,
+          "conf": 1.0
+        },
+        {
+          "text": "VIP23",
+          "x": 269,
+          "y": 144,
+          "conf": 0.99
+        },
+        {
+          "text": "the city gate!",
+          "x": 541,
+          "y": 186,
+          "conf": 0.98
+        },
+        {
+          "text": "\u03b2X Zd 17:04",
+          "x": 950,
+          "y": 280,
+          "conf": 0.86
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 404,
+          "conf": 1.0
+        },
+        {
+          "text": "Login Gifts",
+          "x": 982,
+          "y": 484,
+          "conf": 1.0
+        },
+        {
+          "text": "Quests",
+          "x": 86,
+          "y": 586,
+          "conf": 1.0
+        },
+        {
+          "text": "f",
+          "x": 992,
+          "y": 604,
+          "conf": 0.78
+        },
+        {
+          "text": "Follow Us",
+          "x": 988,
+          "y": 666,
+          "conf": 0.95
+        },
+        {
+          "text": "Blazon",
+          "x": 534,
+          "y": 734,
+          "conf": 1.0
+        },
+        {
+          "text": "Duty",
+          "x": 357,
+          "y": 764,
+          "conf": 1.0
+        },
+        {
+          "text": "Smelter",
+          "x": 695,
+          "y": 798,
+          "conf": 0.99
+        },
+        {
+          "text": "Event",
+          "x": 988,
+          "y": 829,
+          "conf": 0.95
+        },
+        {
+          "text": "Center",
+          "x": 985,
+          "y": 867,
+          "conf": 1.0
+        },
+        {
+          "text": "Train",
+          "x": 229,
+          "y": 879,
+          "conf": 0.96
+        },
+        {
+          "text": "Citizen",
+          "x": 803,
+          "y": 940,
+          "conf": 1.0
+        },
+        {
+          "text": "Detail",
+          "x": 176,
+          "y": 1046,
+          "conf": 0.95
+        },
+        {
+          "text": "3",
+          "x": 1041,
+          "y": 1076,
+          "conf": 0.98
+        },
+        {
+          "text": "Barracks",
+          "x": 467,
+          "y": 1116,
+          "conf": 1.0
+        },
+        {
+          "text": "00:00:18",
+          "x": 989,
+          "y": 1177,
+          "conf": 0.99
+        },
+        {
+          "text": "Upgrade",
+          "x": 219,
+          "y": 1220,
+          "conf": 1.0
+        },
+        {
+          "text": "FOH",
+          "x": 935,
+          "y": 1461,
+          "conf": 0.78
+        },
+        {
+          "text": "Alliance",
+          "x": 988,
+          "y": 1516,
+          "conf": 0.97
+        },
+        {
+          "text": "12",
+          "x": 1043,
+          "y": 1580,
+          "conf": 1.0
+        },
+        {
+          "text": "Mysterious",
+          "x": 300,
+          "y": 1692,
+          "conf": 0.99
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1685,
+          "conf": 1.0
+        },
+        {
+          "text": "7d 17:04",
+          "x": 502,
+          "y": 1708,
+          "conf": 0.96
+        },
+        {
+          "text": "Valuable",
+          "x": 706,
+          "y": 1695,
+          "conf": 0.99
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 97,
+          "y": 1712,
+          "conf": 1.0
+        },
+        {
+          "text": "Realm",
+          "x": 299,
+          "y": 1727,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 706,
+          "y": 1729,
+          "conf": 1.0
+        },
+        {
+          "text": "ESP1KMt:Mimbecile",
+          "x": 259,
+          "y": 1787,
+          "conf": 0.97
+        },
+        {
+          "text": "NF",
+          "x": 83,
+          "y": 1829,
+          "conf": 0.97
+        }
+      ]
+    },
+    {
+      "file": "status_radial.png",
+      "label": "speedup_modal",
+      "gems": null,
+      "n_text": 25,
+      "text_signature": [
+        "1 hour speedup for training",
+        "10 minute speedup for training",
+        "15 minute speedup for training",
+        "30 minute speedup for training",
+        "buy",
+        "finish all",
+        "remaining time: 2d 16:49",
+        "speedup settings",
+        "this is a placeholder",
+        "time to reduce: 2d 17:00",
+        "training speedup",
+        "training timer by 10 minutes.",
+        "training timer by 15 minutes.",
+        "training timer by 30 minutes."
+      ],
+      "buttons": [
+        {
+          "text": "Training Speedup",
+          "x": 543,
+          "y": 66,
+          "conf": 0.98
+        },
+        {
+          "text": "This is a placeholder",
+          "x": 410,
+          "y": 357,
+          "conf": 1.0
+        },
+        {
+          "text": "Buy",
+          "x": 853,
+          "y": 365,
+          "conf": 0.99
+        },
+        {
+          "text": "This is a placeholder",
+          "x": 853,
+          "y": 404,
+          "conf": 0.99
+        },
+        {
+          "text": "This is a placeholder",
+          "x": 398,
+          "y": 430,
+          "conf": 1.0
+        },
+        {
+          "text": "43.",
+          "x": 165,
+          "y": 695,
+          "conf": 0.96
+        },
+        {
+          "text": "48,786",
+          "x": 199,
+          "y": 948,
+          "conf": 0.99
+        },
+        {
+          "text": "35,157",
+          "x": 197,
+          "y": 1202,
+          "conf": 1.0
+        },
+        {
+          "text": "260",
+          "x": 336,
+          "y": 1507,
+          "conf": 1.0
+        },
+        {
+          "text": "Speedup Settings",
+          "x": 280,
+          "y": 1719,
+          "conf": 1.0
+        },
+        {
+          "text": "Finish All",
+          "x": 291,
+          "y": 1840,
+          "conf": 0.99
+        },
+        {
+          "text": "Use",
+          "x": 791,
+          "y": 1838,
+          "conf": 1.0
+        }
+      ]
+    },
+    {
+      "file": "status_restart.png",
+      "label": "unknown",
+      "gems": 8180979,
+      "n_text": 44,
+      "text_signature": [
+        "-7d 17:05",
+        "7d 17:05",
+        "a visitor is waiting at",
+        "bllow us",
+        "center",
+        "comeback celebration",
+        "espjkmt:m imbecile",
+        "event",
+        "f",
+        "gin gifts",
+        "go",
+        "iance",
+        "invite old friends",
+        "laluable"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 36,
+          "conf": 1.0
+        },
+        {
+          "text": "670.4M",
+          "x": 277,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "9.6B",
+          "x": 410,
+          "y": 35,
+          "conf": 0.98
+        },
+        {
+          "text": "29B",
+          "x": 612,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 814,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "15.2B",
+          "x": 959,
+          "y": 35,
+          "conf": 0.98
+        },
+        {
+          "text": "X 115.1B",
+          "x": 259,
+          "y": 94,
+          "conf": 0.94
+        },
+        {
+          "text": "122/156",
+          "x": 558,
+          "y": 93,
+          "conf": 1.0
+        },
+        {
+          "text": "8,180,979",
+          "x": 920,
+          "y": 101,
+          "conf": 1.0
+        },
+        {
+          "text": "VIP23",
+          "x": 268,
+          "y": 143,
+          "conf": 0.99
+        },
+        {
+          "text": "the city gate!",
+          "x": 540,
+          "y": 185,
+          "conf": 0.97
+        },
+        {
+          "text": "7d 17:05",
+          "x": 779,
+          "y": 279,
+          "conf": 0.99
+        },
+        {
+          "text": "-7d 17:05",
+          "x": 955,
+          "y": 279,
+          "conf": 0.95
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 403,
+          "conf": 1.0
+        },
+        {
+          "text": "gin Gifts",
+          "x": 1005,
+          "y": 483,
+          "conf": 0.98
+        },
+        {
+          "text": "Comeback Celebration",
+          "x": 433,
+          "y": 507,
+          "conf": 1.0
+        },
+        {
+          "text": "Quest",
+          "x": 77,
+          "y": 585,
+          "conf": 0.99
+        },
+        {
+          "text": "f",
+          "x": 993,
+          "y": 605,
+          "conf": 0.69
+        },
+        {
+          "text": "bllow Us",
+          "x": 1004,
+          "y": 665,
+          "conf": 0.83
+        },
+        {
+          "text": "Event",
+          "x": 986,
+          "y": 828,
+          "conf": 0.99
+        },
+        {
+          "text": "Center",
+          "x": 991,
+          "y": 868,
+          "conf": 0.95
+        },
+        {
+          "text": "5",
+          "x": 1042,
+          "y": 1074,
+          "conf": 1.0
+        },
+        {
+          "text": "Go",
+          "x": 557,
+          "y": 1185,
+          "conf": 0.95
+        },
+        {
+          "text": "00:48",
+          "x": 1014,
+          "y": 1176,
+          "conf": 0.98
+        },
+        {
+          "text": "Invite old friends",
+          "x": 544,
+          "y": 1295,
+          "conf": 1.0
+        },
+        {
+          "text": "to earn rich rewards",
+          "x": 543,
+          "y": 1340,
+          "conf": 0.99
+        },
+        {
+          "text": "KL50",
+          "x": 401,
+          "y": 1464,
+          "conf": 0.67
+        },
+        {
+          "text": "150",
+          "x": 533,
+          "y": 1469,
+          "conf": 1.0
+        },
+        {
+          "text": "150",
+          "x": 656,
+          "y": 1469,
+          "conf": 1.0
+        },
+        {
+          "text": "100",
+          "x": 863,
+          "y": 1459,
+          "conf": 0.99
+        },
+        {
+          "text": "iance",
+          "x": 1013,
+          "y": 1519,
+          "conf": 0.97
+        },
+        {
+          "text": "300",
+          "x": 337,
+          "y": 1566,
+          "conf": 1.0
+        },
+        {
+          "text": "12",
+          "x": 1043,
+          "y": 1580,
+          "conf": 1.0
+        },
+        {
+          "text": "Mysterious",
+          "x": 301,
+          "y": 1692,
+          "conf": 0.99
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1684,
+          "conf": 0.99
+        },
+        {
+          "text": "7d-17:05",
+          "x": 502,
+          "y": 1708,
+          "conf": 0.98
+        },
+        {
+          "text": "laluable",
+          "x": 711,
+          "y": 1695,
+          "conf": 0.89
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 99,
+          "y": 1713,
+          "conf": 0.98
+        },
+        {
+          "text": "Realm",
+          "x": 299,
+          "y": 1728,
+          "conf": 0.99
+        },
+        {
+          "text": "Event",
+          "x": 705,
+          "y": 1729,
+          "conf": 0.99
+        },
+        {
+          "text": "ESPJKMt:M imbecile",
+          "x": 266,
+          "y": 1787,
+          "conf": 0.93
+        }
+      ]
+    },
+    {
+      "file": "status_s.png",
+      "label": "city",
+      "gems": 8180979,
+      "n_text": 35,
+      "text_signature": [
+        "1 5.2b",
+        "7d 16:47",
+        "7d 16:47-- 7d 16:47",
+        "[ esp] km t: mmom",
+        "a visitor is waiting at",
+        "alliance",
+        "center",
+        "event",
+        "f",
+        "follow us",
+        "login gifts",
+        "lucky raffle",
+        "mail",
+        "mysterious"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 38,
+          "conf": 1.0
+        },
+        {
+          "text": "175",
+          "x": 249,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "9.6B",
+          "x": 427,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "28.9B",
+          "x": 628,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 814,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "1 5.2B",
+          "x": 960,
+          "y": 35,
+          "conf": 0.91
+        },
+        {
+          "text": "X115.1B",
+          "x": 259,
+          "y": 94,
+          "conf": 1.0
+        },
+        {
+          "text": "122/156",
+          "x": 558,
+          "y": 94,
+          "conf": 1.0
+        },
+        {
+          "text": "8,180,979",
+          "x": 920,
+          "y": 103,
+          "conf": 1.0
+        },
+        {
+          "text": "VIP23",
+          "x": 269,
+          "y": 144,
+          "conf": 0.99
+        },
+        {
+          "text": "the city gate!",
+          "x": 541,
+          "y": 186,
+          "conf": 0.98
+        },
+        {
+          "text": "7d 16:47-- 7d 16:47",
+          "x": 880,
+          "y": 279,
+          "conf": 0.96
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 404,
+          "conf": 1.0
+        },
+        {
+          "text": "Login Gifts",
+          "x": 981,
+          "y": 484,
+          "conf": 1.0
+        },
+        {
+          "text": "Quests",
+          "x": 85,
+          "y": 585,
+          "conf": 1.0
+        },
+        {
+          "text": "f",
+          "x": 992,
+          "y": 604,
+          "conf": 0.78
+        },
+        {
+          "text": "Follow Us",
+          "x": 988,
+          "y": 666,
+          "conf": 0.95
+        },
+        {
+          "text": "Event",
+          "x": 988,
+          "y": 829,
+          "conf": 1.0
+        },
+        {
+          "text": "Center",
+          "x": 985,
+          "y": 867,
+          "conf": 1.0
+        },
+        {
+          "text": "3",
+          "x": 1041,
+          "y": 1075,
+          "conf": 0.98
+        },
+        {
+          "text": "00:02:04",
+          "x": 989,
+          "y": 1177,
+          "conf": 0.99
+        },
+        {
+          "text": "FOR:",
+          "x": 941,
+          "y": 1457,
+          "conf": 0.9
+        },
+        {
+          "text": "Alliance",
+          "x": 988,
+          "y": 1516,
+          "conf": 0.97
+        },
+        {
+          "text": "300",
+          "x": 337,
+          "y": 1567,
+          "conf": 1.0
+        },
+        {
+          "text": "19",
+          "x": 1043,
+          "y": 1579,
+          "conf": 1.0
+        },
+        {
+          "text": "Mysterious",
+          "x": 300,
+          "y": 1692,
+          "conf": 0.99
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1684,
+          "conf": 1.0
+        },
+        {
+          "text": "Valuable",
+          "x": 706,
+          "y": 1695,
+          "conf": 0.99
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 98,
+          "y": 1712,
+          "conf": 0.99
+        },
+        {
+          "text": "7d 16:47",
+          "x": 501,
+          "y": 1708,
+          "conf": 1.0
+        },
+        {
+          "text": "Realm",
+          "x": 299,
+          "y": 1728,
+          "conf": 0.99
+        },
+        {
+          "text": "Event",
+          "x": 706,
+          "y": 1729,
+          "conf": 1.0
+        },
+        {
+          "text": "[ ESP] KM t: MMOM",
+          "x": 228,
+          "y": 1829,
+          "conf": 0.92
+        }
+      ]
+    },
+    {
+      "file": "status_speed.png",
+      "label": "speedup_modal",
+      "gems": null,
+      "n_text": 26,
+      "text_signature": [
+        "1 hour speedup for training",
+        "10 minute speedup for training",
+        "15 minute speedup for training",
+        "30 minute speedup for training",
+        "buy",
+        "chf 86.48",
+        "finish all",
+        "remaining time: 2d 15:57",
+        "speedup settings",
+        "the crazy speedup sale is",
+        "time to reduce: 2d 16:00",
+        "total 47,000 hour speedup",
+        "training speedup",
+        "training timer by 10 minutes."
+      ],
+      "buttons": [
+        {
+          "text": "Training Speedup",
+          "x": 543,
+          "y": 66,
+          "conf": 0.98
+        },
+        {
+          "text": "Here!",
+          "x": 267,
+          "y": 366,
+          "conf": 1.0
+        },
+        {
+          "text": "Buy",
+          "x": 853,
+          "y": 372,
+          "conf": 0.99
+        },
+        {
+          "text": "CHF 86.48",
+          "x": 855,
+          "y": 409,
+          "conf": 0.94
+        },
+        {
+          "text": "43,527",
+          "x": 196,
+          "y": 694,
+          "conf": 1.0
+        },
+        {
+          "text": "49,133",
+          "x": 198,
+          "y": 949,
+          "conf": 0.99
+        },
+        {
+          "text": "35,162",
+          "x": 199,
+          "y": 1202,
+          "conf": 1.0
+        },
+        {
+          "text": "384",
+          "x": 337,
+          "y": 1507,
+          "conf": 1.0
+        },
+        {
+          "text": "Speedup Settings",
+          "x": 280,
+          "y": 1719,
+          "conf": 1.0
+        },
+        {
+          "text": "Finish All",
+          "x": 291,
+          "y": 1840,
+          "conf": 0.98
+        },
+        {
+          "text": "Use",
+          "x": 791,
+          "y": 1838,
+          "conf": 1.0
+        }
+      ]
+    },
+    {
+      "file": "status_stuck.png",
+      "label": "exit_dialog",
+      "gems": 8180979,
+      "n_text": 39,
+      "text_signature": [
+        "7d 16:15",
+        "a visitor is waiting at",
+        "alliance",
+        "cancel",
+        "center",
+        "event",
+        "f",
+        "follow us",
+        "golden japanese subs",
+        "login gifts",
+        "lucky raffle",
+        "mail",
+        "mysterious",
+        "quests"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "473.9M",
+          "x": 279,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "9.6B",
+          "x": 407,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "28.6B",
+          "x": 626,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 815,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "15.2B",
+          "x": 959,
+          "y": 35,
+          "conf": 0.91
+        },
+        {
+          "text": "X115.2B",
+          "x": 258,
+          "y": 93,
+          "conf": 0.99
+        },
+        {
+          "text": "122/156",
+          "x": 557,
+          "y": 93,
+          "conf": 1.0
+        },
+        {
+          "text": "8,180,979",
+          "x": 920,
+          "y": 102,
+          "conf": 0.99
+        },
+        {
+          "text": "VIP23",
+          "x": 265,
+          "y": 143,
+          "conf": 1.0
+        },
+        {
+          "text": "12",
+          "x": 190,
+          "y": 142,
+          "conf": 0.74
+        },
+        {
+          "text": "the city gate!",
+          "x": 540,
+          "y": 185,
+          "conf": 0.96
+        },
+        {
+          "text": "7d 16:15",
+          "x": 780,
+          "y": 279,
+          "conf": 0.98
+        },
+        {
+          "text": "7d 16:15",
+          "x": 953,
+          "y": 279,
+          "conf": 0.98
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 403,
+          "conf": 1.0
+        },
+        {
+          "text": "Login Gifts",
+          "x": 983,
+          "y": 483,
+          "conf": 0.95
+        },
+        {
+          "text": "Quests",
+          "x": 86,
+          "y": 585,
+          "conf": 1.0
+        },
+        {
+          "text": "f",
+          "x": 993,
+          "y": 603,
+          "conf": 0.6
+        },
+        {
+          "text": "Follow Us",
+          "x": 987,
+          "y": 665,
+          "conf": 0.96
+        },
+        {
+          "text": "Event",
+          "x": 987,
+          "y": 829,
+          "conf": 0.96
+        },
+        {
+          "text": "Center",
+          "x": 987,
+          "y": 868,
+          "conf": 0.94
+        },
+        {
+          "text": "Cancel",
+          "x": 363,
+          "y": 1135,
+          "conf": 1.0
+        },
+        {
+          "text": "Quit",
+          "x": 719,
+          "y": 1135,
+          "conf": 1.0
+        },
+        {
+          "text": "00:01:09",
+          "x": 991,
+          "y": 1175,
+          "conf": 0.98
+        },
+        {
+          "text": "Alliance",
+          "x": 988,
+          "y": 1516,
+          "conf": 0.97
+        },
+        {
+          "text": "300",
+          "x": 336,
+          "y": 1567,
+          "conf": 1.0
+        },
+        {
+          "text": "36",
+          "x": 1042,
+          "y": 1580,
+          "conf": 0.99
+        },
+        {
+          "text": "Mysterious",
+          "x": 301,
+          "y": 1692,
+          "conf": 0.99
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1684,
+          "conf": 0.99
+        },
+        {
+          "text": "7d 16:15",
+          "x": 502,
+          "y": 1707,
+          "conf": 0.95
+        },
+        {
+          "text": "Valuable",
+          "x": 710,
+          "y": 1695,
+          "conf": 0.95
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 99,
+          "y": 1713,
+          "conf": 0.98
+        },
+        {
+          "text": "Realm",
+          "x": 299,
+          "y": 1728,
+          "conf": 0.99
+        },
+        {
+          "text": "Event",
+          "x": 706,
+          "y": 1729,
+          "conf": 0.99
+        },
+        {
+          "text": "golden Japanese Subs",
+          "x": 249,
+          "y": 1873,
+          "conf": 0.95
+        }
+      ]
+    },
+    {
+      "file": "status_t1.png",
+      "label": "city",
+      "gems": 8180979,
+      "n_text": 36,
+      "text_signature": [
+        "1 5.2b",
+        "3--7d 15:59",
+        "3d 14:52",
+        "78 15:59",
+        "7d 15:58",
+        "a visitor is waiting at",
+        "alliance",
+        "center",
+        "conscripts",
+        "event",
+        "f",
+        "follow us",
+        "for sal",
+        "golden japanese subs"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 38,
+          "conf": 1.0
+        },
+        {
+          "text": "473.9M",
+          "x": 277,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "9.6B",
+          "x": 427,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "28.6B",
+          "x": 627,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 814,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "1 5.2B",
+          "x": 960,
+          "y": 35,
+          "conf": 0.92
+        },
+        {
+          "text": "X115.2B",
+          "x": 258,
+          "y": 94,
+          "conf": 1.0
+        },
+        {
+          "text": "122/156",
+          "x": 558,
+          "y": 94,
+          "conf": 1.0
+        },
+        {
+          "text": "8,180,979",
+          "x": 920,
+          "y": 103,
+          "conf": 1.0
+        },
+        {
+          "text": "VIP23",
+          "x": 269,
+          "y": 144,
+          "conf": 0.99
+        },
+        {
+          "text": "the city gate!",
+          "x": 541,
+          "y": 185,
+          "conf": 0.96
+        },
+        {
+          "text": "7d 15:58",
+          "x": 779,
+          "y": 279,
+          "conf": 0.98
+        },
+        {
+          "text": "3--7d 15:59",
+          "x": 953,
+          "y": 279,
+          "conf": 0.88
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 404,
+          "conf": 1.0
+        },
+        {
+          "text": "Login Gifts",
+          "x": 982,
+          "y": 484,
+          "conf": 1.0
+        },
+        {
+          "text": "Quests",
+          "x": 86,
+          "y": 585,
+          "conf": 1.0
+        },
+        {
+          "text": "f",
+          "x": 992,
+          "y": 604,
+          "conf": 0.78
+        },
+        {
+          "text": "Follow Us",
+          "x": 988,
+          "y": 666,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 987,
+          "y": 829,
+          "conf": 1.0
+        },
+        {
+          "text": "Center",
+          "x": 986,
+          "y": 868,
+          "conf": 1.0
+        },
+        {
+          "text": "3d 14:52",
+          "x": 490,
+          "y": 953,
+          "conf": 0.98
+        },
+        {
+          "text": "Conscripts",
+          "x": 485,
+          "y": 992,
+          "conf": 0.99
+        },
+        {
+          "text": "FOR SAL",
+          "x": 953,
+          "y": 1446,
+          "conf": 0.93
+        },
+        {
+          "text": "Alliance",
+          "x": 988,
+          "y": 1516,
+          "conf": 0.97
+        },
+        {
+          "text": "300",
+          "x": 341,
+          "y": 1570,
+          "conf": 1.0
+        },
+        {
+          "text": "Mysterious",
+          "x": 300,
+          "y": 1692,
+          "conf": 0.99
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1685,
+          "conf": 1.0
+        },
+        {
+          "text": "Valuable",
+          "x": 706,
+          "y": 1695,
+          "conf": 0.99
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 98,
+          "y": 1712,
+          "conf": 0.99
+        },
+        {
+          "text": "78 15:59",
+          "x": 502,
+          "y": 1708,
+          "conf": 0.89
+        },
+        {
+          "text": "Realm",
+          "x": 300,
+          "y": 1727,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 705,
+          "y": 1729,
+          "conf": 1.0
+        },
+        {
+          "text": "golden Japanese Subs",
+          "x": 249,
+          "y": 1873,
+          "conf": 0.99
+        }
+      ]
+    },
+    {
+      "file": "status_tr.png",
+      "label": "training_idle",
+      "gems": null,
+      "n_text": 14,
+      "text_signature": [
+        "1 5.2b",
+        "3d 16:03",
+        "conscripts",
+        "instant train",
+        "own: 513,526,484",
+        "train"
+      ],
+      "buttons": [
+        {
+          "text": "670.4M",
+          "x": 250,
+          "y": 32,
+          "conf": 1.0
+        },
+        {
+          "text": "9.6B",
+          "x": 389,
+          "y": 32,
+          "conf": 1.0
+        },
+        {
+          "text": "29B",
+          "x": 581,
+          "y": 32,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 778,
+          "y": 31,
+          "conf": 1.0
+        },
+        {
+          "text": "1 5.2B",
+          "x": 922,
+          "y": 30,
+          "conf": 0.92
+        },
+        {
+          "text": "Conscripts",
+          "x": 567,
+          "y": 996,
+          "conf": 1.0
+        },
+        {
+          "text": "Own: 513,526,484",
+          "x": 542,
+          "y": 1089,
+          "conf": 0.98
+        },
+        {
+          "text": "59.2M",
+          "x": 167,
+          "y": 1455,
+          "conf": 1.0
+        },
+        {
+          "text": "10.8M",
+          "x": 674,
+          "y": 1454,
+          "conf": 1.0
+        },
+        {
+          "text": "269241",
+          "x": 910,
+          "y": 1590,
+          "conf": 1.0
+        },
+        {
+          "text": "Instant Train",
+          "x": 274,
+          "y": 1815,
+          "conf": 0.99
+        },
+        {
+          "text": "Train",
+          "x": 804,
+          "y": 1812,
+          "conf": 1.0
+        },
+        {
+          "text": "5,709",
+          "x": 296,
+          "y": 1862,
+          "conf": 0.98
+        },
+        {
+          "text": "3d 16:03",
+          "x": 831,
+          "y": 1860,
+          "conf": 1.0
+        }
+      ]
+    },
+    {
+      "file": "status_train.png",
+      "label": "city",
+      "gems": 8194180,
+      "n_text": 40,
+      "text_signature": [
+        "-7d 22:05",
+        "1 5.2b",
+        "2d 15:55",
+        "7d 22:05",
+        "a visitor is waiting at",
+        "alliance",
+        "center",
+        "conscripts",
+        "event",
+        "f",
+        "follow us",
+        "loaih gifts",
+        "lucky raffle",
+        "mail"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 38,
+          "conf": 1.0
+        },
+        {
+          "text": "2.8B",
+          "x": 253,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "8.3B",
+          "x": 430,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "32.6B",
+          "x": 628,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 815,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "1 5.2B",
+          "x": 959,
+          "y": 36,
+          "conf": 0.93
+        },
+        {
+          "text": "X114.9B",
+          "x": 256,
+          "y": 93,
+          "conf": 0.99
+        },
+        {
+          "text": "122/156",
+          "x": 557,
+          "y": 93,
+          "conf": 1.0
+        },
+        {
+          "text": "8,194,180",
+          "x": 920,
+          "y": 103,
+          "conf": 1.0
+        },
+        {
+          "text": "VIP23",
+          "x": 271,
+          "y": 144,
+          "conf": 0.99
+        },
+        {
+          "text": "the city gate!",
+          "x": 540,
+          "y": 186,
+          "conf": 0.98
+        },
+        {
+          "text": "7d 22:05",
+          "x": 778,
+          "y": 279,
+          "conf": 0.99
+        },
+        {
+          "text": "-7d 22:05",
+          "x": 953,
+          "y": 279,
+          "conf": 0.95
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 403,
+          "conf": 1.0
+        },
+        {
+          "text": "the City.",
+          "x": 549,
+          "y": 473,
+          "conf": 0.99
+        },
+        {
+          "text": "04:27:42",
+          "x": 776,
+          "y": 476,
+          "conf": 0.98
+        },
+        {
+          "text": "Loaih Gifts",
+          "x": 981,
+          "y": 482,
+          "conf": 0.97
+        },
+        {
+          "text": "Quests",
+          "x": 87,
+          "y": 585,
+          "conf": 1.0
+        },
+        {
+          "text": "f",
+          "x": 992,
+          "y": 604,
+          "conf": 0.81
+        },
+        {
+          "text": "Follow Us",
+          "x": 988,
+          "y": 665,
+          "conf": 0.99
+        },
+        {
+          "text": "Event",
+          "x": 988,
+          "y": 829,
+          "conf": 1.0
+        },
+        {
+          "text": "Center",
+          "x": 986,
+          "y": 867,
+          "conf": 1.0
+        },
+        {
+          "text": "3",
+          "x": 1041,
+          "y": 1075,
+          "conf": 1.0
+        },
+        {
+          "text": "00:00:07",
+          "x": 988,
+          "y": 1177,
+          "conf": 0.99
+        },
+        {
+          "text": "2d 15:55",
+          "x": 489,
+          "y": 1299,
+          "conf": 0.94
+        },
+        {
+          "text": "Conscripts",
+          "x": 485,
+          "y": 1337,
+          "conf": 0.99
+        },
+        {
+          "text": "Alliance",
+          "x": 988,
+          "y": 1517,
+          "conf": 0.92
+        },
+        {
+          "text": "300",
+          "x": 337,
+          "y": 1567,
+          "conf": 1.0
+        },
+        {
+          "text": "24",
+          "x": 1042,
+          "y": 1581,
+          "conf": 1.0
+        },
+        {
+          "text": "Mysterious",
+          "x": 301,
+          "y": 1692,
+          "conf": 0.99
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1684,
+          "conf": 1.0
+        },
+        {
+          "text": "Valuable",
+          "x": 707,
+          "y": 1695,
+          "conf": 0.99
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 97,
+          "y": 1712,
+          "conf": 1.0
+        },
+        {
+          "text": "7d 22:05",
+          "x": 496,
+          "y": 1708,
+          "conf": 0.94
+        },
+        {
+          "text": "Realm",
+          "x": 299,
+          "y": 1728,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 706,
+          "y": 1729,
+          "conf": 0.99
+        }
+      ]
+    },
+    {
+      "file": "status_unk.png",
+      "label": "city",
+      "gems": 8180979,
+      "n_text": 39,
+      "text_signature": [
+        "1 5.2b",
+        "3d 15:05",
+        "7d 16:11-- 7d 16:12",
+        "7d 16:12",
+        "a visitor is waiting at",
+        "alliance",
+        "center",
+        "conscripts",
+        "event",
+        "f",
+        "foh",
+        "follow us",
+        "golden japanese subs",
+        "loaih gifts"
+      ],
+      "buttons": [
+        {
+          "text": "49",
+          "x": 35,
+          "y": 38,
+          "conf": 1.0
+        },
+        {
+          "text": "473.9M",
+          "x": 277,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "9.6B",
+          "x": 421,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "28.6B",
+          "x": 628,
+          "y": 35,
+          "conf": 1.0
+        },
+        {
+          "text": "89.5B",
+          "x": 814,
+          "y": 34,
+          "conf": 1.0
+        },
+        {
+          "text": "1 5.2B",
+          "x": 960,
+          "y": 35,
+          "conf": 0.91
+        },
+        {
+          "text": "X115.2B",
+          "x": 258,
+          "y": 94,
+          "conf": 0.99
+        },
+        {
+          "text": "122/156",
+          "x": 558,
+          "y": 93,
+          "conf": 1.0
+        },
+        {
+          "text": "8,180,979",
+          "x": 920,
+          "y": 103,
+          "conf": 1.0
+        },
+        {
+          "text": "VIP23",
+          "x": 269,
+          "y": 144,
+          "conf": 0.99
+        },
+        {
+          "text": "the city gate!",
+          "x": 541,
+          "y": 185,
+          "conf": 0.95
+        },
+        {
+          "text": "7d 16:11-- 7d 16:12",
+          "x": 883,
+          "y": 279,
+          "conf": 0.97
+        },
+        {
+          "text": "1/2",
+          "x": 86,
+          "y": 403,
+          "conf": 1.0
+        },
+        {
+          "text": "the City.",
+          "x": 549,
+          "y": 473,
+          "conf": 0.99
+        },
+        {
+          "text": "Loaih Gifts",
+          "x": 984,
+          "y": 482,
+          "conf": 1.0
+        },
+        {
+          "text": "Quests",
+          "x": 85,
+          "y": 585,
+          "conf": 1.0
+        },
+        {
+          "text": "f",
+          "x": 992,
+          "y": 603,
+          "conf": 0.8
+        },
+        {
+          "text": "Follow Us",
+          "x": 988,
+          "y": 666,
+          "conf": 0.95
+        },
+        {
+          "text": "Event",
+          "x": 988,
+          "y": 829,
+          "conf": 1.0
+        },
+        {
+          "text": "Center",
+          "x": 985,
+          "y": 867,
+          "conf": 1.0
+        },
+        {
+          "text": "3d 15:05",
+          "x": 490,
+          "y": 953,
+          "conf": 0.93
+        },
+        {
+          "text": "Conscripts",
+          "x": 484,
+          "y": 992,
+          "conf": 0.99
+        },
+        {
+          "text": "00:03:38",
+          "x": 989,
+          "y": 1177,
+          "conf": 0.99
+        },
+        {
+          "text": "FOH",
+          "x": 935,
+          "y": 1461,
+          "conf": 0.79
+        },
+        {
+          "text": "Alliance",
+          "x": 988,
+          "y": 1516,
+          "conf": 0.97
+        },
+        {
+          "text": "300",
+          "x": 339,
+          "y": 1568,
+          "conf": 1.0
+        },
+        {
+          "text": "38",
+          "x": 1041,
+          "y": 1575,
+          "conf": 0.99
+        },
+        {
+          "text": "Mysterious",
+          "x": 300,
+          "y": 1692,
+          "conf": 0.99
+        },
+        {
+          "text": "Mail",
+          "x": 987,
+          "y": 1684,
+          "conf": 1.0
+        },
+        {
+          "text": "Valuable",
+          "x": 706,
+          "y": 1695,
+          "conf": 0.99
+        },
+        {
+          "text": "Lucky Raffle",
+          "x": 97,
+          "y": 1712,
+          "conf": 1.0
+        },
+        {
+          "text": "7d 16:12",
+          "x": 503,
+          "y": 1708,
+          "conf": 0.96
+        },
+        {
+          "text": "Realm",
+          "x": 300,
+          "y": 1727,
+          "conf": 1.0
+        },
+        {
+          "text": "Event",
+          "x": 706,
+          "y": 1729,
+          "conf": 1.0
+        },
+        {
+          "text": "golden Japanese Subs",
+          "x": 249,
+          "y": 1873,
+          "conf": 0.96
+        }
+      ]
+    }
+  ],
+  "index": {
+    "barracks_radial": {
+      "count": 5,
+      "examples": [
+        "status_afterbb.png",
+        "status_bar.png",
+        "status_dial.png"
+      ]
+    },
+    "city": {
+      "count": 12,
+      "examples": [
+        "status_assess.png",
+        "status_cleared.png",
+        "status_fresh.png"
+      ]
+    },
+    "disconnect": {
+      "count": 3,
+      "examples": [
+        "status_fa.png",
+        "status_menu.png",
+        "status_r2.png"
+      ]
+    },
+    "exit_dialog": {
+      "count": 1,
+      "examples": [
+        "status_stuck.png"
+      ]
+    },
+    "resources": {
+      "count": 1,
+      "examples": [
+        "status_modal.png"
+      ]
+    },
+    "speedup_modal": {
+      "count": 3,
+      "examples": [
+        "status_after.png",
+        "status_radial.png",
+        "status_speed.png"
+      ]
+    },
+    "training_idle": {
+      "count": 2,
+      "examples": [
+        "status_latest.png",
+        "status_tr.png"
+      ]
+    },
+    "unknown": {
+      "count": 1,
+      "examples": [
+        "status_restart.png"
+      ]
+    }
+  }
+}

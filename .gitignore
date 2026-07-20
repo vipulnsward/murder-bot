@@ -9,3 +9,4 @@ status_latest.png
 run_*.log
 .gstack/
 hls.min.js
+game_brain/screens/

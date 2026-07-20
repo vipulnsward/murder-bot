@@ -6,8 +6,10 @@ a local Android emulator (BlueStacks). It drives the game entirely through ADB i
 game API, no memory hacks, no accessibility tree (Evony is a Unity/IL2CPP app, so the
 screen is the only interface).
 
-It ran a real campaign from **685.7M → 1.0B+ T1 Warriors** unattended, and now targets
-1.5B T1 then T2 ground.
+Campaigns run so far, all unattended: **685.7M → 1.5B T1 Warriors**, then a switch to
+T2 ground that reached **500M Conscripts** (final 501,481,135; 294 batches, 8 food refills,
+0 failures). A push toward **1B** is paused at 511M — the bot is fine, but food inventory
+runs out ~544M short of 1B (see `kb/13`). Resuming to 1B is a restock problem, not a bot one.
 
 > Evony's ToS prohibits automation. Use only on a self-owned account whose risk you accept.
 
@@ -162,9 +164,13 @@ the dashboards. See `kb/11-self-healing-food-refill.md` for the full write-up.
 
 ## Notes & safety rails
 
-- **Never spends gems.** Recovery is dismiss/back-only; blind taps that once hit a gem
-  "Instant Finish" button were removed.
+- **The bot never spends gems.** Its recovery is dismiss/back-only; blind taps that once hit
+  a gem "Instant Finish" button were removed. The *one* deliberate exception is operator-run:
+  clearing a batch stranded at its full multi-day timer with Instant Finish (~4.3k gems), a
+  distinct stall from out-of-food — see `kb/12-instant-finish-recovery.md`.
 - **Never "opens all" food.** Food top-up is hard-capped.
+- **Know your ceiling.** Food, not the bot, caps how far a run reaches (~59M food/batch). The
+  batch math and the 500M→1B budget are in `kb/13-scaling-1b-resource-ceiling.md`.
 - **Stale display resync:** if the in-game resource display desyncs, a force-stop +
   relaunch (`am force-stop` / `monkey`) re-syncs it.
 - The `kb/` folder documents the game mechanics and design decisions behind these rails.

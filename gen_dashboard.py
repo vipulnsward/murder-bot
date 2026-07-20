@@ -9,13 +9,13 @@ import cv2
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 QTY = 269228
-TARGET = 2_000_000_000
-SESSION_START = 685_654_504
+TARGET = 500_000_000
+SESSION_START = 299_999_999
 
 PROFILE = {
     "name": "NeoIsTlatoani", "alliance": "NFG", "server": "K49",
     "keep": "49", "vip": "23", "power": "113.4B", "gems": "9.8M",
-    "troop": "T1 Warriors · Ground",
+    "troop": "T2 Conscripts · Ground",
 }
 
 CSS = r"""
@@ -373,16 +373,16 @@ def main():
                       chip("VIP " + P["vip"], "VIP"), chip(P["gems"], "Gems"),
                       chip(P["server"], "Server")])
     session = "".join([
-        stat("Total T1 Warriors", human(own), f"{own:,}"),
+        stat("Total T2 Conscripts", human(own), f"{own:,}"),
         stat("Batches this run", f"{batches:,}"),
         stat("Trained this run", f"+{trained_run/1e6:.1f}M"),
-        stat("Trained this session", f"+{sess/1e6:.1f}M", "since 685.7M"),
+        stat("Trained this session", f"+{sess/1e6:.1f}M", "since 300M"),
         stat("Rate", (human(rate) + "/min") if rate else "—", f"{3600/(rate/QTY):.1f}s / batch" if rate else ""),
         stat("Troops / hour", human(troops_hr) if troops_hr else "—"),
         stat("Food reserve", human(food), f"~{food_batches} batches" if food_batches else ""),
         stat("Refills this run", f"{refills}", "~2B food each"),
         stat("Run time", runtime, "this session's run"),
-        stat("ETA to 2B", f"{eta_h:.1f} h" if eta_h else "—", "at current pace"),
+        stat("ETA to 500M", f"{eta_h:.1f} h" if eta_h else "—", "at current pace"),
     ])
     shot_html = (f'<img alt="Live game" src="{shot}">' if shot
                  else '<div class="noimg">screenshot unavailable</div>')
@@ -404,15 +404,15 @@ def main():
         avatar = (f'<img class="crest" alt="NFG crest" src="{crest}">' if crest
                   else '<div class="crest"></div>')
 
-    p1 = min(own / 2_000_000_000 * 100, 100) if own else 0
+    p1 = min(own / 500_000_000 * 100, 100) if own else 0
     roadmap = f"""
  <div class="sect">{ICON_ROAD} Campaign Roadmap</div>
  <div class="road rise" style="--d:.14s">
   <div class="phase active">
    <div class="ph-top"><span class="ph-n">01</span><span class="ph-st">In progress</span></div>
-   <div class="ph-name">T1 Warriors → 2B</div>
+   <div class="ph-name">T2 Conscripts → 500M</div>
    <div class="ph-bar"><div class="ph-fill" style="width:{p1:.1f}%"></div></div>
-   <div class="ph-sub">{own:,} / 2,000,000,000 · {p1:.1f}%</div>
+   <div class="ph-sub">{own:,} / 500,000,000 · {p1:.1f}%</div>
   </div>
   <div class="phase">
    <div class="ph-top"><span class="ph-n">02</span><span class="ph-st queued">Queued</span></div>
@@ -445,8 +445,8 @@ def main():
  <div class="hero rise" style="--d:.12s" id="hero">
   <div class="bg" style="background-image:url('{banner}')"></div>
   <div class="in">
-   <div class="eyebrow">T1 Warriors mustered · goal 2,000,000,000 {badge}</div>
-   <div class="own"><span id="ownval" data-start="{start_own}" data-end="{own}">{own:,}</span><small> / 2B</small></div>
+   <div class="eyebrow">T2 Conscripts mustered · goal 500,000,000 {badge}</div>
+   <div class="own"><span id="ownval" data-start="{start_own}" data-end="{own}">{own:,}</span><small> / 500M</small></div>
    <div class="subline"><b id="togo" data-end="{to_go}">{to_go:,}</b> to go · <b>{(to_go//QTY) if to_go else 0:,}</b> batches remaining</div>
    <div class="track"><div class="fill" id="fill" style="--pct:{pct:.2f}"></div></div>
    <div class="pctrow"><span><b id="pctv" data-end="{pct:.1f}">{pct:.1f}%</b> to goal</span><span>{(human(rate)+" / min") if rate else ""}</span></div>

@@ -145,14 +145,21 @@ def default_tasks():
         # disabled until wired on a clean session (kb/26). notify -> human on no-items.
         Task("auto_shield", __import__("auto_shield").make_task(notify=_notify),
              interval=20, priority=1, enabled=False),
-        Task("gather", lambda: _stub("gather",
-             "Dispatch idle marches to L14 food tiles; needs zoom-robust map nav.")(CTX),
+        # base_dev: our niche — upgrade/research/item-speedup policy DONE + tested
+        # (base_dev.BaseDevPolicy); gem-safe (items only, never a gem finish). [LIVE-CAPTURE] perceive/act.
+        Task("base_dev", __import__("base_dev").make_task(notify=_notify),
+             interval=300, priority=20, enabled=False),
+        # gather: march-dispatch policy DONE + tested (gather.GatherPolicy); ALWAYS keeps
+        # reserved_for_rallies marches free (user constraint). [LIVE-CAPTURE] perceive/dispatch.
+        Task("gather", __import__("gather").make_task(notify=_notify),
              interval=120, priority=15, enabled=False),
-        Task("rally_join", lambda: _stub("rally_join",
-             "Join boss rallies filtered by <5min / boss-only / march-feasible.")(CTX),
+        # rally_join: join-filter policy DONE + tested (rally_join.RallyJoinPolicy); capped by
+        # idle marches. [LIVE-CAPTURE] perceive/act.
+        Task("rally_join", __import__("rally_join").make_task(notify=_notify),
              interval=60, priority=12, enabled=False),
-        Task("monster", lambda: _stub("monster",
-             "Attack monsters / auto-set boss rallies; needs map scan + presets.")(CTX),
+        # monster: target-selection policy DONE + tested (monster.MonsterPolicy); respects
+        # max_level + min_stamina_reserve. [LIVE-CAPTURE] perceive/act.
+        Task("monster", __import__("monster").make_task(notify=_notify),
              interval=90, priority=14, enabled=False),
     ]
 

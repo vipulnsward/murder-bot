@@ -51,6 +51,14 @@ def adb(*a, binary=False):
 
 
 def screencap():
+    raw = adb("exec-out", "screencap", binary=True)
+    if len(raw) >= 16:
+        w = int.from_bytes(raw[0:4], "little")
+        h = int.from_bytes(raw[4:8], "little")
+        need = w * h * 4
+        if w > 0 and h > 0 and len(raw) >= need:
+            px = np.frombuffer(raw[-need:], np.uint8).reshape(h, w, 4)
+            return cv2.cvtColor(px, cv2.COLOR_RGBA2BGR)
     raw = adb("exec-out", "screencap", "-p", binary=True)
     return cv2.imdecode(np.frombuffer(raw, np.uint8), cv2.IMREAD_COLOR)
 
@@ -309,6 +317,7 @@ def main():
     if goto_warriors() is None:
         log("warning: not on Warriors screen at start; loop will recover")
     import auto_refill
+    import watchdog
     ok_batches = 0
     topups = 0
     fails = 0
@@ -372,6 +381,13 @@ def main():
         else:
             fails += 1
             nofood = 0
+            if not watchdog.is_app_running(DEVICE):
+                log("app not running (crash?) — app refresh")
+                if auto_refill.app_refresh():
+                    fails = 0
+                    log("app refresh OK; resumed on Warriors")
+                time.sleep(1.0)
+                continue
             fimg = screencap()
             if vis(fimg, "cap_popup"):
                 tap(*CAP_CONFIRM, d=0.6)

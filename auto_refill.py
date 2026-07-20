@@ -62,30 +62,36 @@ def open_resources():
 
 
 def find_1m_food():
-    for _ in range(6):
+    for _ in range(7):
         img = cap()
         mx, _, tl = m(img, "food_1m_label")
         if mx >= 0.90:
-            return tl
+            time.sleep(0.7)  # let the list settle before trusting the position
+            mx2, _, tl2 = m(cap(), "food_1m_label")
+            return tl2 if mx2 >= 0.90 else tl
         adb("exec-out", "input", "swipe", "540", "1400", "540", "650", "500")
-        time.sleep(1.0)
+        time.sleep(1.3)
     return None
 
 
 def refill(target=TARGET_ITEMS):
     dismiss()
     open_resources()
-    tl = find_1m_food()
-    if tl is None:
+    cnt = None
+    found_any = False
+    for _ in range(3):
+        tl = find_1m_food()
+        if tl is None:
+            continue
+        found_any = True
+        tap(tl[0] + 525, tl[1] + 135, 1.6)
+        cnt = T.read_food_count(cap())
+        if cnt and cnt >= 1000:
+            break
+        tap(1010, 594, 0.4)  # close any partial modal before retrying
+    if not found_any:
         print("REFILL FAIL: 1M Food row not found")
         return False
-    tap(tl[0] + 525, tl[1] + 135, 1.5)
-    cnt = T.read_food_count(cap())
-    if not cnt or cnt < 1000:
-        tl = find_1m_food()
-        if tl:
-            tap(tl[0] + 525, tl[1] + 135, 1.5)
-            cnt = T.read_food_count(cap())
     if not cnt or cnt < 1000:
         print("REFILL FAIL: modal did not open (cnt=%s)" % cnt)
         tap(1010, 594)

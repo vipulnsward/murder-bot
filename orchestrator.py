@@ -139,8 +139,10 @@ def default_tasks():
         Task("alliance", lambda: _stub("alliance",
              "Alliance Help auto-tap + Science donation + Gift claim, every ~4h.")(CTX),
              interval=14400, priority=25, enabled=False),
-        Task("auto_shield", lambda: _stub("auto_shield",
-             "Detect incoming attack/scout -> apply shield item (3d->24h->8h). Fixed UI.")(CTX),
+        # auto_shield: decision policy is DONE + tested (auto_shield.ShieldPolicy);
+        # perceive()/apply_shield() are [LIVE-CAPTURE] stubs that fail loud -> stays
+        # disabled until wired on a clean session (kb/26). notify -> human on no-items.
+        Task("auto_shield", __import__("auto_shield").make_task(notify=_notify),
              interval=20, priority=1, enabled=False),
         Task("gather", lambda: _stub("gather",
              "Dispatch idle marches to L14 food tiles; needs zoom-robust map nav.")(CTX),

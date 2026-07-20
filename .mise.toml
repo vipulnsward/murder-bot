@@ -1,0 +1,6 @@
+[tools]
+python = "3.14"
+
+[env]
+# mise auto-activates this venv on `cd` into the project.
+_.python.venv = { path = ".venv", create = false }

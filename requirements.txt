@@ -1,0 +1,12 @@
+# Evony bot deps. Runs under mise python 3.14 (.mise.toml). The heavy ML stack
+# (mlx, mlx-vlm, opencv, rapidocr, onnxruntime, numpy, pillow) is provided by the
+# mise 3.14 global and inherited via --system-site-packages; pinned here for a
+# clean-machine rebuild:  python -m venv --system-site-packages .venv && pip install -r requirements.txt
+mlx==0.32.0
+mlx-vlm==0.6.6
+rapidocr-onnxruntime==1.2.3
+onnxruntime==1.27.0
+opencv-python==5.0.0.93
+numpy==2.5.1
+pillow==12.3.0
+pytesseract

@@ -158,14 +158,22 @@ CTX = None  # set by run()
 
 
 def run(device=DEVICE, tasks=None, max_ticks=None, logger=print,
-        llm_fallback=False, stuck_threshold=6, macro="default", idle_cap_s=None):
+        llm_fallback=False, stuck_threshold=6, macro="default", idle_cap_s=None,
+        watchdog=True):
     """Main loop. STOPS on the account-disconnect screen (never taps Quit/Restart).
     max_ticks bounds the loop for tests; None = run forever. If llm_fallback is on,
     a stuck deterministic layer escalates to the LLM vision agent (costs credits).
 
     `macro` gates activity to a plausible human rhythm (kb/30): during a scheduled
     sleep block or micro-break the loop idles WITHOUT tapping. Pass "default" for a
-    fresh MacroSchedule, an instance to customize, or False/None to run 24/7."""
+    fresh MacroSchedule, an instance to customize, or False/None to run 24/7.
+
+    `watchdog` (on by default) feeds each frame to the crash/stuck detector; on a
+    real crash (app process gone) or `fail_threshold` consecutive off-anchor frames
+    it recovers via app_refresh + notify. NOTE: recovery-on-stuck is safe while the
+    only live task is training (which stays on known anchor screens); revisit the
+    off-anchor threshold before enabling map/alliance tasks that visit un-anchored
+    screens, so a legit unrecognized screen isn't force-restarted."""
     global CTX
     CTX = Ctx(device, logger)
     if macro == "default":
@@ -175,7 +183,7 @@ def run(device=DEVICE, tasks=None, max_ticks=None, logger=print,
     for t in (tasks or default_tasks()):
         if t.enabled:
             sched.add(t)
-    watch = wd.Watchdog(device, grab_fn=CTX.screencap)
+    watch = wd.Watchdog(device, grab_fn=CTX.screencap) if watchdog else None
     CTX.log(f"orchestrator: {len([t for t in (tasks or default_tasks()) if t.enabled])} task(s) enabled"
             + (" + LLM fallback" if llm_fallback else ""))
 
@@ -201,6 +209,13 @@ def run(device=DEVICE, tasks=None, max_ticks=None, logger=print,
             CTX.log("DISCONNECT (account taken — likely easy-bot.club). Stopping; will NOT tap.")
             _notify("DISCONNECT — account taken (easy-bot.club?). Stopped; will NOT tap Quit/Restart.", "alert")
             return "disconnect"
+        if watch is not None and watch.observe(img, app_running=True) == "RECOVER":
+            running = wd.is_app_running(device)
+            CTX.log(f"watchdog: {'app process gone' if not running else 'stuck off known screens'} — recovering (app_refresh).")
+            _notify("Watchdog recovering the game (crash/stuck).", "warn")
+            watch.recover()
+            stuck = 0
+            continue
         try:
             ran = sched.run_due()
             stuck = 0 if ran else stuck
@@ -233,7 +248,7 @@ if __name__ == "__main__":
     import os
 
     # dry-run tests of run() itself: fake device I/O (no ADB, no real taps),
-    # verify (A) macro gating idles without acting and (B) the disconnect guard.
+    # verify (A) macro gating idles, (B) the disconnect guard, (C) watchdog recovery.
     os.environ["EVONY_NOTIFY_MAC"] = "0"   # don't fire real banners during the test
 
     import fast_screenshot as FS
@@ -246,7 +261,20 @@ if __name__ == "__main__":
         return "DISCONNECT_FRAME" if grabs["n"] >= 4 else "OK_FRAME"
     FS.grab = fake_grab
     F.is_disconnect = lambda img, min_score=0.85: img == "DISCONNECT_FRAME"
-    W.Watchdog = lambda *a, **k: type("W", (), {"tick": lambda s: "ok"})()
+
+    def stub_watchdog(observe_states):
+        """Fake Watchdog: yields the given observe() results in order (then 'ok'), counts recover()."""
+        st = {"i": 0, "recoveries": 0}
+        def observe(self, img, app_running=True):
+            r = observe_states[st["i"]] if st["i"] < len(observe_states) else "ok"
+            st["i"] += 1
+            return r
+        def recover(self):
+            st["recoveries"] += 1
+            return True
+        W.Watchdog = lambda *a, **k: type("W", (), {"observe": observe, "recover": recover})()
+        return st
+    stub_watchdog([])   # default: always healthy
 
     trains = {"n": 0}
     def fake_train(ctx):
@@ -268,10 +296,20 @@ if __name__ == "__main__":
         def state(self, now=None): return ("active", 100.0)
         def idle_sleep_s(self, now=None): return 0.0
     grabs["n"] = trains["n"] = 0
+    st = stub_watchdog([])   # healthy every tick
     rb = run(max_ticks=20, tasks=tasks, macro=ActiveMacro(), logger=lambda m: None)
-    b_ok = rb == "disconnect" and trains["n"] >= 1 and grabs["n"] >= 1
-    print(f"B macro=active -> result={rb} screencaps={grabs['n']} trains={trains['n']} ok={b_ok}")
+    b_ok = rb == "disconnect" and trains["n"] >= 1 and grabs["n"] >= 1 and st["recoveries"] == 0
+    print(f"B macro=active -> result={rb} screencaps={grabs['n']} trains={trains['n']} recoveries={st['recoveries']} ok={b_ok}")
 
-    ok = a_ok and b_ok
+    # C) watchdog says RECOVER on tick 1 -> recover() fires, NO training that tick (loop continues).
+    W.is_app_running = lambda *a, **k: False    # app "gone"
+    grabs["n"] = trains["n"] = 0
+    st = stub_watchdog(["RECOVER"])             # first observe -> RECOVER, then healthy
+    rc = run(max_ticks=6, tasks=tasks, macro=ActiveMacro(), logger=lambda m: None)
+    # tick1 recovers (no train); ticks 2-3 healthy+train; tick4 disconnect frame -> stop
+    c_ok = rc == "disconnect" and st["recoveries"] == 1
+    print(f"C watchdog RECOVER -> result={rc} recoveries={st['recoveries']} trains={trains['n']} ok={c_ok}")
+
+    ok = a_ok and b_ok and c_ok
     print("SELF-TEST:", "PASS" if ok else "FAIL")
     raise SystemExit(0 if ok else 1)

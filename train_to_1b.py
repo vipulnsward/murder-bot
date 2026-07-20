@@ -376,14 +376,19 @@ def main():
                 fails = max(0, fails - 1)
                 continue
             if fails in (3, 6):
-                log(f"stuck ({fails} fails, r={r}) — auto-refill #{topups+1} (likely out of food)")
-                if auto_refill.refill(target=2000) and auto_refill.to_warriors():
-                    topups += 1
-                    fails = 0
-                    log("auto-refill OK; resumed on Warriors")
-                else:
+                food = read_food_topbar(fimg)
+                if food is not None and food > 300_000_000:
+                    log(f"stuck ({fails} fails) but food ~{food/1e9:.2f}B present — nav recovery (no refill)")
                     auto_refill.to_warriors()
-                    log("auto-refill failed; will retry")
+                else:
+                    log(f"stuck ({fails} fails, r={r}) — auto-refill #{topups+1} (food low/unknown)")
+                    if auto_refill.refill(target=2000) and auto_refill.to_warriors():
+                        topups += 1
+                        fails = 0
+                        log("auto-refill OK; resumed on Warriors")
+                    else:
+                        auto_refill.to_warriors()
+                        log("auto-refill failed; will retry")
             elif fails == 8:
                 log("still stuck — app refresh (force-stop + relaunch) last resort")
                 if auto_refill.app_refresh():

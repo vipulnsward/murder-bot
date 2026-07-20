@@ -40,8 +40,52 @@ class Ctx:
     def screencap(self):
         return fast_screenshot.grab(self.device)
 
+    def tap(self, x, y, d=0.3):
+        import subprocess
+        subprocess.run(["adb", "-s", self.device, "shell", "input", "tap", str(int(x)), str(int(y))])
+        time.sleep(d)
+
+    def swipe(self, x1, y1, x2, y2, ms=400, d=0.3):
+        import subprocess
+        subprocess.run(["adb", "-s", self.device, "shell", "input", "swipe",
+                        *map(lambda v: str(int(v)), (x1, y1, x2, y2, ms))])
+        time.sleep(d)
+
+    def back(self, d=0.9):
+        import subprocess
+        subprocess.run(["adb", "-s", self.device, "shell", "input", "keyevent", "4"])
+        time.sleep(d)
+
     def log(self, msg):
         self._log(f"[{time.strftime('%H:%M:%S')}] {msg}")
+
+
+def llm_resolve(ctx, img, goal="reach the training screen"):
+    """Escalate a stuck/unknown state to the LLM vision fallback (opt-in; costs
+    API credits). Executes the ONE safe action it returns and logs the decision
+    for later KB distillation. Returns the action dict, or None if unavailable."""
+    try:
+        import json
+        import llm_agent
+        act = llm_agent.decide(img, goal=goal)
+    except Exception as e:
+        ctx.log(f"llm_resolve unavailable: {e!r}")
+        return None
+    ctx.log(f"llm: {act.get('action')} ({act.get('reason','')[:60]})")
+    a = act.get("action")
+    if a == "tap" and act.get("x") is not None:
+        ctx.tap(act["x"], act["y"])
+    elif a == "swipe" and act.get("x2") is not None:
+        ctx.swipe(act["x"], act["y"], act["x2"], act["y2"])
+    elif a == "back":
+        ctx.back()
+    # tap "stop"/"done"/"wait" are non-actions here (caller decides)
+    try:
+        with open("llm_decisions.jsonl", "a") as f:
+            f.write(json.dumps({"t": time.strftime("%H:%M:%S"), **act}) + "\n")
+    except Exception:
+        pass
+    return act
 
 
 class NotReady(Exception):
@@ -97,9 +141,11 @@ def default_tasks():
 CTX = None  # set by run()
 
 
-def run(device=DEVICE, tasks=None, max_ticks=None, logger=print):
+def run(device=DEVICE, tasks=None, max_ticks=None, logger=print,
+        llm_fallback=False, stuck_threshold=6):
     """Main loop. STOPS on the account-disconnect screen (never taps Quit/Restart).
-    max_ticks bounds the loop for tests; None = run forever."""
+    max_ticks bounds the loop for tests; None = run forever. If llm_fallback is on,
+    a stuck deterministic layer escalates to the LLM vision agent (costs credits)."""
     global CTX
     CTX = Ctx(device, logger)
     sched = Scheduler()
@@ -107,9 +153,11 @@ def run(device=DEVICE, tasks=None, max_ticks=None, logger=print):
         if t.enabled:
             sched.add(t)
     watch = wd.Watchdog(device, grab_fn=CTX.screencap)
-    CTX.log(f"orchestrator: {len([t for t in (tasks or default_tasks()) if t.enabled])} task(s) enabled")
+    CTX.log(f"orchestrator: {len([t for t in (tasks or default_tasks()) if t.enabled])} task(s) enabled"
+            + (" + LLM fallback" if llm_fallback else ""))
 
     ticks = 0
+    stuck = 0
     while max_ticks is None or ticks < max_ticks:
         ticks += 1
         img = CTX.screencap()
@@ -118,9 +166,20 @@ def run(device=DEVICE, tasks=None, max_ticks=None, logger=print):
             return "disconnect"
         try:
             ran = sched.run_due()
+            stuck = 0 if ran else stuck
         except Exception as e:
-            CTX.log(f"task error: {e!r}")
+            stuck += 1
+            CTX.log(f"task not ready ({stuck}/{stuck_threshold}): {e}")
             ran = None
+        if stuck >= stuck_threshold:
+            if llm_fallback:
+                act = llm_resolve(CTX, img)
+                if act and act.get("action") == "stop":
+                    CTX.log("LLM said stop — halting for human/deterministic.")
+                    return "stopped"
+            else:
+                CTX.log("stuck; LLM fallback off — deterministic recovery only.")
+            stuck = 0
         if ran is None:
             nxt = sched.seconds_until_next() or 0.5
             time.sleep(min(nxt, 1.0))

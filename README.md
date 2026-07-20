@@ -29,6 +29,10 @@ inventory reaches only ~629M (spending 1M-Food + the spendable **Safe Food** sta
 | `gen_dashboard.py` | Renders `evony_status.html` — a branded live status dashboard (progress to target, rate, ETA, screenshot). |
 | `live_stream.py` | MJPEG live stream of the emulator screen on `:8088` + a `/stats` JSON endpoint (re-OCRs the count every 10s). |
 | `hls_stream.sh` | H.264 HLS variant of the stream (`adb screenrecord \| ffmpeg`) for smoother HD over a tunnel. |
+| `fast_screenshot.py` | Screenshot transport. Raw `screencap`→NumPy (no PNG encode/decode) — **2.4× faster** than `screencap -p` (201ms vs 476ms), no screenrecord conflict with the HLS stream. `grab(method="raw")` with a PNG fallback. |
+| `scheduler.py` | ALAS-style time-based task scheduler: tasks carry a `next_run` + interval + priority; `run_due()` runs the most-due, highest-priority task and reschedules it (so refill preempts routine ticks). Clock-injectable; a thrown task is caught and retried. |
+| `watchdog.py` | Crash/stuck detector: recovers when the app process is gone or N consecutive frames match no known screen anchor. Recovery is injectable (defaults to `auto_refill.app_refresh`). |
+| `infra_demo.py` | Live smoke test wiring `scheduler` + `fast_screenshot` + `watchdog` together against the device. |
 | `templates/` | Click-proof PNG templates for each UI element (train button, speedup button, popups, barracks, etc.). |
 | `kb/` | Researched knowledge base on Evony combat, resources, tasks, botting, buffs, self-healing. |
 

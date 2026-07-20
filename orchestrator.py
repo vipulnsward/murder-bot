@@ -56,15 +56,24 @@ class Ctx:
     def back(self, d=0.9):
         import subprocess
         subprocess.run(["adb", "-s", self.device, "shell", "input", "keyevent", "4"])
-        time.sleep(time_module_uniform(d))
-
-
-def time_module_uniform(d):
-    import random
-    return max(0.0, d + random.uniform(-0.15, 0.35))
+        time.sleep(_human_pause(d))
 
     def log(self, msg):
         self._log(f"[{time.strftime('%H:%M:%S')}] {msg}")
+
+
+def _human_pause(d):
+    import random
+    return max(0.0, d + random.uniform(-0.15, 0.35))
+
+
+def _notify(msg, level="info"):
+    """Best-effort push alert (macOS banner + any configured Slack/Discord). Never raises."""
+    try:
+        import notify
+        notify.notify(msg, level=level)
+    except Exception:
+        pass
 
 
 def llm_resolve(ctx, img, goal="reach the training screen"):
@@ -170,6 +179,7 @@ def run(device=DEVICE, tasks=None, max_ticks=None, logger=print,
         img = CTX.screencap()
         if screen_fsm.is_disconnect(img):
             CTX.log("DISCONNECT (account taken — likely easy-bot.club). Stopping; will NOT tap.")
+            _notify("DISCONNECT — account taken (easy-bot.club?). Stopped; will NOT tap Quit/Restart.", "alert")
             return "disconnect"
         try:
             ran = sched.run_due()
@@ -179,6 +189,7 @@ def run(device=DEVICE, tasks=None, max_ticks=None, logger=print,
             cause = getattr(e, "cause", e)
             if isinstance(cause, humanize.TooManyClicks):
                 CTX.log(f"SELF-DETECTED BOT-TELL ({cause}) — pausing for human (kb/30 fail-safe).")
+                _notify(f"Self-detected bot-tell ({cause}) — paused for human.", "alert")
                 return "stopped"
             stuck += 1
             CTX.log(f"task not ready ({stuck}/{stuck_threshold}): {e}")

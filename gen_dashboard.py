@@ -9,7 +9,7 @@ import cv2
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 QTY = 269228
-TARGET = 1_500_000_000
+TARGET = 2_000_000_000
 SESSION_START = 685_654_504
 
 PROFILE = {
@@ -36,6 +36,8 @@ body{background:#070d18;color:#ece4cf;font-family:system-ui,-apple-system,"Segoe
 @keyframes rise{to{opacity:1;transform:none}}
 .top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
 .crest{width:58px;height:58px;border-radius:12px;object-fit:cover;border:1px solid var(--line);box-shadow:0 6px 22px rgba(0,0,0,.5)}
+.logo{width:52px;height:52px;border-radius:12px;object-fit:cover;flex:0 0 auto;
+ border:1px solid rgba(230,197,104,.55);box-shadow:0 6px 22px rgba(0,0,0,.5),0 0 18px rgba(230,197,104,.25)}
 .ava{position:relative;width:64px;height:64px;flex:0 0 auto}
 .portrait{width:64px;height:64px;border-radius:14px;object-fit:cover;border:1px solid rgba(230,197,104,.5);
  box-shadow:0 6px 22px rgba(0,0,0,.55)}
@@ -347,6 +349,18 @@ def main():
     P = PROFILE
     trained_run = batches * QTY
     start_own = max(own - trained_run, int(own * 0.985))
+    refills = 0
+    run_secs = 0
+    if log:
+        _txt = open(log).read()
+        refills = _txt.count("auto-refill OK")
+        _ts = re.findall(r"\[(\d\d:\d\d:\d\d)\]", _txt)
+        if len(_ts) >= 2:
+            _a = datetime.datetime.strptime(_ts[0], "%H:%M:%S")
+            _b = datetime.datetime.strptime(_ts[-1], "%H:%M:%S")
+            run_secs = max((_b - _a).total_seconds(), 0)
+    troops_hr = rate * 60 if rate else None
+    runtime = f"{int(run_secs // 3600)}h {int((run_secs % 3600) // 60)}m" if run_secs else "—"
 
     def chip(v, l):
         return f'<div class="chip"><span class="cv">{v}</span><span class="cl">{l}</span></div>'
@@ -359,18 +373,28 @@ def main():
                       chip("VIP " + P["vip"], "VIP"), chip(P["gems"], "Gems"),
                       chip(P["server"], "Server")])
     session = "".join([
+        stat("Total T1 Warriors", human(own), f"{own:,}"),
         stat("Batches this run", f"{batches:,}"),
         stat("Trained this run", f"+{trained_run/1e6:.1f}M"),
         stat("Trained this session", f"+{sess/1e6:.1f}M", "since 685.7M"),
         stat("Rate", (human(rate) + "/min") if rate else "—", f"{3600/(rate/QTY):.1f}s / batch" if rate else ""),
+        stat("Troops / hour", human(troops_hr) if troops_hr else "—"),
         stat("Food reserve", human(food), f"~{food_batches} batches" if food_batches else ""),
-        stat("ETA to 1.5B", f"{eta_h:.1f} h" if eta_h else "—", "at current pace"),
+        stat("Refills this run", f"{refills}", "~2B food each"),
+        stat("Run time", runtime, "this session's run"),
+        stat("ETA to 2B", f"{eta_h:.1f} h" if eta_h else "—", "at current pace"),
     ])
     shot_html = (f'<img alt="Live game" src="{shot}">' if shot
                  else '<div class="noimg">screenshot unavailable</div>')
     warn_html = ('<div class="warn">⚠ Food reserve under 600M — an automated resupply is due shortly.</div>'
                  if warn else "")
-    badge = ('<span class="badge">★ 1B reached</span>' if past1b else "")
+    if own >= 1_500_000_000:
+        badge = '<span class="badge">★ 1.5B reached</span>'
+    elif past1b:
+        badge = '<span class="badge">★ 1B reached</span>'
+    else:
+        badge = ""
+    logo = f'<img class="logo" alt="NFG crest" src="{crest}">' if crest else ""
     mon = asset("avatar_b64.txt")
     if mon:
         avatar = (f'<div class="ava"><img class="portrait" alt="Monarch" src="{mon}">'
@@ -380,15 +404,15 @@ def main():
         avatar = (f'<img class="crest" alt="NFG crest" src="{crest}">' if crest
                   else '<div class="crest"></div>')
 
-    p1 = min(own / 1_500_000_000 * 100, 100) if own else 0
+    p1 = min(own / 2_000_000_000 * 100, 100) if own else 0
     roadmap = f"""
  <div class="sect">{ICON_ROAD} Campaign Roadmap</div>
  <div class="road rise" style="--d:.14s">
   <div class="phase active">
    <div class="ph-top"><span class="ph-n">01</span><span class="ph-st">In progress</span></div>
-   <div class="ph-name">T1 Warriors → 1.5B</div>
+   <div class="ph-name">T1 Warriors → 2B</div>
    <div class="ph-bar"><div class="ph-fill" style="width:{p1:.1f}%"></div></div>
-   <div class="ph-sub">{own:,} / 1,500,000,000 · {p1:.1f}%</div>
+   <div class="ph-sub">{own:,} / 2,000,000,000 · {p1:.1f}%</div>
   </div>
   <div class="phase">
    <div class="ph-top"><span class="ph-n">02</span><span class="ph-st queued">Queued</span></div>
@@ -406,6 +430,7 @@ def main():
     body = f"""<canvas id="core"></canvas><div class="scrim"></div>
 <div class="wrap">
  <div class="top rise" style="--d:0s">
+  {logo}
   {avatar}
   <div class="brand">
    <div class="name serif">{P['name']}</div>
@@ -420,8 +445,8 @@ def main():
  <div class="hero rise" style="--d:.12s" id="hero">
   <div class="bg" style="background-image:url('{banner}')"></div>
   <div class="in">
-   <div class="eyebrow">T1 Warriors mustered · goal 1,500,000,000 {badge}</div>
-   <div class="own"><span id="ownval" data-start="{start_own}" data-end="{own}">{own:,}</span><small> / 1.5B</small></div>
+   <div class="eyebrow">T1 Warriors mustered · goal 2,000,000,000 {badge}</div>
+   <div class="own"><span id="ownval" data-start="{start_own}" data-end="{own}">{own:,}</span><small> / 2B</small></div>
    <div class="subline"><b id="togo" data-end="{to_go}">{to_go:,}</b> to go · <b>{(to_go//QTY) if to_go else 0:,}</b> batches remaining</div>
    <div class="track"><div class="fill" id="fill" style="--pct:{pct:.2f}"></div></div>
    <div class="pctrow"><span><b id="pctv" data-end="{pct:.1f}">{pct:.1f}%</b> to goal</span><span>{(human(rate)+" / min") if rate else ""}</span></div>

@@ -159,7 +159,7 @@ CTX = None  # set by run()
 
 def run(device=DEVICE, tasks=None, max_ticks=None, logger=print,
         llm_fallback=False, stuck_threshold=6, macro="default", idle_cap_s=None,
-        watchdog=True):
+        watchdog=True, should_stop=None):
     """Main loop. STOPS on the account-disconnect screen (never taps Quit/Restart).
     max_ticks bounds the loop for tests; None = run forever. If llm_fallback is on,
     a stuck deterministic layer escalates to the LLM vision agent (costs credits).
@@ -192,6 +192,9 @@ def run(device=DEVICE, tasks=None, max_ticks=None, logger=print,
     last_macro = None
     while max_ticks is None or ticks < max_ticks:
         ticks += 1
+        if should_stop is not None and should_stop():
+            CTX.log("stop requested (signal/human) — halting cleanly.")
+            return "stopped"
         if macro:
             mstate = macro.state()[0]
             if mstate != "active":

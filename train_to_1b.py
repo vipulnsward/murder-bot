@@ -85,7 +85,7 @@ def ocr(img, box, wl):
     x1, y1, x2, y2, = box
     g = cv2.cvtColor(img[y1:y2, x1:x2], cv2.COLOR_BGR2GRAY)
     g = cv2.resize(g, None, fx=2.5, fy=2.5, interpolation=cv2.INTER_CUBIC)
-    inv = cv2.THRESH_BINARY_INV if box == M_COUNT else cv2.THRESH_BINARY
+    inv = cv2.THRESH_BINARY_INV if box in (M_COUNT, OWN_REGION) else cv2.THRESH_BINARY
     _, t = cv2.threshold(g, 0, 255, inv + cv2.THRESH_OTSU)
     cv2.imwrite(os.path.join(HERE, "_t.png"), t)
     return subprocess.run(["tesseract", os.path.join(HERE, "_t.png"), "stdout",
@@ -141,7 +141,9 @@ def read_food_topbar(img):
 
 def on_warriors_idle(img=None):
     img = img if img is not None else screencap()
-    return vis(img, "warriors_title") and vis(img, "train_btn_idle"), img
+    # tier-agnostic: the green Train button is the reliable idle signal for any
+    # troop tier (T1 "Warriors", T2 "Conscripts", ...). The title text differs per tier.
+    return vis(img, "train_btn_idle"), img
 
 
 def to_city():

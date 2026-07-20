@@ -121,10 +121,17 @@ def refill(target=TARGET_ITEMS):
     return True
 
 
+def on_training(img):
+    # tier-agnostic training screen: green Train button (idle), or Finish-All (busy),
+    # or the tier banner. warriors_title only matches T1; T2+ have different titles.
+    return (m(img, "train_btn_idle")[0] > 0.9 or m(img, "speedup_btn")[0] > 0.9
+            or m(img, "warriors_title")[0] > 0.9)
+
+
 def to_warriors():
     for _ in range(4):
         img = cap()
-        if m(img, "warriors_title")[0] > 0.9 or m(img, "speedup_btn")[0] > 0.9:
+        if on_training(img):
             return True
         if m(img, "exit_dialog")[0] > 0.9:
             tap(360, 1134, 0.8)
@@ -135,10 +142,12 @@ def to_warriors():
             rmx, rc, _ = m(cap(), "radial_train")
             if rmx > 0.85:
                 tap(rc[0], rc[1], 1.6)
+            else:
+                tap(355, 690, 1.6)  # "View" crossed-swords fallback
             continue
         adb("exec-out", "input", "keyevent", "4")
         time.sleep(1.1)
-    return m(cap(), "warriors_title")[0] > 0.9
+    return on_training(cap())
 
 
 PKG = "com.topgamesinc.evony.flexion"
@@ -152,7 +161,7 @@ def app_refresh():
     for _ in range(12):
         time.sleep(5)
         img = cap()
-        if m(img, "warriors_title")[0] > 0.9 or m(img, "barracks_bldg")[0] > 0.85:
+        if on_training(img) or m(img, "barracks_bldg")[0] > 0.85:
             break
         if m(img, "exit_dialog")[0] > 0.9:
             tap(360, 1134, 0.8)

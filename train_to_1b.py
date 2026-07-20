@@ -314,10 +314,11 @@ def main():
     a = ap.parse_args()
     target = a.target
     log(f"target={target:,} qty={TRAIN_QTY:,} food_target={FOOD_TARGET}")
-    if goto_warriors() is None:
-        log("warning: not on Warriors screen at start; loop will recover")
     import auto_refill
     import watchdog
+    import screen_fsm
+    if screen_fsm.try_ensure_training(screencap, tap, back) not in screen_fsm.READY:
+        log("warning: not on Warriors screen at start; loop will recover")
     ok_batches = 0
     topups = 0
     fails = 0
@@ -327,6 +328,9 @@ def main():
         cyc += 1
         do_check = (cyc % 10 == 1)
         img = screencap()
+        if screen_fsm.is_disconnect(img):
+            log("DISCONNECT: someone logged in with the account. Stopping — will NOT tap Quit/Restart. Check the account.")
+            break
         idle = on_warriors_idle(img)[0]
         if fails >= 10:
             log(f"STOP: {fails} consecutive failures — needs a human look."); break
@@ -395,11 +399,8 @@ def main():
                 continue
             if fails in (3, 6):
                 food = read_food_topbar(fimg)
-                if food is not None and food > 300_000_000:
-                    log(f"stuck ({fails} fails) but food ~{food/1e9:.2f}B present — nav recovery (no refill)")
-                    auto_refill.to_warriors()
-                else:
-                    log(f"stuck ({fails} fails, r={r}) — auto-refill #{topups+1} (food low/unknown)")
+                if food is not None and food <= 300_000_000:
+                    log(f"stuck ({fails} fails) — food ~{food/1e6:.0f}M low, auto-refill #{topups+1}")
                     if auto_refill.refill(target=2000) and auto_refill.to_warriors():
                         topups += 1
                         fails = 0
@@ -407,13 +408,17 @@ def main():
                     else:
                         auto_refill.to_warriors()
                         log("auto-refill failed; will retry")
+                else:
+                    where = f"~{food/1e9:.2f}B present" if food else "unreadable (off-screen)"
+                    log(f"stuck ({fails} fails, r={r}) — food {where}, FSM nav recovery (no refill)")
+                    screen_fsm.try_ensure_training(screencap, tap, back)
             elif fails == 8:
                 log("still stuck — app refresh (force-stop + relaunch) last resort")
                 if auto_refill.app_refresh():
                     fails = 0
                     log("app refresh OK; resumed on Warriors")
             else:
-                auto_refill.to_warriors()
+                screen_fsm.try_ensure_training(screencap, tap, back)
             time.sleep(1.2)
     log(f"ended: {ok_batches} batches, {topups} food top-ups (~{ok_batches*TRAIN_QTY:,} troops).")
 

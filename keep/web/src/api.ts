@@ -218,6 +218,7 @@ export interface CityMap {
   ok: boolean
   stats: { screens?: number; captures?: number; elements?: number }
   buildings: string[]
+  priority?: { found: string[]; missing: string[]; total: number }
 }
 
 export type ControlAction = 'start' | 'pause' | 'resume' | 'panic_stop' | 'reclaim_session'

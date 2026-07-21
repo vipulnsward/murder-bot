@@ -71,6 +71,20 @@ export function Dashboard() {
             <div className="rounded-lg border border-border bg-surface-2 py-3"><p className="text-[10px] uppercase tracking-wide text-muted">Screens</p><p className="mt-0.5 font-mono text-xl font-semibold tabular-nums">{city.data?.stats?.screens ?? '—'}</p></div>
             <div className="rounded-lg border border-border bg-surface-2 py-3"><p className="text-[10px] uppercase tracking-wide text-muted">Captures</p><p className="mt-0.5 font-mono text-xl font-semibold tabular-nums">{city.data?.stats?.captures ?? '—'}</p></div>
           </div>
+          {city.data?.priority ? (
+            <div className="mt-4">
+              <div className="mb-1.5 flex items-center justify-between text-xs">
+                <span className="uppercase tracking-wide text-muted">Key buildings</span>
+                <span className="font-mono tabular-nums text-muted">{city.data.priority.found.length}/{city.data.priority.total}</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-surface-2">
+                <div className="h-full rounded-full bg-good transition-[width] duration-500" style={{ width: `${city.data.priority.total ? (city.data.priority.found.length / city.data.priority.total) * 100 : 0}%` }} />
+              </div>
+              {city.data.priority.missing.length ? (
+                <p className="mt-1.5 text-xs text-muted">Still hunting: <span className="text-warn">{city.data.priority.missing.map((b) => b.replace(/_/g, ' ')).join(', ')}</span></p>
+              ) : <p className="mt-1.5 text-xs text-good">All key buildings mapped ✓</p>}
+            </div>
+          ) : null}
           {city.data?.buildings?.length ? (
             <div className="mt-4 flex flex-wrap gap-2">
               {city.data.buildings.map((b) => (

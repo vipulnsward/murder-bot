@@ -200,7 +200,21 @@ def create_app(bridge: ControlBridge | None = None) -> FastAPI:
             )
         except Exception as exc:
             return {"ok": False, "error": str(exc), "stats": {}, "buildings": []}
-        return {"ok": True, "stats": stats, "buildings": buildings}
+        try:
+            import live_map
+
+            priority = list(live_map.PRIORITY)
+        except Exception:
+            priority = []
+        have = set(buildings)
+        found = [b for b in priority if b in have]
+        missing = [b for b in priority if b not in have]
+        return {
+            "ok": True,
+            "stats": stats,
+            "buildings": buildings,
+            "priority": {"found": found, "missing": missing, "total": len(priority)},
+        }
 
     @app.get("/api/screen.mjpeg")
     def screen_mjpeg() -> StreamingResponse:

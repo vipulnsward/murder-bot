@@ -1,12 +1,12 @@
-# Keep Console — implementation-ready spec
+# Murder Bot — implementation-ready spec
 
 > Companion to **CONTROL_APP_PLAN.md**. That doc sets direction; this one is the buildable
 > spec: the exact config schema, the API contract, the control bridge, the frontend tree,
 > the design system, and a phased ticket backlog. Nothing here changes the plan's decisions
 > (FastAPI + React/TS/Vite + Tailwind/shadcn + WebSocket, single `config.yaml`, gem-lock
-> surfaced and LOCKED, "Keep Console" naming). It makes them concrete.
+> surfaced and LOCKED, "Murder Bot" naming). It makes them concrete.
 
-**Working name:** Keep Console. **Runtime:** Python 3.14 in the repo `.venv` (mise), reusing
+**Working name:** Murder Bot. **Runtime:** Python 3.14 in the repo `.venv` (mise), reusing
 the existing modules directly. **Bind:** `127.0.0.1` by default; remote only via the existing
 Cloudflare tunnel with auth.
 
@@ -940,7 +940,7 @@ the linchpin and independently improves the bot.
    P1 so nothing has to be re-modeled later.*
 3. **Access** — local-only vs. remote via the Cloudflare tunnel with auth. *Local-only P1;* remote
    + auth is `P3-08` and must never be unauthenticated.
-4. **Name** — *Keep Console* (assumed).
+4. **Name** — *Murder Bot* (assumed).
 
 ### New risks surfaced (with mitigations)
 

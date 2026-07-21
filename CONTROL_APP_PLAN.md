@@ -1,11 +1,11 @@
-# Keep Console — management app plan (design only, not implemented)
+# Murder Bot — management app plan (design only, not implemented)
 
 A local web app to **run, configure, observe, and debug** the Evony bot — the ESB /
 easy-bot.club style control panel, but for our own gem-safe local bot. View and edit
 every config, toggle features, watch the live screen, tail logs, and use the vision
 tools that accelerate live-wiring. Feature-rich, simple, and nice to look at.
 
-> Working name: **Keep Console** (the Keep is Evony's command center). Alt: *Suzerain*.
+> Working name: **Murder Bot** (the Keep is Evony's command center). Alt: *Suzerain*.
 
 ---
 
@@ -165,7 +165,7 @@ config.yaml
 1. **Frontend:** React SPA (rich, recommended) vs. HTMX/Alpine (simpler, less JS)?
 2. **Scope now:** single-account console first, or design Fleet/multi-account in from P1?
 3. **Access:** local-only, or remote via the miru.so Cloudflare tunnel (needs auth) from the start?
-4. **Name:** *Keep Console*, *Suzerain*, or your pick?
+4. **Name:** *Murder Bot*, *Suzerain*, or your pick?
 
 *This is a plan only — nothing here is implemented. The config-centralization refactor (§4) is
 the first real step and also independently improves the bot.*

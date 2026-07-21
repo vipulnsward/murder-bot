@@ -1,4 +1,4 @@
-"""FastAPI server for the local Keep Console."""
+"""FastAPI server for the local Murder Bot."""
 
 from __future__ import annotations
 
@@ -41,7 +41,7 @@ def create_app(bridge: ControlBridge | None = None) -> FastAPI:
     def stream_owned_frame() -> None:
         return None
 
-    app = FastAPI(title="Keep Console")
+    app = FastAPI(title="Murder Bot")
     app.state.bridge = active
     app.state.stream = stream
     app.add_middleware(
@@ -295,7 +295,7 @@ def create_app(bridge: ControlBridge | None = None) -> FastAPI:
     else:
         @app.get("/")
         def root() -> dict[str, str]:
-            return {"message": "Keep Console frontend is not built"}
+            return {"message": "Murder Bot frontend is not built"}
 
     return app
 

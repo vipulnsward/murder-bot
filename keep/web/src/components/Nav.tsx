@@ -17,7 +17,7 @@ const items = [
 export function Nav() {
   return (
     <nav aria-label="Primary" className="fixed inset-y-0 left-0 z-30 flex w-rail flex-col items-center border-r border-border bg-surface py-2">
-      <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-accent font-bold text-[#07111f]" title="Keep Console">
+      <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-accent font-bold text-[#07111f]" title="Murder Bot">
         K
       </div>
       {items.map(([to, icon, label, enabled]) => enabled ? (

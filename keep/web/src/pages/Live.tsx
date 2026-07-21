@@ -71,7 +71,7 @@ export function Live() {
         <div><p className="eyebrow">Observe</p><h1>Live</h1></div>
         <span className={`text-sm ${noSignal ? 'text-warn' : 'text-good'}`}>{fallback ? 'MJPEG fallback' : noSignal ? 'No signal' : 'H.264 live'}</span>
       </div>
-      {stream.isError && <div className="offline-banner">Backend unavailable. The stream will reconnect when Keep Console returns.</div>}
+      {stream.isError && <div className="offline-banner">Backend unavailable. The stream will reconnect when Murder Bot returns.</div>}
       {stream.data?.error && <div className="error-banner">{stream.data.error}</div>}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
         <section className="card relative min-h-64 overflow-hidden p-0 md:p-0">

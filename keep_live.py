@@ -1,4 +1,4 @@
-"""Run Keep Console locally with a LIVE emulator frame source.
+"""Run Murder Bot locally with a LIVE emulator frame source.
 
 Serves the full app (Dashboard/Tasks/Config/Generals/Knowledge/Live/...) on :8000
 with the Live view streaming the real emulator via adb screencap -> JPEG. This is

@@ -1,4 +1,4 @@
-"""Thread-safe lifecycle bridge between Keep Console and the orchestrator."""
+"""Thread-safe lifecycle bridge between Murder Bot and the orchestrator."""
 
 from __future__ import annotations
 

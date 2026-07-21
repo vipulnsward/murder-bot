@@ -16,7 +16,7 @@ export function Dashboard() {
   return (
     <div>
       <div className="page-heading">
-        <div><p className="eyebrow">Keep Console</p><h1>Dashboard</h1></div>
+        <div><p className="eyebrow">Murder Bot</p><h1>Dashboard</h1></div>
         <span className="text-sm text-muted">{status?.account ?? 'main'} · {status?.device ?? 'backend offline'}</span>
       </div>
 

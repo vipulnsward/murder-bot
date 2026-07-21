@@ -1,4 +1,4 @@
-# Keep Console
+# Murder Bot
 
 React control surface for the Keep backend.
 

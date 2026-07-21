@@ -1,4 +1,4 @@
-"""Validated YAML configuration for Keep Console."""
+"""Validated YAML configuration for Murder Bot."""
 
 from __future__ import annotations
 

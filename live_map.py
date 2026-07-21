@@ -271,12 +271,17 @@ def main():
     exit_ideal_land()   # if a prior probe drilled into Ideal Land, return to the main city
     # Cover the whole city with camera pans; at each stop tap ONLY detected building
     # structures (targeted, ~5 taps/view) instead of a blind 63-point grid.
+    # Big swipes so the camera actually crosses the walls into the inner city where the
+    # military buildings sit. Two full up-sweeps (drag content down = reveal inner city),
+    # then a ring around it.
     PANS = [("center", None),
-            ("north", (540, 780, 540, 1240)), ("south", (540, 1240, 540, 780)),
-            ("west", (320, 900, 840, 900)), ("east", (840, 900, 320, 900)),
-            ("nw", (340, 780, 820, 1240)), ("ne", (820, 780, 340, 1240)),
-            ("sw", (340, 1240, 820, 780)), ("se", (820, 1240, 340, 780)),
-            ("north2", (540, 780, 540, 1240)), ("west2", (320, 900, 840, 900))]
+            ("in_north", (540, 520, 540, 1500)), ("in_north2", (540, 520, 540, 1500)),
+            ("west", (250, 900, 900, 900)), ("east", (900, 900, 250, 900)),
+            ("nw", (280, 560, 850, 1460)), ("ne", (850, 560, 280, 1460)),
+            ("south", (540, 1500, 540, 520)),
+            ("sw", (280, 1460, 850, 560)), ("se", (850, 1460, 280, 560)),
+            ("in_north3", (540, 520, 540, 1500)), ("west2", (250, 900, 900, 900)),
+            ("east2", (900, 900, 250, 900))]
     for label, mv in PANS:
         if not ensure_game():                    # guard: don't tap a browser/home screen
             print("Evony left foreground mid-sweep — aborting pass", flush=True); return

@@ -56,6 +56,12 @@ class ControlBridge:
         except Exception:
             return None
 
+    def latest_frame(self) -> bytes | None:
+        try:
+            return self.frame_source()
+        except Exception:
+            return None
+
     @staticmethod
     def _now() -> str:
         return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -85,7 +91,7 @@ class ControlBridge:
             "engine": self.status,
             "account": account.name,
             "device": account.adb_serial,
-            "device_ok": self.frame_source() is not None,
+            "device_ok": self.latest_frame() is not None,
             "current_task": self.current_task,
             "macro_state": self.macro_state,
             "macro": {

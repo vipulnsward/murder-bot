@@ -134,7 +134,7 @@ def create_app(bridge: ControlBridge | None = None) -> FastAPI:
     def screen_mjpeg() -> StreamingResponse:
         async def frames():
             while True:
-                frame = active.frame_source()
+                frame = active.latest_frame()
                 content_type = b"image/jpeg" if frame else b"image/svg+xml"
                 payload = frame or NO_SIGNAL_SVG
                 yield b"--frame\r\nContent-Type: " + content_type + b"\r\nContent-Length: " + str(len(payload)).encode() + b"\r\n\r\n" + payload + b"\r\n"
@@ -174,7 +174,7 @@ def create_app(bridge: ControlBridge | None = None) -> FastAPI:
         seq = 0
         try:
             while True:
-                frame = active.frame_source()
+                frame = active.latest_frame()
                 seq += 1
                 if mode == "mjpeg":
                     await websocket.send_bytes(frame or NO_SIGNAL_SVG)

@@ -21,6 +21,11 @@ import time
 BACK_ARROW = (80, 72)
 CITY_GLOBE = (994, 1790)
 EXIT_CANCEL = (362, 1133)
+# The city's Alliance + Mail buttons live in this bottom-right box (Alliance ~988,1516;
+# Mail ~987,1685). Scoping the city check here is ~4x faster than a full-frame OCR and
+# runs on every ensure_city — the world-map "X:/Y:" coords sit up top, outside this box,
+# so a scoped miss correctly falls through to the full-frame world-map check.
+CITY_BOX = (760, 1400, 1080, 1920)
 
 
 def is_city(texts):
@@ -53,6 +58,16 @@ class Nav:
     def _frame(self):
         return self.ctx.screencap()
 
+    def _read(self, img, box=None):
+        """read_all with an optional scope box, tolerant of injected doubles that
+        only accept (img)."""
+        if box is None:
+            return self.read_all(img)
+        try:
+            return self.read_all(img, box=box)
+        except TypeError:
+            return self.read_all(img)
+
     def state(self, img=None):
         """Return 'disconnect' | 'exit_dialog' | 'city' | 'world_map' | 'other'."""
         img = self._frame() if img is None else img
@@ -60,9 +75,11 @@ class Nav:
             return "disconnect"
         if self.screen_fsm.identify(img) == "exit_dialog":
             return "exit_dialog"
-        texts = self.read_all(img)
-        if is_city(texts):
+        # Fast path: scope the city check to the Alliance/Mail corner (~4x cheaper).
+        if is_city(self._read(img, CITY_BOX)):
             return "city"
+        # Not clearly city — read the full frame for the world-map / other decision.
+        texts = self._read(img)
         if is_worldmap(texts):
             return "world_map"
         return "other"

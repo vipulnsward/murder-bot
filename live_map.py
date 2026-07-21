@@ -101,7 +101,11 @@ def main():
             return None
         if screen_fsm.is_disconnect(img):
             return "DISCONNECT"
-        texts = ocr_read.read_all(img)
+        # Fast OCR first: the radial menu (Detail/Upgrade) pops up around the tapped
+        # building, never the whole screen. Scope OCR to a box around the tap point
+        # instead of the full 1080x1920 frame — ~3x less pixels to detect, plus cache.
+        tapbox = (max(0, x - 360), max(0, y - 430), min(1080, x + 360), min(1920, y + 230))
+        texts = ocr_read.read_all(img, box=tapbox, cache=True)
         low = " ".join(str(t).lower() for t, *_ in texts)
         if "detail" not in low and "upgrade" not in low:
             return None

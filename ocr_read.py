@@ -9,23 +9,38 @@ Fast (~0.4s full frame; crop a region to go faster). Lazy-loads the engine.
 """
 
 import re
+from hashlib import blake2b
 
 import cv2
 
+USE_ANGLE_CLS = False
+DET_LIMIT_SIDE_LEN = 640
+NUMBER_UPSCALE = 2
+
 _ENGINE = None
+_REC_ENGINE = None
+_CACHE = {}
 
 
 def _engine():
     global _ENGINE
     if _ENGINE is None:
         from rapidocr_onnxruntime import RapidOCR
-        _ENGINE = RapidOCR()
+        _ENGINE = RapidOCR(use_angle_cls=USE_ANGLE_CLS,
+                           det_limit_side_len=DET_LIMIT_SIDE_LEN,
+                           det_model_path=None)
     return _ENGINE
 
 
-def read_all(img, box=None):
-    """Return [(text, (cx, cy), conf)]. img: BGR ndarray or path. box: optional
-    (x1,y1,x2,y2) crop; centers are returned in FULL-image coordinates."""
+def _rec_engine():
+    global _REC_ENGINE
+    if _REC_ENGINE is None:
+        from rapidocr_onnxruntime import RapidOCR
+        _REC_ENGINE = RapidOCR(use_angle_cls=USE_ANGLE_CLS, use_text_det=False)
+    return _REC_ENGINE
+
+
+def _crop(img, box):
     if isinstance(img, str):
         img = cv2.imread(img)
     ox, oy = 0, 0
@@ -33,12 +48,36 @@ def read_all(img, box=None):
         x1, y1, x2, y2 = box
         ox, oy = x1, y1
         img = img[y1:y2, x1:x2]
+    return img, ox, oy
+
+
+def _cache_key(img, ox, oy):
+    pixels = img if img.flags.c_contiguous else img.copy()
+    return (blake2b(pixels.data, digest_size=16).digest(), pixels.shape,
+            pixels.dtype.str, ox, oy)
+
+
+def clear_cache():
+    """Clear cached OCR reads."""
+    _CACHE.clear()
+
+
+def read_all(img, box=None, cache=False):
+    """Return [(text, (cx, cy), conf)]. img: BGR ndarray or path. box: optional
+    (x1,y1,x2,y2) crop; centers are returned in FULL-image coordinates.
+    Set cache=True to reuse results for identical crop pixels."""
+    img, ox, oy = _crop(img, box)
+    key = _cache_key(img, ox, oy) if cache else None
+    if key in _CACHE:
+        return list(_CACHE[key])
     res, _ = _engine()(img)
     out = []
     for pts, txt, conf in (res or []):
         cx = int((pts[0][0] + pts[2][0]) / 2) + ox
         cy = int((pts[0][1] + pts[2][1]) / 2) + oy
         out.append((txt, (cx, cy), float(conf)))
+    if cache:
+        _CACHE[key] = tuple(out)
     return out
 
 
@@ -74,6 +113,25 @@ def read_number(img, box=None, pick="largest"):
     return nums[0][0]
 
 
+def read_number_fast(img, box=None, pick="largest", upscale=NUMBER_UPSCALE):
+    """Read one number from a tight crop without running text detection."""
+    crop, _, _ = _crop(img, box)
+    gray = (crop if crop.ndim == 2 else
+            cv2.cvtColor(crop, cv2.COLOR_BGRA2GRAY if crop.shape[2] == 4
+                         else cv2.COLOR_BGR2GRAY))
+    if upscale and upscale != 1:
+        gray = cv2.resize(gray, None, fx=upscale, fy=upscale,
+                          interpolation=cv2.INTER_CUBIC)
+    res, _ = _rec_engine()(gray)
+    if res:
+        text = res[0][1].strip()
+        if re.fullmatch(r"[\d,.\s]+", text):
+            number = _to_int(text)
+            if number is not None:
+                return number
+    return read_number(img, box, pick)
+
+
 def read_gems(img):
     """Gem count from the top-right (informational; RapidOCR reads it reliably where
     Tesseract failed). Full-frame read, then pick the big number in the top-right."""
@@ -96,10 +154,43 @@ def screen_hint(img):
 
 
 if __name__ == "__main__":
-    import sys
-    for f in sys.argv[1:] or ["status_cleared.png", "status_r2.png", "status_speed.png"]:
-        import os
-        if not os.path.exists(f):
-            continue
-        print(f"{f}: gems={read_gems(f)}  hint={screen_hint(f)}  "
-              f"use_btn={find_button(f, 'use')}  finish={find_button(f, 'finish all')}")
+    from time import perf_counter
+
+    test_frame = ("/private/tmp/claude-501/-Users-sward-work-scratch/"
+                  "c2e71639-9f51-4ec5-b5ef-685684771afc/scratchpad/holo_test.png")
+    number_box = (828, 75, 1015, 128)
+    image = cv2.imread(test_frame)
+
+    read_all(image, number_box)
+    read_number_fast(image, number_box)
+
+    started = perf_counter()
+    full = read_all(image)
+    full_ms = (perf_counter() - started) * 1000
+
+    started = perf_counter()
+    number = read_number(image, number_box)
+    number_ms = (perf_counter() - started) * 1000
+
+    started = perf_counter()
+    fast_number = read_number_fast(image, number_box)
+    fast_number_ms = (perf_counter() - started) * 1000
+
+    clear_cache()
+    started = perf_counter()
+    cached_first = read_all(image, number_box, cache=True)
+    cache_first_ms = (perf_counter() - started) * 1000
+    started = perf_counter()
+    cached_second = read_all(image, number_box, cache=True)
+    cache_second_ms = (perf_counter() - started) * 1000
+
+    texts = " ".join(text.lower() for text, _, _ in full)
+    ok = (image is not None and number == fast_number == 7794429 and
+          cached_first == cached_second and cache_second_ms < cache_first_ms / 4 and
+          all(text in texts for text in ("disconnected", "quit", "restart")))
+    print(f"full read_all: {full_ms:.1f} ms, {len(full)} boxes")
+    print(f"read_number: {number_ms:.1f} ms, value={number}")
+    print(f"read_number_fast: {fast_number_ms:.1f} ms, value={fast_number}")
+    print(f"cache: first={cache_first_ms:.1f} ms, second={cache_second_ms:.3f} ms")
+    print("SELF-TEST:", "PASS" if ok else "FAIL")
+    raise SystemExit(0 if ok else 1)

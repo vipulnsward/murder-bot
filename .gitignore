@@ -11,3 +11,6 @@ run_*.log
 hls.min.js
 game_brain/screens/
 .venv/
+keep/web/node_modules/
+keep/web/dist/
+keep/web/.vite/

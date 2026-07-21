@@ -20,3 +20,4 @@ battle_reports.jsonl
 data/pages/
 data/generals.raw.jsonl
 data/live_frames/
+game_brain/live/

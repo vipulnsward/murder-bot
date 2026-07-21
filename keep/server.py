@@ -16,12 +16,13 @@ if str(ROOT) not in sys.path:
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ValidationError
 
 from keep.bridge import ControlBridge
 from keep.config import KeepConfig, default_config, load_config, save_config
+from keep.stream import HLSStreamManager
 
 
 NO_SIGNAL_SVG = b'''<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360"><rect width="640" height="360" fill="#0b0f14"/><text x="320" y="180" fill="#9aa6b6" font-family="system-ui,sans-serif" font-size="22" text-anchor="middle">No signal</text></svg>'''
@@ -34,8 +35,15 @@ class ControlRequest(BaseModel):
 
 def create_app(bridge: ControlBridge | None = None) -> FastAPI:
     active = bridge or ControlBridge()
+    stream = HLSStreamManager()
+    frame_source = active.frame_source
+
+    def stream_owned_frame() -> None:
+        return None
+
     app = FastAPI(title="Keep Console")
     app.state.bridge = active
+    app.state.stream = stream
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -189,6 +197,53 @@ def create_app(bridge: ControlBridge | None = None) -> FastAPI:
             media_type="multipart/x-mixed-replace; boundary=frame",
             headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
         )
+
+    @app.post("/api/stream/start")
+    def start_stream() -> dict[str, Any]:
+        result = stream.start_hls()
+        if result["owns_adb"]:
+            active.frame_source = stream_owned_frame
+        return result
+
+    @app.post("/api/stream/stop")
+    def stop_stream() -> dict[str, Any]:
+        result = stream.stop_hls()
+        active.frame_source = frame_source
+        return result
+
+    @app.get("/api/stream/status")
+    def stream_status() -> dict[str, Any]:
+        result = stream.status()
+        if not result["owns_adb"] and active.frame_source is stream_owned_frame:
+            active.frame_source = frame_source
+        return result
+
+    @app.get("/hls/stream.m3u8")
+    def hls_playlist() -> FileResponse:
+        path = stream.output_dir / "stream.m3u8"
+        if not path.is_file():
+            raise HTTPException(status_code=404, detail="stream is not ready")
+        return FileResponse(
+            path,
+            media_type="application/vnd.apple.mpegurl",
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+        )
+
+    @app.get("/hls/{segment}.ts")
+    def hls_segment(segment: str) -> FileResponse:
+        path = stream.output_dir / f"{segment}.ts"
+        if not path.is_file() or path.parent != stream.output_dir:
+            raise HTTPException(status_code=404, detail="segment not found")
+        return FileResponse(
+            path,
+            media_type="video/mp2t",
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+        )
+
+    @app.on_event("shutdown")
+    def stop_stream_on_shutdown() -> None:
+        stream.close()
+        active.frame_source = frame_source
 
     @app.websocket("/ws/status")
     async def ws_status(websocket: WebSocket) -> None:

@@ -136,6 +136,23 @@ export interface ScreenFrame {
   no_signal: boolean
 }
 
+export interface StreamStatus {
+  running: boolean
+  ready: boolean
+  owns_adb: boolean
+  device: string
+  output_dir: string
+  screenrecord_pid: number | null
+  ffmpeg_pid: number | null
+  worker_alive: boolean
+  screenrecord_alive: boolean
+  ffmpeg_alive: boolean
+  screenrecord_restarts: number
+  fps_line: string | null
+  segment_duration_s: number
+  error: string | null
+}
+
 export type GeneralType = 'ground' | 'mounted' | 'ranged' | 'siege' | 'wall' | 'subcity' | 'monster' | 'other'
 
 export interface General {
@@ -236,6 +253,9 @@ export const api = {
   getEvents: () => request<{ events: EventItem[] }>('/api/events'),
   getSchedule: () => request<ScheduleSegment[]>('/api/schedule'),
   getSafety: () => request<SafetyResponse>('/api/safety'),
+  getStreamStatus: () => request<StreamStatus>('/api/stream/status'),
+  startStream: () => request<StreamStatus>('/api/stream/start', { method: 'POST' }),
+  stopStream: () => request<StreamStatus>('/api/stream/stop', { method: 'POST' }),
   getGenerals: ({ q, gtype, limit }: GeneralQuery = {}) =>
     request<{ generals: General[]; total: number }>(withQuery('/api/generals', { q, gtype, limit })),
   getGeneral: (name: string) => request<GeneralDetail>(`/api/generals/${encodeURIComponent(name)}`),

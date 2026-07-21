@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { api } from '../api'
+import { Link } from 'react-router-dom'
+import { API_BASE_URL, api } from '../api'
 import { SafetyBadges } from '../components/SafetyBadges'
 
 const number = new Intl.NumberFormat('en-US')
@@ -40,9 +41,9 @@ export function Dashboard() {
 
         <section className="card">
           <div className="mb-3 flex items-center justify-between"><div><p className="eyebrow">Live</p><h2 className="mt-1 text-lg font-semibold">Screen preview</h2></div><span className="font-mono text-xs text-muted">{status?.screen ?? 'no frame'}</span></div>
-          <div className="flex aspect-video items-center justify-center rounded-lg border border-dashed border-border bg-surface-2 text-sm text-muted">
-            Live MJPEG screen placeholder
-          </div>
+          <Link className="block overflow-hidden rounded-lg border border-border bg-surface-2" title="Open the full Live view" to="/live">
+            <img alt="Live emulator screen" className="block aspect-video h-full w-full object-contain" src={`${API_BASE_URL}/api/screen.mjpeg`} />
+          </Link>
         </section>
 
         <section className="card xl:col-span-2">

@@ -79,18 +79,23 @@ SALE_WORDS = ("chf", "purchase", "%return", "unlock privileges", "flash sale",
               "daily gems for", "right of mining")
 
 
+BANNER_WORDS = ("congratulations", "obtained", "you have received", "reward received",
+                "subordinate city", "all accept")
+
+
 def has_popup(img):
-    """True if a purchase modal is over the city. These are CENTERED and leave the
-    bottom-right Mail button visible, so is_city can't see them — detect by price/title."""
+    """True if a purchase modal or a reward/menu overlay is over the city. Purchase
+    modals are CENTERED and leave Mail visible (so is_city can't see them) — detect by
+    price/title. Reward banners ('Congratulations') and menus also block mapping."""
     low = " ".join(str(t).lower() for t, *_ in ocr_read.read_all(img))
-    return any(w in low for w in SALE_WORDS)
+    return any(w in low for w in SALE_WORDS) or any(w in low for w in BANNER_WORDS)
 
 
-def clear_popups(max_iters=8):
-    """Dismiss purchase/event popups with Android Back (safe — never buys; the close-X
-    moves per popup). Checks for a popup BEFORE is_city, because a centered modal leaves
-    Mail visible and would otherwise read as 'city'. Cancels an exit-game dialog with
-    Cancel (never Quit). Returns True only when the clean city (no popup) is reached."""
+def clear_popups(max_iters=10):
+    """Return the bare city from ANY blocking state. Order matters: exit-dialog -> Cancel
+    (never Quit); sale popup / reward banner -> Android Back; already city -> done;
+    anything else (a menu or building panel) -> the in-game BACK ARROW (80,72), which
+    closes menus without the exit-dialog risk of a bare-city Android Back."""
     for _ in range(max_iters):
         img = shared_capture.grab_wait(DEV, timeout=6)
         if img is None or screen_fsm.is_disconnect(img):
@@ -98,15 +103,17 @@ def clear_popups(max_iters=8):
         if screen_fsm.identify(img) == "exit_dialog":
             subprocess.run(["adb", "-s", DEV, "shell", "input", "tap",
                             str(nav.EXIT_CANCEL[0]), str(nav.EXIT_CANCEL[1])])
-            time.sleep(1.3)
+            time.sleep(1.2)
             continue
-        if has_popup(img):
-            subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"])  # Back closes it
-            time.sleep(1.3)
+        low = " ".join(str(t).lower() for t, *_ in ocr_read.read_all(img))
+        if any(w in low for w in SALE_WORDS) or any(w in low for w in BANNER_WORDS):
+            subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"])
+            time.sleep(1.2)
             continue
         if nav.is_city(ocr_read.read_all(img, box=nav.CITY_BOX)):
             return True
-        return False   # unknown non-popup screen — don't blind-Back into the exit dialog
+        subprocess.run(["adb", "-s", DEV, "shell", "input", "tap", "80", "72"])  # back arrow: close menu
+        time.sleep(1.2)
     return False
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PKG = "com.topgamesinc.evony.flexion"

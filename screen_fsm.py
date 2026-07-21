@@ -55,12 +55,33 @@ def is_disconnect(img, min_score=0.85):
     return img is not None and _match(img, "disconnect_popup")[0] >= min_score
 
 
-def identify(img):
+# Map screen_id (Holo) labels onto the FSM's vocabulary. Screens the FSM doesn't
+# model (world_map, alliance, watchtower, ...) pass through under their own name.
+_HOLO_TO_FSM = {
+    "disconnect": "disconnect", "speedup_modal": "speedup_modal",
+    "resources": "resources", "exit_dialog": "exit_dialog",
+    "city": "city", "radial_dial": "barracks_radial",
+    "training_barracks": "training_idle",
+}
+
+
+def identify(img, holo_fallback=False, describe_fn=None):
+    """Template-first screen ID. If nothing matches and holo_fallback is on, ask
+    Holo (screen_id.classify) — lets the FSM name un-templated screens (kb/31)
+    without a template for each. Default off, so the hot path stays template-only."""
     if img is None:
         return "unknown"
     for name, tpl, thr in ANCHOR_ORDER:
         if _match(img, tpl)[0] >= thr:
             return name
+    if holo_fallback:
+        try:
+            import screen_id
+            label, _desc, score = screen_id.classify(img, describe_fn=describe_fn)
+            if score > 0:
+                return _HOLO_TO_FSM.get(label, label)
+        except Exception:
+            pass
     return "unknown"
 
 
@@ -111,44 +132,62 @@ def try_ensure_training(screencap, tap, back, tries=14, min_score=0.85):
 
 
 if __name__ == "__main__":
-    import sys
+    import numpy as np
 
-    # 1) identify() on saved frames (offline, deterministic)
-    cases = [
-        ("_cur.png", "training_idle"),
-        ("status_s.png", "city"),
-        ("status_r2.png", "disconnect"),
-        ("status_fa.png", "disconnect"),
-    ]
     ok = True
-    for f, expect in cases:
-        if not os.path.exists(f):
-            print(f"  (skip {f}: missing)")
-            continue
-        got = identify(cv2.imread(f))
+
+    # Build a real frame by pasting an in-repo template into a blank canvas — the
+    # self-test is self-contained (no external screenshots needed).
+    def canvas_with(name, x=120, y=160):
+        c = np.zeros((1920, 1080, 3), np.uint8)
+        t = cv2.imread(os.path.join(TDIR, name + ".png"))
+        if t is not None:
+            th, tw = t.shape[:2]
+            c[y:y + th, x:x + tw] = t
+        return c
+
+    # 1) identify() finds the right screen from its template (real matchTemplate path)
+    for tpl, expect in [("disconnect_popup", "disconnect"),
+                        ("train_btn_idle", "training_idle"),
+                        ("modal_speedup_title", "speedup_modal")]:
+        got = identify(canvas_with(tpl))
         mark = "ok" if got == expect else "FAIL"
         ok &= got == expect
-        print(f"  identify({f}) = {got}  (expect {expect}) [{mark}]")
+        print(f"  identify(canvas[{tpl}]) = {got}  (expect {expect}) [{mark}]")
 
-    # 2) disconnect safety: ensure_training must RAISE, never tap
+    # 2) disconnect safety: ensure_training must RAISE, never tap (identify stubbed).
     taps = {"n": 0}
-    def fake_tap(*a, **k): taps["n"] += 1
-    def fake_back(*a, **k): pass
-    def dis_cap():
-        return cv2.imread("status_r2.png")
+    fake_tap = lambda *a, **k: taps.__setitem__("n", taps["n"] + 1)
+    fake_back = lambda *a, **k: None
+    _real_identify = identify
+    globals()["identify"] = lambda img, **k: "disconnect"
     try:
-        ensure_training(dis_cap, fake_tap, fake_back, tries=3)
+        ensure_training(lambda: "F", fake_tap, fake_back, tries=3)
         print("  disconnect safety: FAIL (did not raise)")
         ok = False
     except DisconnectError:
         print(f"  disconnect safety: raised DisconnectError, taps={taps['n']} (expect 0) [{'ok' if taps['n']==0 else 'FAIL'}]")
         ok &= taps["n"] == 0
 
-    # 3) already-on-training short-circuits with zero taps
+    # 3) already-on-training short-circuits with zero taps (identify stubbed).
+    globals()["identify"] = lambda img, **k: "training_idle"
     taps["n"] = 0
-    s, _ = ensure_training(lambda: cv2.imread("_cur.png"), fake_tap, fake_back, tries=3)
+    s, _ = ensure_training(lambda: "F", fake_tap, fake_back, tries=3)
     print(f"  ensure_training on idle -> {s}, taps={taps['n']} (expect training_idle, 0) [{'ok' if s=='training_idle' and taps['n']==0 else 'FAIL'}]")
     ok &= s == "training_idle" and taps["n"] == 0
+    globals()["identify"] = _real_identify
+
+    # 4) holo_fallback: a blank frame matches no template -> Holo (screen_id) classifies it.
+    import numpy as np
+    blank = np.zeros((1920, 1080, 3), np.uint8)
+    base = identify(blank)                                  # fallback off -> unknown
+    wm = identify(blank, holo_fallback=True,
+                  describe_fn=lambda img, q: "a zoomed-out world map with resource tiles and monsters")
+    dis = identify(blank, holo_fallback=True,
+                   describe_fn=lambda img, q: "you were disconnected because someone logged in; Quit or Restart")
+    fb_ok = base == "unknown" and wm == "world_map" and dis == "disconnect"
+    print(f"  holo_fallback: base={base} world_map={wm} disconnect={dis} [{'ok' if fb_ok else 'FAIL'}]")
+    ok &= fb_ok
 
     print("SELF-TEST:", "PASS" if ok else "FAIL")
     raise SystemExit(0 if ok else 1)

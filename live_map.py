@@ -46,6 +46,10 @@ def _maybe_write_hud(img, min_interval=8.0):
 IDEAL_BOX = (0, 1120, 240, 1760)   # left column of the Ideal Land decoration UI
 IDEAL_TOKENS = ("ornament", "construct", "inventory", "top", "charts", "gallery")
 CITY_TOGGLE = (994, 1790)          # bottom-right castle button: Ideal Land <-> main city
+# The buildings that actually matter for the bot (military + economy + core).
+PRIORITY = ["keep", "academy", "barracks", "stable", "archer_camp", "archer_range",
+            "workshop", "hospital", "forge", "embassy", "rally_spot", "war_hall",
+            "watchtower", "market", "wall", "warehouse", "hall_of_war"]
 
 
 def is_ideal_land(img):
@@ -67,34 +71,42 @@ def exit_ideal_land(tries=3):
         time.sleep(2.0)
 
 
-SALE_WORDS = ("deal", "purchase", "chf", "%return", "great value", "brand new",
-              "flash sale", "tech leap", "unlock privileges", "super value",
-              "limited time", "running of the bulls", "for sale", "buy now")
+# Strong purchase-popup signals. "chf" (the price) is the reliable one — every purchase
+# modal shows a CHF price and the bare city never does. Avoid generic words like "deal"
+# or "for sale" (the Alliance button carries a FOR SALE badge -> false positive).
+SALE_WORDS = ("chf", "purchase", "%return", "unlock privileges", "flash sale",
+              "tech leap", "super value", "running of the bulls", "bounty cave",
+              "daily gems for", "right of mining")
 
 
-def clear_popups(max_iters=6):
-    """Dismiss CONFIRMED sale/event popups with Android Back (safe — never buys; the
-    close-X moves per popup). Cancels an exit-game dialog with Cancel (never Quit).
-    Crucially, if the screen is neither the city, an exit dialog, nor a recognized sale
-    popup, it does NOTHING — a blind Back in the city opens the exit dialog, and looping
-    that trips the humanization guard. Returns True only when the city is reached."""
+def has_popup(img):
+    """True if a purchase modal is over the city. These are CENTERED and leave the
+    bottom-right Mail button visible, so is_city can't see them — detect by price/title."""
+    low = " ".join(str(t).lower() for t, *_ in ocr_read.read_all(img))
+    return any(w in low for w in SALE_WORDS)
+
+
+def clear_popups(max_iters=8):
+    """Dismiss purchase/event popups with Android Back (safe — never buys; the close-X
+    moves per popup). Checks for a popup BEFORE is_city, because a centered modal leaves
+    Mail visible and would otherwise read as 'city'. Cancels an exit-game dialog with
+    Cancel (never Quit). Returns True only when the clean city (no popup) is reached."""
     for _ in range(max_iters):
         img = shared_capture.grab_wait(DEV, timeout=6)
         if img is None or screen_fsm.is_disconnect(img):
             return False
-        if nav.is_city(ocr_read.read_all(img, box=nav.CITY_BOX)):
-            return True
         if screen_fsm.identify(img) == "exit_dialog":
             subprocess.run(["adb", "-s", DEV, "shell", "input", "tap",
                             str(nav.EXIT_CANCEL[0]), str(nav.EXIT_CANCEL[1])])
-            time.sleep(1.4)
+            time.sleep(1.3)
             continue
-        low = " ".join(str(t).lower() for t, *_ in ocr_read.read_all(img))
-        if any(w in low for w in SALE_WORDS):
-            subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"])  # Back closes sale popups
-            time.sleep(1.4)
-        else:
-            return False   # unknown screen — don't blind-Back into the exit dialog
+        if has_popup(img):
+            subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"])  # Back closes it
+            time.sleep(1.3)
+            continue
+        if nav.is_city(ocr_read.read_all(img, box=nav.CITY_BOX)):
+            return True
+        return False   # unknown non-popup screen — don't blind-Back into the exit dialog
     return False
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PKG = "com.topgamesinc.evony.flexion"
@@ -145,6 +157,33 @@ def adb_back():
     subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"]); time.sleep(0.9)
 
 
+def find_building_candidates(img):
+    """Return [(x, y)] tap points at building structures. Buildings are grey/brown
+    structures; grass is green and decorations are pink — mask both out and the
+    remaining blobs are buildings. ~5 targeted taps per view vs 63 blind grid taps."""
+    import numpy as np
+
+    if img is None:
+        return []
+    h, w = img.shape[:2]
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    grass = cv2.inRange(hsv, np.array([32, 35, 35]), np.array([98, 255, 255]))
+    pink = cv2.inRange(hsv, np.array([125, 25, 70]), np.array([178, 255, 255]))
+    struct = cv2.bitwise_not(cv2.bitwise_or(grass, pink))
+    play = np.zeros((h, w), np.uint8)
+    play[240:1240, 150:900] = 255   # exclude top HUD, bottom decorations, side UI columns
+    struct = cv2.bitwise_and(struct, play)
+    struct = cv2.morphologyEx(struct, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+    struct = cv2.morphologyEx(struct, cv2.MORPH_CLOSE, np.ones((25, 25), np.uint8))
+    cnts, _ = cv2.findContours(struct, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    pts = []
+    for c in cnts:
+        if cv2.contourArea(c) > 5000:
+            x, y, bw, bh = cv2.boundingRect(c)
+            pts.append((x + bw // 2, y + int(bh * 0.55)))   # tap toward the building base
+    return pts
+
+
 def radial_name(texts):
     # Only name a building when a KNOWN building label appears in the panel text.
     # The old "any capitalized word" fallback recorded OCR noise and button labels
@@ -174,9 +213,11 @@ def main():
         if is_ideal_land(pre):
             exit_ideal_land()
             return None
-        # Safety + productivity: only tap while actually in the city. If a sale/event
-        # popup is up, clear it (Back, never Buy) and skip this probe — never blind-tap
-        # popup UI, which could land on a Buy button.
+        # A centered purchase modal leaves Mail visible (is_city would say True), so check
+        # for it explicitly and clear it — never blind-tap popup UI (could hit Buy).
+        if has_popup(pre):
+            clear_popups()
+            return None
         if not nav.is_city(ocr_read.read_all(pre, box=nav.CITY_BOX, cache=True)):
             clear_popups()
             return None
@@ -228,30 +269,39 @@ def main():
         return
     print("ensure city:", n.ensure_city(), flush=True)
     exit_ideal_land()   # if a prior probe drilled into Ideal Land, return to the main city
-    import random
-    jx, jy = random.randint(-65, 65), random.randint(-65, 65)   # jitter so repeated sweeps hit new points
-    grid = [(x + jx, y + jy) for y in range(300, 1320, 120) for x in range(160, 960, 120)]
-    blocks = [("center", None), ("north", (540, 700, 540, 1280)), ("south", (540, 1280, 540, 700)),
-              ("west", (300, 900, 880, 900)), ("east", (880, 900, 300, 900)),
-              ("nw", (760, 700, 320, 1250)), ("se", (320, 1250, 760, 700))]
-    for bname, mv in blocks:
+    # Cover the whole city with camera pans; at each stop tap ONLY detected building
+    # structures (targeted, ~5 taps/view) instead of a blind 63-point grid.
+    PANS = [("center", None),
+            ("north", (540, 780, 540, 1240)), ("south", (540, 1240, 540, 780)),
+            ("west", (320, 900, 840, 900)), ("east", (840, 900, 320, 900)),
+            ("nw", (340, 780, 820, 1240)), ("ne", (820, 780, 340, 1240)),
+            ("sw", (340, 1240, 820, 780)), ("se", (820, 1240, 340, 780)),
+            ("north2", (540, 780, 540, 1240)), ("west2", (320, 900, 840, 900))]
+    for label, mv in PANS:
         if not ensure_game():                    # guard: don't tap a browser/home screen
             print("Evony left foreground mid-sweep — aborting pass", flush=True); return
-        clear_popups()                           # a sale/event popup may have appeared mid-sweep
-        exit_ideal_land()                        # a probe may have drilled into Ideal Land
+        clear_popups(); exit_ideal_land()
         if mv:
-            subprocess.run(["adb", "-s", DEV, "shell", "input", "swipe", *map(str, mv), "500"]); time.sleep(1.5)
-            n.ensure_city(tries=2)
-        print(f"== block {bname}: {len(grid)} probes ==", flush=True)
-        for x, y in grid:
-            if probe(x, y) == "DISCONNECT":
-                print("DISCONNECT - stopping", flush=True)
-                print("\nBUILDINGS:", sorted(found), flush=True); return
+            subprocess.run(["adb", "-s", DEV, "shell", "input", "swipe", *map(str, mv), "450"]); time.sleep(1.4)
+            clear_popups(); exit_ideal_land()
+        img = cap()
+        # Only detect buildings on a clean city frame — a centered popup would otherwise
+        # be picked up as a "structure" and tapped.
+        if img is None or has_popup(img):
+            print(f"== pan {label}: skipped (popup) ==", flush=True)
+            continue
+        cands = find_building_candidates(img)
+        print(f"== pan {label}: {len(cands)} building candidates ==", flush=True)
+        for cx, cy in cands:
+            if probe(cx, cy) == "DISCONNECT":
+                print("DISCONNECT - stopping", flush=True); return
 
-    print("\n=== ALL BUILDINGS FOUND ===", flush=True)
-    for name, loc in sorted(found.items()):
-        print(f"  {name}: {loc}")
-    print("count:", len(found), "| stats:", db.stats(), flush=True)
+    have = {s["label"].replace("bldg_", "") for s in db.list_screens()
+            if str(s.get("label", "")).startswith("bldg_")}
+    missing = [b for b in PRIORITY if b not in have]
+    print(f"\n=== sweep done: {len(found)} buildings this sweep {sorted(found)}", flush=True)
+    print(f"priority missing ({len(missing)}/{len(PRIORITY)}): {missing}", flush=True)
+    print("stats:", db.stats(), flush=True)
 
 
 if __name__ == "__main__":

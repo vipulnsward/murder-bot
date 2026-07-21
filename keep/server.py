@@ -130,6 +130,50 @@ def create_app(bridge: ControlBridge | None = None) -> FastAPI:
     def safety() -> dict[str, Any]:
         return active.safety()
 
+    def _kb():
+        import game_kb
+        return game_kb.GameKB(str(ROOT / "game_brain" / "game_kb.db"))
+
+    @app.get("/api/generals")
+    def generals(q: str | None = None, gtype: str | None = None, limit: int = 320) -> dict[str, Any]:
+        db = _kb()
+        rows = db.search(q)["generals"] if q else db.list_generals(gtype=gtype)
+        if gtype:
+            rows = [r for r in rows if r.get("gtype") == gtype]
+        return {"generals": rows[:limit], "total": len(rows)}
+
+    @app.get("/api/generals/{name}")
+    def general_detail(name: str) -> dict[str, Any]:
+        db = _kb()
+        g = db.get_general(name)
+        if not g:
+            raise HTTPException(status_code=404, detail="general not found")
+        g["ratings"] = db.ratings(general=name)
+        return g
+
+    @app.get("/api/generals-recommend")
+    def generals_recommend(role: str, n: int = 5, gtype: str | None = None) -> dict[str, Any]:
+        import general_advisor
+        adv = general_advisor.GeneralAdvisor(str(ROOT / "game_brain" / "game_kb.db"))
+        return {"role": role, "recommendations": adv.recommend(role, n=n, gtype=gtype)}
+
+    @app.get("/api/guides")
+    def guides(q: str | None = None, category: str | None = None, limit: int = 200) -> dict[str, Any]:
+        db = _kb()
+        rows = db.search(q)["guides"] if q else db.guides(category=category)
+        return {"guides": rows[:limit], "total": len(rows)}
+
+    @app.get("/api/kb")
+    def kb_list() -> dict[str, Any]:
+        return {"docs": sorted(p.name for p in (ROOT / "kb").glob("*.md"))}
+
+    @app.get("/api/kb/{name}")
+    def kb_doc(name: str) -> dict[str, Any]:
+        p = ROOT / "kb" / name
+        if "/" in name or ".." in name or p.suffix != ".md" or not p.is_file():
+            raise HTTPException(status_code=404, detail="kb doc not found")
+        return {"name": name, "markdown": p.read_text()}
+
     @app.get("/api/screen.mjpeg")
     def screen_mjpeg() -> StreamingResponse:
         async def frames():
@@ -272,6 +316,17 @@ def _self_test() -> bool:
             )
             case = missing.status_code == 400 and confirmed.status_code == 200
             print(f"POST /api/control reclaim confirmation: {'PASS' if case else 'FAIL'} ({missing.status_code}/{confirmed.status_code})")
+            ok &= case
+
+            response = client.get("/api/generals?limit=5")
+            gdata = response.json()
+            case = response.status_code == 200 and "generals" in gdata and "total" in gdata
+            print(f"GET /api/generals responds ({gdata.get('total')} total): {'PASS' if case else 'FAIL'}")
+            ok &= case
+
+            case = (client.get("/api/kb").status_code == 200
+                    and client.get("/api/kb/..%2f..%2fetc%2fpasswd").status_code == 404)
+            print(f"GET /api/kb + path-traversal blocked: {'PASS' if case else 'FAIL'}")
             ok &= case
 
     print("SELF-TEST:", "PASS" if ok else "FAIL")

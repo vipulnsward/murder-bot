@@ -19,3 +19,4 @@ llm_decisions.jsonl
 battle_reports.jsonl
 data/pages/
 data/generals.raw.jsonl
+data/live_frames/

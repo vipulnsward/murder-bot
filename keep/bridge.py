@@ -11,6 +11,7 @@ import time
 from typing import Any, Callable
 
 import orchestrator
+from macro_schedule import MacroSchedule
 
 from keep.config import KeepConfig, load_config, save_config
 
@@ -21,6 +22,8 @@ class ControlBridge:
         runner: Callable[..., Any] = orchestrator.run,
         config_path: str | Path = "config.yaml",
         log_limit: int = 5000,
+        clock: Callable[[], float] = time.time,
+        frame_source: Callable[[], bytes | None] | None = None,
     ) -> None:
         self.runner = runner
         self.config_path = Path(config_path)
@@ -30,6 +33,9 @@ class ControlBridge:
         self.counters: dict[str, int | float] = {}
         self.logs: deque[dict[str, Any]] = deque(maxlen=log_limit)
         self.events: list[dict[str, Any]] = []
+        self.clock = clock
+        self.frame_source = frame_source or self._live_stream_frame
+        self.screen: str | None = None
         self.last_config = load_config(self.config_path)
         self.reload_pending = False
         self._reload: KeepConfig | None = None
@@ -42,6 +48,15 @@ class ControlBridge:
         self._registry = orchestrator.default_tasks()
 
     @staticmethod
+    def _live_stream_frame() -> bytes | None:
+        try:
+            from live_stream import _latest
+
+            return _latest.get("jpg")
+        except Exception:
+            return None
+
+    @staticmethod
     def _now() -> str:
         return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
@@ -51,13 +66,38 @@ class ControlBridge:
 
     def snapshot(self) -> dict[str, Any]:
         cfg = self.last_config
+        account = next(
+            account
+            for account in cfg.fleet.accounts
+            if account.name == cfg.fleet.active_account
+        )
+        macro_state, seconds_until_change = self._macro_schedule().state(self.clock())
+        counts = {
+            "own": 0,
+            "food": 0,
+            "gems": 0,
+            "batches": 0,
+            "rate_per_min": 0,
+            **self.counters,
+        }
         return {
             "status": self.status,
             "engine": self.status,
+            "account": account.name,
+            "device": account.adb_serial,
+            "device_ok": self.frame_source() is not None,
             "current_task": self.current_task,
             "macro_state": self.macro_state,
+            "macro": {
+                "state": macro_state,
+                "seconds_until_change": round(seconds_until_change, 3),
+            },
+            "screen": self.screen,
             "uptime_s": round(self.uptime, 3),
+            "ticks": int(counts.get("ticks", 0)),
             "counters": dict(self.counters),
+            "counts": counts,
+            "last_event": self.events[-1] if self.events else None,
             "reload_pending": self.reload_pending,
             "safety": {
                 "gem_spend": cfg.safety.gem_spend,
@@ -65,6 +105,58 @@ class ControlBridge:
                 "humanized": cfg.safety.humanize_required,
                 "macro_on": cfg.safety.macro_required,
             },
+        }
+
+    def _macro_schedule(self) -> MacroSchedule:
+        cfg = self.last_config.macro_schedule
+        return MacroSchedule(
+            cfg={
+                "sleep_len_h": cfg.sleep_len_h.as_tuple(),
+                "sleep_anchor_h": cfg.sleep_anchor_h.as_tuple(),
+                "micro_break_every_min": cfg.micro_break_every_min.as_tuple(),
+                "micro_break_len_min": cfg.micro_break_len_min.as_tuple(),
+                "idle_poll_cap_s": cfg.idle_poll_cap_s,
+            },
+            clock=self.clock,
+            seed_salt=cfg.seed_salt,
+        )
+
+    @staticmethod
+    def _timestamp(epoch: float) -> str:
+        return datetime.fromtimestamp(epoch, timezone.utc).isoformat().replace("+00:00", "Z")
+
+    def schedule(self) -> list[dict[str, str]]:
+        start = self.clock()
+        end = start + 24 * 60 * 60
+        if not self.last_config.macro_schedule.enabled:
+            return [{"start": self._timestamp(start), "end": self._timestamp(end), "state": "active"}]
+
+        macro = self._macro_schedule()
+        segments: list[tuple[float, float, str]] = []
+        cursor = start
+        while cursor < end:
+            macro._build_day(cursor)
+            day_segments = macro._segments or []
+            segments.extend(day_segments)
+            cursor = day_segments[-1][1] + 1 if day_segments else end
+        return [
+            {
+                "start": self._timestamp(max(segment_start, start)),
+                "end": self._timestamp(min(segment_end, end)),
+                "state": state,
+            }
+            for segment_start, segment_end, state in segments
+            if segment_end > start and segment_start < end
+        ]
+
+    def safety(self) -> dict[str, Any]:
+        cfg = self.last_config.safety
+        return {
+            "gem_spend": cfg.gem_spend,
+            "locked": True,
+            "disconnect_policy": cfg.disconnect_policy,
+            "humanize_required": cfg.humanize_required,
+            "reclaim_requires_confirm": cfg.reclaim_requires_confirm,
         }
 
     def _configured_tasks(self) -> list[Any]:
@@ -205,4 +297,3 @@ class ControlBridge:
 
     def add_event(self, msg: str, level: str = "info") -> None:
         self.events.append({"ts": self._now(), "level": level, "channel_sent": [], "msg": msg})
-

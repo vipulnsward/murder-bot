@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import os
 from pathlib import Path
 import sys
@@ -13,14 +14,17 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from fastapi import FastAPI, HTTPException, WebSocket
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ValidationError
 
 from keep.bridge import ControlBridge
 from keep.config import KeepConfig, default_config, load_config, save_config
+
+
+NO_SIGNAL_SVG = b'''<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360"><rect width="640" height="360" fill="#0b0f14"/><text x="320" y="180" fill="#9aa6b6" font-family="system-ui,sans-serif" font-size="22" text-anchor="middle">No signal</text></svg>'''
 
 
 class ControlRequest(BaseModel):
@@ -118,12 +122,73 @@ def create_app(bridge: ControlBridge | None = None) -> FastAPI:
     def events() -> dict[str, Any]:
         return {"events": list(active.events)}
 
+    @app.get("/api/schedule")
+    def schedule() -> list[dict[str, str]]:
+        return active.schedule()
+
+    @app.get("/api/safety")
+    def safety() -> dict[str, Any]:
+        return active.safety()
+
+    @app.get("/api/screen.mjpeg")
+    def screen_mjpeg() -> StreamingResponse:
+        async def frames():
+            while True:
+                frame = active.frame_source()
+                content_type = b"image/jpeg" if frame else b"image/svg+xml"
+                payload = frame or NO_SIGNAL_SVG
+                yield b"--frame\r\nContent-Type: " + content_type + b"\r\nContent-Length: " + str(len(payload)).encode() + b"\r\n\r\n" + payload + b"\r\n"
+                await asyncio.sleep(1 / 3 if frame else 1)
+
+        return StreamingResponse(
+            frames(),
+            media_type="multipart/x-mixed-replace; boundary=frame",
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+        )
+
     @app.websocket("/ws/status")
     async def ws_status(websocket: WebSocket) -> None:
         await websocket.accept()
         await websocket.send_json(active.snapshot())
         await asyncio.sleep(0)
         await websocket.close()
+
+    @app.websocket("/ws/logs")
+    async def ws_logs(websocket: WebSocket) -> None:
+        await websocket.accept()
+        cursor: str | None = None
+        try:
+            while True:
+                batch = active.get_logs(cursor)
+                for line in batch["lines"]:
+                    await websocket.send_json(line)
+                    cursor = line["cursor"]
+                await asyncio.sleep(0.2)
+        except (WebSocketDisconnect, RuntimeError):
+            return
+
+    @app.websocket("/ws/screen")
+    async def ws_screen(websocket: WebSocket) -> None:
+        await websocket.accept()
+        mode = websocket.query_params.get("mode", "frame")
+        seq = 0
+        try:
+            while True:
+                frame = active.frame_source()
+                seq += 1
+                if mode == "mjpeg":
+                    await websocket.send_bytes(frame or NO_SIGNAL_SVG)
+                else:
+                    await websocket.send_json({
+                        "seq": seq,
+                        "ts": active._now(),
+                        "jpg_b64": base64.b64encode(frame).decode() if frame else None,
+                        "screen": active.screen,
+                        "no_signal": frame is None,
+                    })
+                await asyncio.sleep(1 / 3 if frame else 1)
+        except (WebSocketDisconnect, RuntimeError):
+            return
 
     dist = ROOT / "keep" / "web" / "dist"
     if dist.is_dir():
@@ -146,7 +211,12 @@ def _self_test() -> bool:
     with TemporaryDirectory() as directory:
         config_path = Path(directory) / "config.yaml"
         save_config(default_config(), config_path)
-        fake = ControlBridge(runner=lambda **kwargs: "stopped", config_path=config_path)
+        fake = ControlBridge(
+            runner=lambda **kwargs: "stopped",
+            config_path=config_path,
+            clock=lambda: 1_774_051_200.0,
+            frame_source=lambda: None,
+        )
         with TestClient(create_app(fake)) as client:
             response = client.get("/api/status")
             case = response.status_code == 200 and "status" in response.json()
@@ -170,6 +240,24 @@ def _self_test() -> bool:
             listed = response.json().get("tasks", [])
             case = response.status_code == 200 and len(listed) == 8
             print(f"GET /api/tasks lists 8 tasks: {'PASS' if case else 'FAIL'}")
+            ok &= case
+
+            response = client.get("/api/schedule")
+            schedule = response.json()
+            case = response.status_code == 200 and bool(schedule) and all(
+                {"start", "end", "state"} <= segment.keys() for segment in schedule
+            )
+            print(f"GET /api/schedule returns segments: {'PASS' if case else 'FAIL'} ({len(schedule)})")
+            ok &= case
+
+            response = client.get("/api/safety")
+            safety = response.json()
+            case = (
+                response.status_code == 200
+                and safety.get("gem_spend") is False
+                and safety.get("locked") is True
+            )
+            print(f"GET /api/safety gem-lock is locked: {'PASS' if case else 'FAIL'}")
             ok &= case
 
             before = next(task for task in listed if task["name"] == "gather")["enabled"]

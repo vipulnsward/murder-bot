@@ -14,3 +14,6 @@ game_brain/screens/
 keep/web/node_modules/
 keep/web/dist/
 keep/web/.vite/
+game_brain/*.db
+data/*.jsonl
+*.jsonl

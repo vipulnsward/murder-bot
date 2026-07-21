@@ -67,10 +67,17 @@ def exit_ideal_land(tries=3):
         time.sleep(2.0)
 
 
+SALE_WORDS = ("deal", "purchase", "chf", "%return", "great value", "brand new",
+              "flash sale", "tech leap", "unlock privileges", "super value",
+              "limited time", "running of the bulls", "for sale", "buy now")
+
+
 def clear_popups(max_iters=6):
-    """Dismiss stacked sale/event popups with Android Back (safe — never buys; the
-    close-X moves per popup). Stops at the city; cancels an exit-game dialog with
-    Cancel (never Quit); leaves a disconnect for the caller. Returns True if city."""
+    """Dismiss CONFIRMED sale/event popups with Android Back (safe — never buys; the
+    close-X moves per popup). Cancels an exit-game dialog with Cancel (never Quit).
+    Crucially, if the screen is neither the city, an exit dialog, nor a recognized sale
+    popup, it does NOTHING — a blind Back in the city opens the exit dialog, and looping
+    that trips the humanization guard. Returns True only when the city is reached."""
     for _ in range(max_iters):
         img = shared_capture.grab_wait(DEV, timeout=6)
         if img is None or screen_fsm.is_disconnect(img):
@@ -80,9 +87,14 @@ def clear_popups(max_iters=6):
         if screen_fsm.identify(img) == "exit_dialog":
             subprocess.run(["adb", "-s", DEV, "shell", "input", "tap",
                             str(nav.EXIT_CANCEL[0]), str(nav.EXIT_CANCEL[1])])
+            time.sleep(1.4)
+            continue
+        low = " ".join(str(t).lower() for t, *_ in ocr_read.read_all(img))
+        if any(w in low for w in SALE_WORDS):
+            subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"])  # Back closes sale popups
+            time.sleep(1.4)
         else:
-            subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"])
-        time.sleep(1.6)
+            return False   # unknown screen — don't blind-Back into the exit dialog
     return False
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PKG = "com.topgamesinc.evony.flexion"
@@ -124,11 +136,13 @@ GENERIC = {"detail","upgrade","cancel","help","info","move","store","recall","bo
 def cap():
     return shared_capture.grab_wait(DEV)          # SHARED frame (no second adb capture)
 
-def tap(x, y, d=0.8):
+def tap(x, y, d=1.4):
+    # The building radial menu needs ~1.4s to animate in; 0.8s misses it (menu not up
+    # yet -> no Detail/Upgrade -> nothing recorded). Measured: 0.8s fails, 1.4s reliable.
     subprocess.run(["adb", "-s", DEV, "shell", "input", "tap", str(int(x)), str(int(y))]); time.sleep(d)
 
 def adb_back():
-    subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"]); time.sleep(0.7)
+    subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"]); time.sleep(0.9)
 
 
 def radial_name(texts):
@@ -173,34 +187,41 @@ def main():
             return None
         if screen_fsm.is_disconnect(img):
             return "DISCONNECT"
-        # Fast OCR first: the radial menu (Detail/Upgrade) pops up around the tapped
-        # building, never the whole screen. Scope OCR to a box around the tap point
-        # instead of the full 1080x1920 frame — ~3x less pixels to detect, plus cache.
+        # Check the radial menu around the tap FIRST — a building shows Detail/Upgrade
+        # there. Do NOT gate on is_city here: a building's radial menu often leaves the
+        # bottom-right Mail button visible, so is_city can still read True and we'd miss
+        # the building entirely.
         tapbox = (max(0, x - 360), max(0, y - 430), min(1080, x + 360), min(1920, y + 230))
         texts = ocr_read.read_all(img, box=tapbox, cache=True)
         low = " ".join(str(t).lower() for t, *_ in texts)
-        if "detail" not in low and "upgrade" not in low:
-            return None
-        name = radial_name(texts)
-        if name and name not in found:
-            found[name] = (x, y)
-            if pre is not None:
-                cv2.imwrite(f"{ROOT}/templates/buildings/{name}.png",
-                            pre[max(0, y - 230):y + 40, max(0, x - 130):min(1080, x + 130)])
-            cv2.imwrite(f"{ROOT}/game_brain/screens/bldg_{name}.png", img)
-            db.upsert_screen(f"bldg_{name}", description=f"city building {name}",
-                             template_path=f"templates/buildings/{name}.png")
-            for t, (cx, cy), cf in texts:
-                if cf > 0.5 and str(t).strip():
-                    db.add_element(f"bldg_{name}", str(t)[:40], cx, cy)
-            db.add_element(f"bldg_{name}", f"loc:{name}", x, y,
-                           template_path=f"templates/buildings/{name}.png", description="building location")
-            db.record_capture(image_path=f"{ROOT}/game_brain/screens/bldg_{name}.png", phash=db.phash(img),
-                              screen_label=f"bldg_{name}", ocr_text=" | ".join(str(t) for t, *_ in texts))
-            print(f"  FOUND {name} @({x},{y}) [total {len(found)}]", flush=True)
-        adb_back()
-        n.ensure_city(tries=3)
-        return name
+        if "detail" in low or "upgrade" in low:
+            name = radial_name(texts)
+            if name and name not in found:
+                found[name] = (x, y)
+                if pre is not None:
+                    cv2.imwrite(f"{ROOT}/templates/buildings/{name}.png",
+                                pre[max(0, y - 230):y + 40, max(0, x - 130):min(1080, x + 130)])
+                cv2.imwrite(f"{ROOT}/game_brain/screens/bldg_{name}.png", img)
+                db.upsert_screen(f"bldg_{name}", description=f"city building {name}",
+                                 template_path=f"templates/buildings/{name}.png")
+                for t, (cx, cy), cf in texts:
+                    if cf > 0.5 and str(t).strip():
+                        db.add_element(f"bldg_{name}", str(t)[:40], cx, cy)
+                db.add_element(f"bldg_{name}", f"loc:{name}", x, y,
+                               template_path=f"templates/buildings/{name}.png", description="building location")
+                db.record_capture(image_path=f"{ROOT}/game_brain/screens/bldg_{name}.png", phash=db.phash(img),
+                                  screen_label=f"bldg_{name}", ocr_text=" | ".join(str(t) for t, *_ in texts))
+                print(f"  FOUND {name} @({x},{y}) [total {len(found)}]", flush=True)
+            adb_back()
+            n.ensure_city(tries=2)
+            return name
+        # No building menu. If some OTHER panel opened (not the city), close it with Back
+        # (safe while a panel is up). If we're still in the bare city, the tap hit empty
+        # ground — do NOT Back (that opens the exit dialog).
+        if not nav.is_city(ocr_read.read_all(img, box=nav.CITY_BOX, cache=True)):
+            adb_back()
+            n.ensure_city(tries=1)
+        return None
 
     if not ensure_game():
         print("Evony not in foreground and relaunch failed — aborting pass", flush=True)

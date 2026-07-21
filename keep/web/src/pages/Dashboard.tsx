@@ -86,9 +86,12 @@ export function Dashboard() {
             </div>
           ) : null}
           {city.data?.buildings?.length ? (
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-8">
               {city.data.buildings.map((b) => (
-                <span key={b} className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-xs capitalize text-muted">{b.replace(/_/g, ' ')}</span>
+                <div key={b} className="rounded-lg border border-border bg-surface-2 p-1 text-center" title={b.replace(/_/g, ' ')}>
+                  <img alt={b} className="mx-auto h-14 w-full rounded object-contain" loading="lazy" src={`${API_BASE_URL}/api/city/template/${b}`} />
+                  <p className="mt-0.5 truncate text-[10px] capitalize text-muted">{b.replace(/_/g, ' ')}</p>
+                </div>
               ))}
             </div>
           ) : null}

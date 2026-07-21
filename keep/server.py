@@ -216,6 +216,16 @@ def create_app(bridge: ControlBridge | None = None) -> FastAPI:
             "priority": {"found": found, "missing": missing, "total": len(priority)},
         }
 
+    @app.get("/api/city/template/{name}")
+    def city_template(name: str) -> FileResponse:
+        """Serve a mapped building's captured template thumbnail."""
+        if "/" in name or ".." in name:
+            raise HTTPException(status_code=404, detail="not found")
+        p = ROOT / "templates" / "buildings" / f"{name}.png"
+        if not p.is_file():
+            raise HTTPException(status_code=404, detail="template not found")
+        return FileResponse(p, media_type="image/png")
+
     @app.get("/api/screen.mjpeg")
     def screen_mjpeg() -> StreamingResponse:
         async def frames():

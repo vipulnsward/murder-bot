@@ -332,22 +332,39 @@ def main():
 
     # Phase 2: anchor on the Keep (fixed reference) and tightly map the inner city where
     # the military buildings cluster — the drift-prone blind raster can't reliably reach it.
-    def center_on_keep(max_iter=18):
-        for _ in range(max_iter):
+    # Full-grid scan pattern to hunt for the Keep, then fine-center on it.
+    SCAN = [None, EAST, EAST, EAST, SOUTH, WEST, WEST, WEST, SOUTH, EAST, EAST, EAST,
+            SOUTH, WEST, WEST, WEST]
+
+    def center_on_keep():
+        # First reset toward the NW corner so the scan is deterministic.
+        for _ in range(4):
+            if not ensure_game():
+                return False
+            clear_popups(); swipe(NW)
+        for mv in SCAN:
             if not ensure_game():
                 return False
             clear_popups(); exit_ideal_land()
+            if mv:
+                swipe(mv); clear_popups(); exit_ideal_land()
             img = cap()
             if img is None or has_popup(img):
                 continue
             k = find_keep(img)
             if k is None:
-                swipe(EAST)   # scan for it
                 continue
-            kx, ky = k
-            if abs(kx - 540) < 150 and abs(ky - 950) < 150:
-                return True   # Keep is centered
-            swipe((kx, ky, 540, 950))   # drag the Keep toward screen center
+            # Found it — fine-center over a few nudges.
+            for _ in range(6):
+                kx, ky = k
+                if abs(kx - 540) < 150 and abs(ky - 950) < 150:
+                    return True
+                swipe((kx, ky, 540, 950))
+                clear_popups()
+                img = cap()
+                k = find_keep(img)
+                if k is None:
+                    break
         return False
 
     if center_on_keep():

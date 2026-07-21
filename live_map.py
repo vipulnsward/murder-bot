@@ -299,18 +299,28 @@ def main():
     # Cover the whole city with camera pans; at each stop tap ONLY detected building
     # structures (targeted). Reset toward the NW corner first so every sweep starts from
     # the same place, then snake-raster a 4x4 grid -> deterministic full coverage.
+    import random
+
     def swipe(mv):
-        subprocess.run(["adb", "-s", DEV, "shell", "input", "swipe", *map(str, mv), "500"])
+        jx, jy = random.randint(-45, 45), random.randint(-45, 45)   # jitter -> new points each sweep
+        m = (mv[0] + jx, mv[1] + jy, mv[2] + jx, mv[3] + jy)
+        subprocess.run(["adb", "-s", DEV, "shell", "input", "swipe", *map(str, m), "500"])
         time.sleep(1.3)
 
-    NW = (300, 620, 840, 1360)      # drag content down-right -> camera moves NW (corner)
+    NW = (300, 620, 840, 1360)      # camera NW
+    NE = (840, 620, 300, 1360)      # camera NE
+    SW = (300, 1360, 840, 620)      # camera SW
+    SE = (840, 1360, 300, 620)      # camera SE
     EAST = (860, 900, 320, 900)     # camera east
     WEST = (320, 900, 860, 900)     # camera west
     SOUTH = (540, 1340, 540, 640)   # camera south
-    for _ in range(4):
+    # Randomize the reset corner + depth each sweep so overnight runs cover the WHOLE
+    # city (including the inner walls) instead of re-rastering the same patch.
+    corner = random.choice([NW, NE, SW, SE])
+    for _ in range(random.randint(3, 6)):
         if not ensure_game():
             return
-        clear_popups(); swipe(NW)
+        clear_popups(); swipe(corner)
     PANS = [("r0c0", None), ("r0c1", EAST), ("r0c2", EAST), ("r0c3", EAST)]
     for row in range(1, 4):          # snake down the rows
         across = [EAST, EAST, EAST] if row % 2 == 0 else [WEST, WEST, WEST]

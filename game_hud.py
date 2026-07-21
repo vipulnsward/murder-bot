@@ -8,10 +8,17 @@ read while the bot is inside menus.
 
 from __future__ import annotations
 
+import json
+import os
 import re
+import time
 
 import nav
 import ocr_read
+
+# The mapper reaches clean-city states between probes and writes the HUD here; the
+# control app's bridge reads it so the dashboard stays live even while mapping.
+HUD_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "game_brain", "live", "hud.json")
 
 # Fixed HUD regions (x1, y1, x2, y2) on the 1080x1920 city view.
 _RES_BOXES = {
@@ -68,6 +75,35 @@ def read_hud(img):
         "gems": _read_amount(img, _GEMS_BOX),
         "vip": int(vip_m.group(1)) if vip_m else None,
     }
+
+
+def write_hud(hud, path=HUD_FILE):
+    """Atomically persist a HUD read (stamped with ts) for the control app to serve."""
+    if not hud or not hud.get("ok"):
+        return False
+    payload = dict(hud)
+    payload["ts"] = time.time()
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        tmp = f"{path}.tmp"
+        with open(tmp, "w") as fh:
+            json.dump(payload, fh)
+        os.replace(tmp, path)
+        return True
+    except OSError:
+        return False
+
+
+def read_hud_file(path=HUD_FILE, max_age_s=90.0):
+    """Return the persisted HUD if present, ok, and newer than max_age_s, else None."""
+    try:
+        with open(path) as fh:
+            hud = json.load(fh)
+    except (OSError, ValueError):
+        return None
+    if hud.get("ok") and (time.time() - hud.get("ts", 0)) <= max_age_s:
+        return hud
+    return None
 
 
 if __name__ == "__main__":

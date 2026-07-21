@@ -17,6 +17,7 @@ import time
 import cv2
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import game_hud
 import nav
 import ocr_read
 import orchestrator
@@ -25,6 +26,21 @@ import shared_capture
 import vision_db
 
 DEV = "127.0.0.1:5555"
+_last_hud = [0.0]
+
+
+def _maybe_write_hud(img, min_interval=8.0):
+    """When we're on a clean city frame between probes, refresh the dashboard HUD
+    file (throttled). Read-only; keeps the control app's stats live while mapping."""
+    now = time.time()
+    if img is None or now - _last_hud[0] < min_interval:
+        return
+    try:
+        hud = game_hud.read_hud(img)
+        if hud.get("ok") and game_hud.write_hud(hud):
+            _last_hud[0] = now
+    except Exception:
+        pass
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PKG = "com.topgamesinc.evony.flexion"
 
@@ -95,6 +111,7 @@ def main():
 
     def probe(x, y):
         pre = cap()
+        _maybe_write_hud(pre)  # pre-tap city frame -> refresh the dashboard HUD (throttled)
         tap(x, y)
         img = cap()
         if img is None:

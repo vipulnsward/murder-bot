@@ -56,19 +56,24 @@ class ControlBridge:
         if now - self._hud_at < max_age_s:
             return self._hud
         self._hud_at = now
-        data = self.latest_frame()
-        if not data:
-            return self._hud
         try:
-            import cv2
-            import numpy as np
-
             import game_hud
 
-            img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
-            hud = game_hud.read_hud(img)
-            if hud.get("ok"):
-                self._hud = hud
+            # Prefer the mapper's clean-city HUD file — it catches the live values
+            # even while we're inside menus. Fall back to reading the frame directly.
+            fresh = game_hud.read_hud_file()
+            if fresh:
+                self._hud = fresh
+                return self._hud
+            data = self.latest_frame()
+            if data:
+                import cv2
+                import numpy as np
+
+                img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
+                hud = game_hud.read_hud(img)
+                if hud.get("ok"):
+                    self._hud = hud
         except Exception:
             pass
         return self._hud

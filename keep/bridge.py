@@ -46,6 +46,32 @@ class ControlBridge:
         self._thread: threading.Thread | None = None
         self._started_at: float | None = None
         self._registry = orchestrator.default_tasks()
+        self._hud: dict[str, Any] = {"ok": False, "resources": {}, "power": None, "gems": None, "vip": None}
+        self._hud_at = 0.0
+
+    def game_hud(self, max_age_s: float = 4.0) -> dict[str, Any]:
+        """Live top-bar stats (resources/power/gems/vip) read from the shared frame.
+        Cached; only refreshed from a clean city frame, else the last good read is kept."""
+        now = time.monotonic()
+        if now - self._hud_at < max_age_s:
+            return self._hud
+        self._hud_at = now
+        data = self.latest_frame()
+        if not data:
+            return self._hud
+        try:
+            import cv2
+            import numpy as np
+
+            import game_hud
+
+            img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
+            hud = game_hud.read_hud(img)
+            if hud.get("ok"):
+                self._hud = hud
+        except Exception:
+            pass
+        return self._hud
 
     @staticmethod
     def _live_stream_frame() -> bytes | None:
@@ -103,6 +129,7 @@ class ControlBridge:
             "ticks": int(counts.get("ticks", 0)),
             "counters": dict(self.counters),
             "counts": counts,
+            "game": self.game_hud(),
             "last_event": self.events[-1] if self.events else None,
             "reload_pending": self.reload_pending,
             "safety": {

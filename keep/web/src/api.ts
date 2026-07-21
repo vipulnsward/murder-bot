@@ -22,6 +22,13 @@ export interface StatusResponse {
     batches: number
     rate_per_min: number
   }
+  game: {
+    ok: boolean
+    resources: { food?: number; wood?: number; stone?: number; gold?: number; refined?: number }
+    power: number | null
+    gems: number | null
+    vip: number | null
+  }
   safety: {
     gem_spend: false
     disconnect_safe: boolean

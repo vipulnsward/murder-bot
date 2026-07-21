@@ -17,3 +17,4 @@ keep/web/.vite/
 game_brain/*.db
 llm_decisions.jsonl
 battle_reports.jsonl
+data/pages/

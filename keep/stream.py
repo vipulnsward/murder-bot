@@ -39,6 +39,7 @@ class HLSStreamManager:
         with self._lock:
             if self._worker and self._worker.is_alive():
                 return self.status()
+            self._signal_remote_screenrecord("-9")
             for path in self.output_dir.iterdir():
                 if path.is_file():
                     path.unlink()
@@ -57,7 +58,7 @@ class HLSStreamManager:
             worker = self._worker
             screenrecord = self._screenrecord
             ffmpeg = self._ffmpeg
-        self._terminate(screenrecord)
+        self._stop_screenrecord(screenrecord)
         self._terminate(ffmpeg)
         if worker:
             worker.join(timeout=10)
@@ -167,9 +168,33 @@ class HLSStreamManager:
     def _screenrecord_command(self) -> list[str]:
         return [
             "adb", "-s", self.device, "exec-out", "screenrecord",
-            "--output-format=h264", "--size", "720x1280",
+            "--output-format=h264", "--size", "1080x1920",
             "--bit-rate", "8000000", "--time-limit", "175", "-",
         ]
+
+    def _stop_screenrecord(self, process: subprocess.Popen[bytes] | None) -> None:
+        self._signal_remote_screenrecord("-2")
+        if process and process.poll() is None:
+            try:
+                process.wait(timeout=1)
+            except subprocess.TimeoutExpired:
+                self._terminate(process)
+        self._signal_remote_screenrecord("-9")
+
+    def _signal_remote_screenrecord(self, signal: str) -> None:
+        try:
+            subprocess.run(
+                [
+                    "adb", "-s", self.device, "shell", "pkill", signal, "-f",
+                    "screenrecord.*--bit-rate 8000000",
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=3,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError):
+            pass
 
     def _ffmpeg_command(self) -> list[str]:
         playlist = self.output_dir / "stream.m3u8"
@@ -177,6 +202,8 @@ class HLSStreamManager:
         return [
             "ffmpeg", "-hide_banner", "-loglevel", "info",
             "-fflags", "+genpts", "-r", "60", "-f", "h264", "-i", "pipe:0",
+            # HLS output: downscale 1080p capture -> 720p for browser bandwidth
+            "-map", "0:v:0", "-vf", "scale=720:1280",
             "-an", "-c:v", "libx264", "-preset", "ultrafast", "-tune", "zerolatency",
             "-profile:v", "baseline", "-b:v", "8000000", "-maxrate", "8000000",
             "-bufsize", "4000000", "-g", "60", "-keyint_min", "60",
@@ -185,9 +212,9 @@ class HLSStreamManager:
             "-hls_flags", "delete_segments+omit_endlist+independent_segments",
             "-hls_segment_type", "mpegts", "-hls_segment_filename", str(segments),
             str(playlist),
-            # 2nd output from the same decoded input: a fresh JPEG for the mapper (shared
-            # capture). Upscaled to device res (1080x1920) so OCR coords == tap coords.
-            "-map", "0:v:0", "-vf", "scale=1080:1920,fps=8", "-q:v", "5", "-update", "1",
+            # 2nd output from the same decoded input: a fresh native-1080p JPEG for the
+            # mapper's OCR (real detail; coords already == device space).
+            "-map", "0:v:0", "-vf", "fps=8", "-q:v", "3", "-update", "1",
             "-atomic_writing", "1", "-y", str(self.frame_path),
         ]
 

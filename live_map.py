@@ -43,6 +43,30 @@ def _maybe_write_hud(img, min_interval=8.0):
         pass
 
 
+IDEAL_BOX = (0, 1120, 240, 1760)   # left column of the Ideal Land decoration UI
+IDEAL_TOKENS = ("ornament", "construct", "inventory", "top", "charts", "gallery")
+CITY_TOGGLE = (994, 1790)          # bottom-right castle button: Ideal Land <-> main city
+
+
+def is_ideal_land(img):
+    """True in Ideal Land (the decorative sub-city), not the main city. Both show Mail
+    bottom-right, but only Ideal Land has the Ornament/Construct/Top Charts column."""
+    if img is None:
+        return False
+    low = " ".join(str(t).lower() for t, *_ in ocr_read.read_all(img, box=IDEAL_BOX, cache=True))
+    return sum(w in low for w in IDEAL_TOKENS) >= 2
+
+
+def exit_ideal_land(tries=3):
+    """Return from Ideal Land to the main city via the bottom-right castle button."""
+    for _ in range(tries):
+        img = shared_capture.grab_wait(DEV, timeout=6)
+        if img is None or not is_ideal_land(img):
+            return
+        subprocess.run(["adb", "-s", DEV, "shell", "input", "tap", *map(str, CITY_TOGGLE)])
+        time.sleep(2.0)
+
+
 def clear_popups(max_iters=6):
     """Dismiss stacked sale/event popups with Android Back (safe — never buys; the
     close-X moves per popup). Stops at the city; cancels an exit-game dialog with
@@ -108,14 +132,13 @@ def adb_back():
 
 
 def radial_name(texts):
+    # Only name a building when a KNOWN building label appears in the panel text.
+    # The old "any capitalized word" fallback recorded OCR noise and button labels
+    # (Detail/Demolish/Follow Us/USS Constitution) as fake buildings.
     low = " ".join(str(t).lower() for t, *_ in texts)
     for b in sorted(BUILDINGS, key=len, reverse=True):
         if b in low:
             return b.replace(" ", "_")
-    for t, (cx, cy), cf in texts:
-        w = str(t).strip()
-        if cf > 0.6 and 200 < cy < 1300 and re.fullmatch(r"[A-Z][A-Za-z]{3,15}", w) and w.lower() not in GENERIC:
-            return w.lower()
     return None
 
 
@@ -130,10 +153,17 @@ def main():
 
     def probe(x, y):
         pre = cap()
+        if pre is None:
+            clear_popups()
+            return None
+        # Never map Ideal Land (the decorative sub-city) — go back to the main city.
+        if is_ideal_land(pre):
+            exit_ideal_land()
+            return None
         # Safety + productivity: only tap while actually in the city. If a sale/event
         # popup is up, clear it (Back, never Buy) and skip this probe — never blind-tap
         # popup UI, which could land on a Buy button.
-        if pre is None or not nav.is_city(ocr_read.read_all(pre, box=nav.CITY_BOX, cache=True)):
+        if not nav.is_city(ocr_read.read_all(pre, box=nav.CITY_BOX, cache=True)):
             clear_popups()
             return None
         _maybe_write_hud(pre)  # pre-tap city frame -> refresh the dashboard HUD (throttled)
@@ -176,6 +206,7 @@ def main():
         print("Evony not in foreground and relaunch failed — aborting pass", flush=True)
         return
     print("ensure city:", n.ensure_city(), flush=True)
+    exit_ideal_land()   # if a prior probe drilled into Ideal Land, return to the main city
     import random
     jx, jy = random.randint(-65, 65), random.randint(-65, 65)   # jitter so repeated sweeps hit new points
     grid = [(x + jx, y + jy) for y in range(300, 1320, 120) for x in range(160, 960, 120)]
@@ -186,6 +217,7 @@ def main():
         if not ensure_game():                    # guard: don't tap a browser/home screen
             print("Evony left foreground mid-sweep — aborting pass", flush=True); return
         clear_popups()                           # a sale/event popup may have appeared mid-sweep
+        exit_ideal_land()                        # a probe may have drilled into Ideal Land
         if mv:
             subprocess.run(["adb", "-s", DEV, "shell", "input", "swipe", *map(str, mv), "500"]); time.sleep(1.5)
             n.ensure_city(tries=2)

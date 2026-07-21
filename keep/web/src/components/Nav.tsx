@@ -6,10 +6,11 @@ const items = [
   ['/tasks', '☰', 'Tasks', true],
   ['/config', '⚙', 'Config', true],
   ['/schedule', '⏱', 'Schedule', true],
+  ['/generals', '♜', 'Generals', true],
   ['/fleet', '⚔', 'Fleet', false],
   ['/logs', '▤', 'Logs', true],
   ['/vision', '◉', 'Vision', false],
-  ['/knowledge', '▤', 'Knowledge', false],
+  ['/knowledge', '◈', 'Knowledge', true],
   ['/safety', '🔒', 'Safety', true],
 ] as const
 

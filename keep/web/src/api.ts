@@ -136,6 +136,58 @@ export interface ScreenFrame {
   no_signal: boolean
 }
 
+export type GeneralType = 'ground' | 'mounted' | 'ranged' | 'siege' | 'wall' | 'subcity' | 'monster' | 'other'
+
+export interface General {
+  name: string
+  gtype: string | null
+  quality: string | null
+  best_use: string | null
+}
+
+export interface GeneralRating {
+  role: string
+  tier: string | null
+  rank: number | null
+  context: string | null
+}
+
+export interface GeneralDetail extends General {
+  ratings: GeneralRating[]
+}
+
+export interface GeneralRecommendation {
+  name: string
+  gtype: string | null
+  tier: string | null
+  rank: number | null
+  best_use: string | null
+}
+
+export interface Guide {
+  title: string
+  url: string
+  category: string | null
+  summary: string | null
+}
+
+export interface GeneralQuery {
+  q?: string
+  gtype?: GeneralType
+  limit?: number
+}
+
+export interface GeneralRecommendationQuery {
+  role: string
+  n?: number
+  gtype?: GeneralType
+}
+
+export interface GuideQuery {
+  q?: string
+  category?: string
+}
+
 export type ControlAction = 'start' | 'pause' | 'resume' | 'panic_stop' | 'reclaim_session'
 
 export class ApiError extends Error {
@@ -162,6 +214,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body as T
 }
 
+function withQuery(path: string, params: Record<string, string | number | undefined>) {
+  const query = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== '') query.set(key, String(value))
+  }
+  const search = query.toString()
+  return search ? `${path}?${search}` : path
+}
+
 export const api = {
   getStatus: () => request<StatusResponse>('/api/status'),
   getConfig: () => request<KeepConfig>('/api/config'),
@@ -175,6 +236,18 @@ export const api = {
   getEvents: () => request<{ events: EventItem[] }>('/api/events'),
   getSchedule: () => request<ScheduleSegment[]>('/api/schedule'),
   getSafety: () => request<SafetyResponse>('/api/safety'),
+  getGenerals: ({ q, gtype, limit }: GeneralQuery = {}) =>
+    request<{ generals: General[]; total: number }>(withQuery('/api/generals', { q, gtype, limit })),
+  getGeneral: (name: string) => request<GeneralDetail>(`/api/generals/${encodeURIComponent(name)}`),
+  recommendGenerals: ({ role, n, gtype }: GeneralRecommendationQuery) =>
+    request<{ role: string; recommendations: GeneralRecommendation[] }>(
+      withQuery('/api/generals-recommend', { role, n, gtype }),
+    ),
+  getGuides: ({ q, category }: GuideQuery = {}) =>
+    request<{ guides: Guide[]; total: number }>(withQuery('/api/guides', { q, category })),
+  getKnowledgeDocs: () => request<{ docs: string[] }>('/api/kb'),
+  getKnowledgeDoc: (name: string) =>
+    request<{ name: string; markdown: string }>(`/api/kb/${encodeURIComponent(name)}`),
   toggleTask: (name: string) =>
     request<{ name: string; enabled: boolean; reload: 'queued'; warning?: string }>(
       `/api/tasks/${encodeURIComponent(name)}/toggle`,

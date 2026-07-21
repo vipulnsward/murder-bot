@@ -3,6 +3,8 @@ import { Nav } from './components/Nav'
 import { StatusStrip } from './components/StatusStrip'
 import { Config } from './pages/Config'
 import { Dashboard } from './pages/Dashboard'
+import { Generals } from './pages/Generals'
+import { Knowledge } from './pages/Knowledge'
 import { Live } from './pages/Live'
 import { Logs } from './pages/Logs'
 import { Safety } from './pages/Safety'
@@ -28,6 +30,8 @@ export default function App() {
         <Route element={<Tasks />} path="tasks" />
         <Route element={<Config />} path="config" />
         <Route element={<Schedule />} path="schedule" />
+        <Route element={<Generals />} path="generals" />
+        <Route element={<Knowledge />} path="knowledge" />
         <Route element={<Logs />} path="logs" />
         <Route element={<Safety />} path="safety" />
         <Route element={<Navigate replace to="/" />} path="*" />

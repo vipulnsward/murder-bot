@@ -1,37 +1,46 @@
 # Development & Economy — Strategy Synthesis for base_dev / daily / gather (kb/40)
 
-Distilled from 77 evonyguidewiki.com pages (buildings, troops, items/resources, VIP, events,
-mechanics) into `data/guides/economy.jsonl`. This doc turns those facts into decisions for
-`base_dev.BaseDevPolicy`, `daily_collect.DailyCollector`, `gather.py`, and the strategist's
-**expand** mode. Companion to the generals catalog (kb/36 + `data/generals.jsonl`).
+The decision layer that turns the evonyguidewiki.com city-development + events + economy pages into
+policy for `base_dev.BaseDevPolicy`, `daily_collect.DailyCollector`, `gather.py`, and the
+strategist's **expand** mode. Primary companion: **`data/guides/economy.jsonl` — 75 distilled records**
+(one per page, schema `{title, url, category:"economy", summary, content}`) covering the 40
+city-development buildings, 15 events, and ~20 item/resource/economy how-to pages. Also companion to
+the generals catalog (kb/36 + `data/generals.jsonl`).
 
 ## Verification legend
-- **Everything here is sourced from evonyguidewiki.com** — per-page URL in each `economy.jsonl`
-  record's `url`. Fetched 2026-07 via the reader-proxy (`crawl_evony.fetch`, Jina) because the site
-  sits behind a JS challenge that blocks plain fetch/curl.
-- `economy.jsonl` line schema: `{title, url, category:"economy", summary, content}`, one page/line.
+- **Source of every fact here = evonyguidewiki.com English pages, captured LOCALLY** under
+  `data/pages/*.md`; the per-page URL is in each `economy.jsonl` record's `url`. The synthesis was
+  written from those local captures (no live fetch). The strategy layer additionally draws on
+  adjacent local pages outside the 75-record set (troop-upgrade, troop-initial-stats,
+  vip-benefits-list, march-size-per-level, how-to-get-more-march-slot, make-wounded-as-you-need,
+  what-is-adv-dispatch, server-time-chart, server-merge, how-to-get-skillbook, how-to-get-runestone,
+  pasture, dead-keep-power-list) — all present in `data/pages/`.
 - **Numbers drift with game patches** (the wiki is itself patched; e.g. Keep/VIP tables edited
-  2025-2026). Treat every level/%/threshold as `[VERIFY IN-GAME]` before hardcoding — same discipline
-  as kb/27/kb/36. Ranks/costs are the site's published values, not our derivation.
-- **Gem-safe invariant carries over from kb/27**: none of the spend advice below ever taps gems.
-  Where a source's headline path is paid (King's Party, packs, tavern gem-refresh), it is flagged
-  NOT-ACTIONABLE for the bot and only kept so the strategist knows to skip it.
+  2025-2026). Treat every level/%/threshold as `[VERIFY]` before hardcoding — same discipline as
+  kb/27/kb/36. `[VERIFY]` also flags any single-page claim or a value the page itself hedged.
+- **Gem-safe invariant carries over from kb/27**: none of the spend advice below ever taps gems for
+  instant-finish, buy-resources, rent-builder, buy-tax, or gacha opens. Where a source's headline
+  path is paid (King's Party/Royal Party, Ekaterina's Garden, event packs, tavern gem-refresh), it
+  is flagged NOT-ACTIONABLE and kept only so the strategist knows to skip it.
+- A couple of mechanics carried from an earlier network pass rely on pages NOT in the local set
+  (troop rock-paper-scissors from `troop-type-en`; the Academy+Rally-Spot beginner order from
+  `construction-en`); these are tagged `[VERIFY — not in local set]`.
 - Cross-refs: **kb/27** base-dev automation · **kb/28** daily-collect + alliance loops · **kb/13**
   1B resource ceiling · **kb/14** food/tier economics · **kb/15** buff maximization · **kb/16** keep
   growth · **kb/23** gathering · **kb/24-25** rallies/monsters.
 
-## Counts (this pass)
-- **77 pages fetched & recorded** (76 batch + Rally Spot); **3 rate-limited (429) then recovered**
-  (embassy, barracks, workshop) — polite re-fetch with extra spacing succeeded, 0 permanent skips.
-- Coverage of the 4 requested sitemap sections: CITY DEV/BUILDINGS/TROOPS, EVENTS, ITEMS/RESOURCES/
-  ECONOMY, MECHANICS/MISC. Highest-value pages prioritized; deliberate lower-value skips listed at end.
+## Companion file
+- **`data/guides/economy.jsonl` = 75 records**: 40 city-development buildings + 15 events + 20
+  economy/item how-to pages (the exact city-development + events + economy scope). Full URLs inside.
+- This doc is the strategy overlay; the jsonl is the fact store. The pages-read/skip ledger is at end.
 
 ---
 
 ## 1. Build/upgrade priority — feeds `base_dev.BaseDevPolicy.decide()`
 Refines kb/27's priority table with the wiki's own guidance (`construction-en`, `academy-en`,
 `upgrade-requirements-keep-en`, `embassy-en`, `military-academy-en`, `rally-spot-en`).
-- **Beginner priority after every Keep-up: Academy + Rally Spot FIRST** (`construction-en`). Academy
+- **Beginner priority after every Keep-up: Academy + Rally Spot FIRST** (`construction-en` `[VERIFY —
+  not in local set]`). Academy
   research drives nearly all buffs; Rally Spot sets base March Size → faster gather + stronger rallies.
 - **Keep is the master gate** — almost every building's upgrade needs a min Keep level, and the Keep
   itself needs Walls + other facilities raised first. Max Lv50. So `base_dev` should treat a
@@ -68,7 +77,7 @@ time) → **Coordination** (march size, §5) + gathering/economy (Advancement, u
 
 ## 3. Troop tier economics — feeds gather/train + strategist expand
 `troop-type-en`, `troop-upgrade-en`, `troop-initial-stats-en`, `arsenal-en`:
-- **4 types, rock-paper-scissors** (equal tier/buff): Mounted > Ground > Ranged > Mounted; **Siege
+- **4 types, rock-paper-scissors** `[VERIFY — from troop-type-en, not in local set]` (equal tier/buff): Mounted > Ground > Ranged > Mounted; **Siege
   beats Ranged but loses to Mounted/Ground**, and is extremely strong (10-23x kill rate) vs any
   *lower-tier* troop. Mounted = best for PvE monster hunting (kb/24-25). **Siege + Ground carry the
   highest Load → the gathering troop types**; Ranged/Siege are long-range.
@@ -111,9 +120,11 @@ Ranked free sources; save big ones for Keep/Academy milestones on double-value e
 
 ## 6. Resource management — feeds gather + daily
 `how-to-get-resource-en`, `warehouse-en`, `how-to-get-gold-efficiently-en`:
-- **Resource item drops:** top resource bosses are **Ymir / Witch / Warlord** (Ymir best per-stamina;
-  Azazel/Kraken highest raw yield 4-5M×4); **Cerberus drops 0 resources** (it's a speedup boss — pick
-  the boss by what you need). Consuming Return also refunds RSS.
+- **Resource item drops (`how-to-get-resource-en`):** ranked by quantity **Azazel 5M > Kraken 4M >
+  Stymphalian Bird 3M > Ymir6 2.9M > Ammit 2.5M > Witch6/Warlord6 2.1M** (×4 RSS types); by
+  stamina-efficiency **Azazel 400K/stam > Kraken 320K > Ymir6 290K** — so **Azazel is best on both**.
+  **Cerberus drops 0 resources** (it's a speedup boss — pick the boss by what you need). Consuming
+  Return also refunds RSS.
 - **Keep RSS in unopened Resource Boxes** — boxed resources can't be plundered; only open them right
   before spending. **Don't buy RSS from the store; use Black Market only in emergencies.**
 - **Troop Load is irrelevant to tile-gather yield** (common newbie mistake) — it only matters for
@@ -137,29 +148,71 @@ Two independent buff families — apply both:
 
 ## 8. Events → time bot actions — feeds strategist expand-mode + daily
 Many recurring events reward the exact actions the bot already does. Score them for free by *timing*
-build/gather/kill/heal into their windows:
-- **Alliance Competition (~10 days, `alliance-competition-en`):** personal score → alliance rank.
-  High-value quests that match bot actions (50-240 pts): Cultivate Generals, Consume Runestones,
-  **Increase Power** (heal wounded — see §make-wounded), **Gather RSS outside city**, **Kill Bosses /
-  Kill Lv14+ Boss** (via alliance rallies), Consume Stamina, **Offer at Shrine** (pre-saved tribute),
-  Wheel spins. Challenge slots are capped/non-refundable → **only start quests worth ≥140 (≥170 at
-  Elite+); R4/R5 prune low ones.** Barbarian/CoC/sub-city attacks don't count as kills.
-- **Dawn of Civilization (~10 days, ~2×/month, `dawn-of-civilization-en`):** 5,000 pts across
-  Gathering/Alliance/Ambition; f2p daily paces — gather 6M+/day, produce 5M+/day, cultivate 23×,
-  refine 23×, shrine-offer 10×, rally 16×, donate 5×, speed-up-ally 10×, buy 20 black-market items,
-  consume 240 stamina (~12 kills), train mass T1, heal 80k, revive 80k souls (Holy Palace Lv25+),
-  recall deserters, +70M power, plunder 18M. Rewards include cheap golden historic generals. **No
-  per-day theme split** — pace daily, not day-specific.
-- **make-wounded exploit (`make-wounded-as-you-need-en`):** a monster battle wounds ≤10% of troops
-  sent (5% if Monarch Talent "Mortality") → send 10× (or 20×) the count you want wounded and **lose on
-  purpose** to hit "heal N troops" / Power-Increase quotas exactly. Use non-ground troops for a
-  reliable 10% cap. Feeds Alliance Competition + Dawn "Increase Power" scoring.
-- **Passive-drop events:** Lucky Composing / Crazy Eggs turn normal gathering/monster drops into free
-  bonus loot (zero extra action). Treasure Hunt (Pyramid, ~10d) is exploration/gather-adjacent (send
-  troops, no combat). Server-Gift wall refreshes **free every server-hour** (add to daily_collect).
-- **PURE-PAY — bot must SKIP (do not target):** **King's Party / Royal Party** (Basic-Gem "cake",
-  ~2×/month/10d, $20-$2,000), **limited-time-promotion**, most purchase packs (`make-profit-purchase-
-  pack-en`, `pay-cheap-en`). Kept only so the strategist never tries to "score" them.
+build/gather/kill/heal into their windows. Four buckets:
+
+**A. Action-scoring — synchronize normal activity (highest value):**
+- **Consuming Return Event (`consuming_return_event-en`) — the single most important economy event.**
+  It *rebates* a share of resources/speedups/items you spend. The winning cycle: **hoard resources
+  2+ weeks → START big construction during a RESOURCE-return window (burn resources → get days of
+  speedups) → COMPLETE builds during a SPEED-UP-return window (burn speedups → get resources).** This
+  is how F2P reaches Keep 35+. Tiers (complete all 4 RSS types): 2.5B ≈ 640 days speedups, 10B ≈
+  3,100, 35B ≈ 9,500; Keep to afford: 125M≈K25, 500M≈K27, 1.25B≈K29, 2.5B≈K31, 5B≈K33, 10B≈K35. **Do
+  not pre-build troops/traps before it.** Also rebates Tactic Scroll, Refining Stone, Blood of Ares
+  (returns generals), dragon-feed and Lv7-material spends. Two rotations run at once (11d/3d cadence).
+- **Alliance Competition (~10 days, `alliance-competition-en`):** personal score → alliance rank
+  (MAX 2,600 Novice → 5,200 Epic). High-value quests that match bot actions (50-240 pts): Increase
+  building power (City Development 300K=+240), Increase research power (450K=+240), Cultivate Generals
+  (500×), Consume Runestones (1.5K), **Increase Power** (heal wounded — see make-wounded), **Gather
+  RSS outside city** (54M one-type=+240), **Kill Bosses / Lv14+ Boss** (via alliance rallies), Consume
+  Stamina, **Offer at Shrine**, Wheel spins, Consume Gems (500K=+240, skip — paid). Challenge slots
+  are capped/non-refundable → **only start quests worth ≥140 (≥170 at Elite+); R4/R5 prune low ones.**
+- **Dawn of Civilization (~10 days, ~2×/month, `dawn-of-civilization-en`):** cheapest route to the
+  PvP **march effect + a golden historic general** (Aethelflaed, Narses, Merlin…). 40 quests across
+  Gathering/Alliance/Ambition; f2p daily paces — gather, produce, cultivate 23×, refine 23×,
+  shrine-offer 10×, rally 16×, donate 5×, speed-up-ally 10×, consume 240 stamina, train mass T1, heal
+  80k, revive 80k souls (**Holy Palace Lv25+**), recall deserters, +70M power, plunder 18M. **No
+  per-day theme split** — pace daily. Top-100 rankers also get Senior March Size Increase items.
+- **Revelation of Horus (`revelation-of-horus-en`) — daily quest RACE scored by SPEED.** Each day's
+  quest title is pre-revealed and completable during the hidden stage. Ranking = who completes soonest
+  after start (~1h after server reset per DST). Quests are normal actions: Cultivate Generals, Refine
+  Equipment, Increase troop power, Tax, Levy Gold, Offer at Shrine, Help Allies. **Winning play:
+  pre-stage tributes/gold/generals and fire instantly at reset.** Coins don't expire; redeem for rare
+  generals (Narses) / Meteoric Stone. Per-quest countdown — miss it and it can't be completed.
+- **F2P currency-from-normal-actions events:** **Dwarf's Lucky Apple** (`dwarfs_lucky_apple-en`) —
+  wishing coins from monster kills + gathering; spend on the 1-coin "Wealth" apple (most Pie chances)
+  and hand every Pie to a Witch for the big gift. **Crazy Eggs** (`crazy_egg-en`) — hammers (from
+  double-drop boss hunts + gathering) smash 4 eggs for gems/stamina/teleporters/artwork chests
+  (~58-70 hammers for all four). **Cleopatra's Treasure** (`cleopatras_treasure-en`) — fragments from
+  hunting (80/day) + gathering (20/day); the F2P play is to **DISASSEMBLE** fragments for resources
+  (~120M each over a 10-day cap), NOT pay gems to open. **Lucky Composing** (`lucky-composing-en`) —
+  cards from tiles + monsters; combine 3-of-a-color into the highest Lucky Box before the event ends.
+
+**B. Free but self-contained (play the free allotment, no base timing):**
+- **Treasure Hunt / Pyramid (`treasure-hunt-en`, ~10d):** huge free gem source (up to 189K at 500M
+  score). Dispatch **weak marches, NO general** to dive Lv3-5 pyramids (20/day, 20 stamina each);
+  a `gather`-style loop. **Pre-research the Academy "Mysterious Relic Exploration" + Adv (Alliance)**
+  nodes — they raise per-dive score.
+- **Hecate's Moon (`hecates-moon-en`):** 2 free Underworld Keys/day; solo monster hunt scored by
+  beating the hardest survivable Trial Temple (pick SIEGE-type with strong ground/mounted). Torches
+  expire after the event — spend them.
+- **Revelation of Maya (`revelation-of-maya-en`):** 20-stage combat roguelike; **no base action helps,
+  needs manual buff choices → LOW priority for an economy bot.**
+
+**C. Spend/pay — bot SKIPS (spend-timing only, not action-scored):** **King's Party / Royal Party**
+(`kings-party-en`, Basic-Gem "cake", $20-$5,000), **Ekaterina's Garden** (`ekaterina-garden-en`, same
+mechanic, cheaper Civilization scrolls), **Limited Time Promotion** (`limited-time-promotion-en`),
+event packs. Only Basic (directly-purchased) gems count — none F2P-viable.
+
+**D. Reference/valuation (not scoring):** `contents-of-chest-event-en`, `event-pack-1-5-en`,
+`eventpack-5vs1-en` (the $4.99 first pack is the value pick; buy many for gems/stamina/refining, buy
+the full 5th set for the exclusive general/scrolls), `material-chest-bag-contents-en`, `auction-en`,
+`exhibition-hall-reward-en` (filling Art Hall halls pays gems/stamina/speedups/teleporters).
+
+**make-wounded exploit (`make-wounded-as-you-need-en`):** a monster battle wounds ≤10% of troops sent
+(5% with Monarch Talent "Mortality") → send 10× (or 20×) the count you want wounded and **lose on
+purpose** to hit "heal N troops" / Power-Increase quotas exactly. Feeds Alliance Competition + Dawn
+"Increase Power" scoring. **Passive layer:** Server-Gift wall refreshes **free every server-hour**
+(add to daily_collect).
 
 ## 9. What to spend vs save (gem-safe)
 - **Never gems** (kb/27). **Speedups:** type-specific first, save "General" for emergencies; spend
@@ -195,25 +248,42 @@ Military-category **research** item (+1 march slot per level) that **hard-gates 
   Return (K25+); bias `monster`/`rally_join` toward Cerberus/Pan (speedups) or Ymir/Witch/Warlord
   (resources) by current need; treat King's Party / packs as non-actionable (never a "spend" target).
 
-## Pages read (77) & deliberate skips
-- **Read:** all buildings (academy, keep, construction, embassy, barracks, archer-camp, stables,
-  workshop, army-camp, military-academy, research-factory, arsenal, hospital, warehouse, walls,
-  watch-tower, market, tavern, wonder, art-hall, shrine, bunker, trap-factory, pasture, farm, mine,
-  quarry, sawmill, rally-spot); troops (type/upgrade/initial-stats); ref (dead-keep-power-list,
-  ideal-land, art_treasure); items/economy (resource, gold, gem, speed-up-items, hammer, medal,
-  monarch-exp, skillbook, teleporter, runestone, vip-time, prestige, material-chest, alliance-shop,
-  black-market); march/VIP/spend (march-size, march-size-per-level, march-speed, general-power,
-  max-generals, more-march-slot, vip, vip-benefits-list, pay-cheap, make-profit-purchase-pack,
-  make-wounded, adv-dispatch, auction); events (category/event, kings-party, treasure-hunt,
-  wisdom_dome, server-gift, dawn-of-civilization, exhibition-hall-reward, limited-time-promotion,
-  lucky-composing, crazy_egg, tavern-level-and-drop-rates); mechanics (alliance-competition,
-  server-merge, server-time-chart). Full URLs in `data/guides/economy.jsonl`.
-- **Skipped (lower economy value; next crawl if needed):** buildings archer-tower, prison,
-  holy-palace, victory-column, triumphal-arch, bacchus-tavern; items badge, scroll, soul-crystal,
-  tactic-scroll, march-speedup, march-size-increase, arrest-warrant, artwork-fragment,
-  ascension-fragment; events consuming_return_event (covered inside speed-up-items/resource),
-  dwarfs_lucky_apple, cleopatras_treasure, civilization-treasure, revelation-of-horus/maya,
-  shadow-of-dawn, hecates-moon, ekaterina-garden, ghost, mysterious-puzzle, event-pack-1-5,
-  eventpack-5vs1, what-is-kill-event; misc how-to-change-server, make-sub-account, option,
-  quiz_answer_list, term-translation-list, correct-translation-tips. Refining/blazon/monarch-gear
-  pages sit in the GEAR/BUFF sitemap sections (out of scope for this ingest).
+## Extra building detail now in `economy.jsonl` (used above)
+This local pass captured full detail on several buildings that strengthen base_dev/expand decisions:
+- **Holy Palace (Keep 11):** soul revival unlocks **Lv25**, consumes Soul Crystals — required for the
+  Dawn "revive 80k souls" quest; gates Keep 38 + Victory Column.
+- **Victory Column (Keep 35):** **+80% Construction, +80% Research, march-time reduction, general
+  attribute buffs** — a top base_dev accelerator; its attribute buffs count toward duty-officer
+  appointment requirements. Gates Keep 36.
+- **Ideal Land (Keep 12):** Construction Speed + all-troop HP/Atk/Def buffs from building level;
+  place Limited Ornaments (from Voyage to Civilizations) for more. Gates Triumphal Arch Lv6+.
+- **Subordinate City (Keep 11):** development cultures **Korea** (gathering+warehouse), **China**
+  (production+training), **America** (sub-city gold+research); up to 9 held, stacking. The main free
+  economy multiplier for expand mode.
+- **Forge (Keep 7):** **Champion's** 4-set (Lv13, +gathering) and **King's Ring** (Lv21, double-drop
+  for gold/hammer/medal farming) are the economy-relevant equipment tiers.
+- **Prison (Keep 11):** PvP captives → Labor (resources = 4h base production) or Release (50 Prestige).
+- **Research Factory (Keep 21, Hospital-gated):** Materials + Research Stones + Historic Medals;
+  stones rarely bottleneck research until ~Keep 33 (Military Advance category).
+
+## Pages ledger — `economy.jsonl` (75) + strategy-layer local pages
+- **`economy.jsonl` (75, the requested city-development + events + economy scope):** buildings
+  (keep, academy, military-academy, research-factory, market, warehouse, farm, sawmill, quarry, mine,
+  embassy, hospital, holy-palace, trap-factory, walls, watch-tower, wonder, wisdom_dome, ideal-land,
+  art-hall, tavern, forge, arsenal, council-of-state, prison, bunker, triumphal-arch, victory-column,
+  shrine, barracks, archer-camp, stables, workshop, army-camp, archer-tower, rally-spot, war-hall,
+  subordinate-city-advantages); economy/items (how-to-get: resource, speed-up-items, gold, hammer,
+  vip-time, gem, stamina, medal, badge, scroll, teleporter, march-speedup, march-size-increase,
+  artwork-fragment; material-chest-bag-contents, server-gift, alliance-shop-item-list,
+  battlefield-shop-item-list, auction, exhibition-hall-reward, limited-time-promotion,
+  dawn-of-civilization); events (alliance-competition, consuming_return_event, hecates-moon,
+  treasure-hunt, revelation-of-horus, revelation-of-maya, kings-party, cleopatras_treasure,
+  dwarfs_lucky_apple, crazy_egg, ekaterina-garden, lucky-composing, contents-of-chest-event,
+  event-pack-1-5, eventpack-5vs1). Full URLs in the jsonl.
+- **Strategy-layer pages (local, cited above but outside the 75-record scope):** troop-upgrade,
+  troop-initial-stats, vip-benefits-list, march-size-per-level, how-to-get-more-march-slot,
+  make-wounded-as-you-need, what-is-adv-dispatch, server-time-chart, server-merge, how-to-get-skillbook,
+  how-to-get-runestone, pasture, dead-keep-power-list — all in `data/pages/`.
+- **Out of local set (facts tagged `[VERIFY]`):** construction-en (beginner priority), troop-type-en
+  (rock-paper-scissors). Refining/blazon/monarch-gear sit in the GEAR/BUFF sitemap sections (out of
+  scope for this ingest; see kb/15/kb/37).

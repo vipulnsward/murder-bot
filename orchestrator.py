@@ -61,6 +61,21 @@ class Ctx:
     def log(self, msg):
         self._log(f"[{time.strftime('%H:%M:%S')}] {msg}")
 
+    def find(self, instruction, img=None):
+        """Locate a UI element by natural-language description via Holo grounding
+        (perception.ground -> local Holo1.5). Returns device (x, y) or None. Lazy:
+        the model loads on first use. Use as the fallback when a template is brittle:
+            xy = ctx.find("the Train button");  xy and ctx.tap(*xy, label="Train")"""
+        import perception
+        return perception.ground(self.screencap() if img is None else img, instruction)
+
+    def find_tap(self, instruction, label="", img=None):
+        """Ground `instruction` and tap it (humanized). Returns the (x, y) tapped, or None."""
+        xy = self.find(instruction, img=img)
+        if xy is not None:
+            self.tap(xy[0], xy[1], label=label or instruction)
+        return xy
+
 
 def _human_pause(d):
     import random
@@ -324,6 +339,22 @@ if __name__ == "__main__":
     c_ok = rc == "disconnect" and st["recoveries"] == 1
     print(f"C watchdog RECOVER -> result={rc} recoveries={st['recoveries']} trains={trains['n']} ok={c_ok}")
 
-    ok = a_ok and b_ok and c_ok
+    # D) ctx.find / find_tap -> Holo grounding primitive (mocked perception; no model/ADB).
+    import sys as _sys
+    import types as _types
+    fake_perc = _types.ModuleType("perception")
+    fake_perc.ground = lambda img, instruction: (123, 456) if "Train" in instruction else None
+    _sys.modules["perception"] = fake_perc
+    taps = []
+    cf = Ctx.__new__(Ctx)
+    cf.device = "test"; cf._log = lambda m: None
+    cf.tap = lambda x, y, d=0.3, label="", radius=10: taps.append((x, y, label))
+    got = cf.find("the Train button", img="frame")
+    tapped = cf.find_tap("the Train button", label="Train", img="frame")
+    miss = cf.find("the nonexistent widget", img="frame")
+    d_ok = got == (123, 456) and tapped == (123, 456) and taps == [(123, 456, "Train")] and miss is None
+    print(f"D ctx.find={got} find_tap={tapped} taps={taps} miss={miss} ok={d_ok}")
+
+    ok = a_ok and b_ok and c_ok and d_ok
     print("SELF-TEST:", "PASS" if ok else "FAIL")
     raise SystemExit(0 if ok else 1)

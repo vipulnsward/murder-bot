@@ -1,189 +1,165 @@
-# Evony Troop Trainer
+# Murder Bot
 
-Vision-based automation that trains troops in **Evony: The King's Return** running on
-a local Android emulator (BlueStacks). It drives the game entirely through ADB input
-(taps/swipes) and reads the screen with OpenCV template matching + Tesseract OCR — no
-game API, no memory hacks, no accessibility tree (Evony is a Unity/IL2CPP app, so the
-screen is the only interface).
+A **gem-safe, humanized automation bot** for **Evony: The King's Return** running on a
+local Android emulator (BlueStacks). It drives the game entirely through ADB input
+(taps/swipes) and understands the screen with OpenCV template matching, fast RapidOCR,
+and a **local Holo1.5-7B vision model** (MLX, on-device) — no game API, no memory hacks,
+no accessibility tree (Evony is a Unity/IL2CPP app, so the screen is the only interface).
 
-> **Beyond training:** the bot now has a multi-feature orchestrator — defense, base
-> development, daily upkeep, alliance, gathering, rallies, monsters — with local
-> Holo1.5 vision, humanized input, and a human activity schedule. See
-> **[ORCHESTRATOR.md](ORCHESTRATOR.md)**.
+Murder Bot pairs the automation core with a **web control app** (FastAPI + React) for
+running, configuring, and watching the bot live, plus a researched strategy knowledge
+base (300+ generals, 140+ guides) it can consult.
 
-Campaigns run so far, all unattended: **685.7M → 1.5B T1 Warriors**, then a switch to
-T2 ground that reached **500M Conscripts** (final 501,481,135; 294 batches, 8 food refills,
-0 failures). A push toward **1B** is paused at 511M — the bot is fine, but food is the ceiling: current
-inventory reaches only ~629M (spending 1M-Food + the spendable **Safe Food** stash), and 1B is
-~80B food short — a gathering grind or paid packs, not a bot problem. For a bulk count, **T1**
-(160 food, 0 stone) is the cheaper tier. See `kb/13` (budget) and `kb/14` (sourcing + tiers).
-
-> Evony's ToS prohibits automation. Use only on a self-owned account whose risk you accept.
+> Evony's ToS prohibits automation. This is a personal tool for a single self-owned
+> account whose risk you accept. Use responsibly.
 
 ---
 
-## What's in here
+## Safety invariants (locked, not optional)
 
-| File | What it does |
-|------|--------------|
-| `train_to_1b.py` | Main loop: train a full batch, Finish-All with speedups, repeat until the target count. |
-| `auto_refill.py` | Self-healing food refill: navigate to Resources, open ~5B food (bounded), walk back to the barracks. Also `app_refresh()` (force-stop + relaunch) as a last-resort recovery. |
-| `recovery_handler.py` | Recovery playbook — dismisses event popups, re-navigates to the barracks, optional vision-LLM fallback. |
-| `food_topup.py` | Opens food resource items in controlled amounts (never "open all"). |
-| `status.py` / `config.py` | Shared OCR/state helpers and tuning constants. |
-| `gen_dashboard.py` | Renders `evony_status.html` — a branded live status dashboard (progress to target, rate, ETA, screenshot). |
-| `live_stream.py` | MJPEG live stream of the emulator screen on `:8088` + a `/stats` JSON endpoint (re-OCRs the count every 10s). |
-| `hls_stream.sh` | H.264 HLS variant of the stream (`adb screenrecord \| ffmpeg`) for smoother HD over a tunnel. |
-| `fast_screenshot.py` | Screenshot transport. Raw `screencap`→NumPy (no PNG encode/decode) — **2.4× faster** than `screencap -p` (201ms vs 476ms), no screenrecord conflict with the HLS stream. `grab(method="raw")` with a PNG fallback. |
-| `scheduler.py` | ALAS-style time-based task scheduler: tasks carry a `next_run` + interval + priority; `run_due()` runs the most-due, highest-priority task and reschedules it (so refill preempts routine ticks). Clock-injectable; a thrown task is caught and retried. |
-| `watchdog.py` | Crash/stuck detector: recovers when the app process is gone or N consecutive frames match no known screen anchor. Recovery is injectable (defaults to `auto_refill.app_refresh`). |
-| `infra_demo.py` | Live smoke test wiring `scheduler` + `fast_screenshot` + `watchdog` together against the device. |
-| `templates/` | Click-proof PNG templates for each UI element (train button, speedup button, popups, barracks, etc.). |
-| `kb/` | Researched knowledge base on Evony combat, resources, tasks, botting, buffs, self-healing. |
+These are enforced in code, not just documented — they are the whole point of the bot.
+
+- **Never spends gems.** No task or recovery path ever taps a gem button (Finish All /
+  Instant Finish / Buy / Confirm-purchase). The control app's `gem_spend` flag is a frozen
+  field — the API returns `422` on any attempt to set it true.
+- **Disconnect = stop.** On the account-disconnect screen the bot stops and notifies; it
+  never taps Quit/Restart on its own (reclaim requires an explicit operator confirm).
+- **Humanized input.** WindMouse-style curved motion, per-tap jitter and dwell, deliberate
+  vs. quick taps, and same-button repeat limits — no robotic pixel-perfect cadence.
+- **Human activity schedule.** A macro schedule adds micro-breaks and an overnight sleep
+  block so activity looks human across a day.
+- **Bounded actions.** Resource opens are hard-capped ("never open all"), and every module
+  self-polices its own guard values.
+
+---
+
+## What it does
+
+An orchestrator runs pluggable, independently-tested feature modules on a time-based
+scheduler (most-due, highest-priority task wins; each reschedules itself):
+
+| Module | Job |
+|--------|-----|
+| `auto_shield.py`   | Keep a defensive shield up; proactively re-shield before it lapses. |
+| `daily_collect.py` | Daily upkeep — collect resources, chests, and free dailies. |
+| `alliance.py`      | Alliance help, donations, and gifts. |
+| `base_dev.py`      | Base development — buildings, research, and upgrades. |
+| `gather.py`        | Send troops to gather tiles (reserves marches for rallies). |
+| `rally_join.py`    | Join alliance rallies against monsters/enemies. |
+| `monster.py`       | Solo-hunt monsters within stamina and level caps. |
+
+Every module ships with a self-test and gem-safe defaults. The full suite is **17/17
+passing** (`python selftest.py`).
+
+---
+
+## The stack
+
+| Layer | Tech |
+|-------|------|
+| **Language / runtime** | Python 3.14 (managed with `mise`, repo `.venv`) |
+| **Device control** | ADB → BlueStacks (`127.0.0.1:5555`); `input tap/swipe`, `screencap`, `screenrecord` |
+| **Perception** | OpenCV template matching + **RapidOCR** (rec-only fast path, content-hash cache) + **Holo1.5-7B** vision via `mlx-vlm` (local, free) |
+| **Vision memory** | `vision.db` (SQLite) — mapped screens, UI elements, and captures with perceptual-hash dedup |
+| **Knowledge base** | `game_kb.py` (SQLite) — **303 generals**, **144 guides** crawled from evonyguidewiki.com; `strategist.py` / `general_advisor.py` query it |
+| **Control app — backend** | **FastAPI** (imports the bot modules directly), WebSockets for live status/logs/screen |
+| **Control app — frontend** | **React + TypeScript + Vite**, Tailwind + shadcn/ui, React Query |
+| **Live screen** | One `screenrecord` → `ffmpeg` fan-out: **HLS 60fps** for the browser **+** a shared JPEG for the mapper (solves the two-consumer / one-ADB constraint) |
+| **Remote access** | Cloudflare quick tunnel (`cloudflared --url`) → public HTTPS |
+| **Notifications** | macOS banners + optional Slack/Discord webhooks |
+
+---
+
+## Layout
+
+| Path | What it is |
+|------|------------|
+| `orchestrator.py` | The engine: scheduler + FSM + watchdog + humanized tap/find context. |
+| `run_bot.py` | Entry point that wires the orchestrator and the feature modules. |
+| `humanize.py` · `macro_schedule.py` | Human-like input + activity schedule. |
+| `nav.py` | Reliable navigation primitives (back, city view, reclaim-after-disconnect). |
+| `perception.py` · `screen_id.py` · `ocr_read.py` · `holo_vision.py` | Vision toolkit (find/ground/read-number/classify). |
+| `vision_db.py` · `game_brain/vision.db` | The mapped-game vision store. |
+| `state_reader.py` · `strategist.py` · `brain.py` · `general_advisor.py` | Read game state and decide/advise from the knowledge base. |
+| `game_kb.py` · `data/*.jsonl` | Strategy knowledge base + reproducible seed data. |
+| `keep/` | FastAPI backend for the control app (`server.py`, `bridge.py`, `stream.py`). |
+| `keep/web/` | React + TS control-app frontend. |
+| `keep_live.py` | Runs the full control app locally with a live emulator frame source. |
+| `templates/` | Click-proof PNG templates for UI elements and buildings. |
+| `kb/` | Researched write-ups on combat, resources, botting, buffs, self-healing. |
+| `selftest.py` | One-command test suite for every module (17/17). |
 
 ---
 
 ## Requirements
 
-- **BlueStacks** (or any Android emulator) with ADB debugging enabled, Evony installed and logged in.
-- **ADB** reachable at `127.0.0.1:5555` (BlueStacks default). Adjust `DEVICE` if yours differs.
-- **Python 3.12** with `opencv-python-headless` and `numpy`.
-- **Tesseract OCR** (`brew install tesseract`) for reading troop counts / food.
-- Streaming extras (optional): **cloudflared** (public URL) and **ffmpeg** (HLS).
+- **BlueStacks** (or any Android emulator) with ADB debugging on, Evony installed and logged in.
+- **ADB** reachable at `127.0.0.1:5555` (adjust `DEVICE` if yours differs).
+- **Python 3.14** via `mise` (`mise install`), then the repo `.venv` (`--system-site-packages`
+  so the ML stack from the global env is visible).
+- Optional: **ffmpeg** (HLS stream), **cloudflared** (public URL), **Node** (build the frontend).
 
 ```bash
-python3.12 -m venv evony-venv
-source evony-venv/bin/activate
-pip install opencv-python-headless numpy pytesseract
-adb connect 127.0.0.1:5555      # confirm the emulator is attached
+mise install                     # Python 3.14 per .mise.toml
+adb connect 127.0.0.1:5555       # confirm the emulator is attached
 adb devices
+python selftest.py               # 17/17 should pass
 ```
 
 ---
 
 ## Usage
 
-### 1. Train troops
-
-Open the game to the **Warriors (T1) barracks training screen** first, then:
+### Run the control app (dashboard + live screen)
 
 ```bash
-source evony-venv/bin/activate
-python train_to_1b.py
+python keep_live.py --port 8000
 ```
 
-It loops: tap **Train** → **Confirm** the capacity popup → wait for the batch →
-**Finish All** with speedups → back to idle → repeat, until `Own >= TARGET_OWN`.
-Progress is logged with a running count and ETA.
+Then open `http://127.0.0.1:8000` — Dashboard, Live screen, Tasks, Config, Schedule,
+Generals, Knowledge, and Safety. The gem-lock and Panic Stop are surfaced and enforced.
 
-**Tuning** (top of `train_to_1b.py`):
-
-```python
-DEVICE     = "127.0.0.1:5555"   # ADB target
-TARGET_OWN = 1_500_000_000      # stop when you own this many of the trained troop
-TRAIN_QTY  = 271766             # slider max the game resets to each batch
-```
-
-> **Why we Confirm instead of typing a number:** the game resets the slider to its max
-> (271,766) every batch, which exceeds current training capacity (269,228), so tapping
-> Train pops a "capacity exceeded → adjust to 269,228?" dialog. Tapping **Confirm** is
-> faster and far more reliable than typing into the quantity field. This is the single
-> biggest stability win in the project.
-
-### 2. Live dashboard (static HTML)
+Expose it publicly (ephemeral URL, only up while your Mac + app + tunnel run):
 
 ```bash
-python gen_dashboard.py        # writes evony_status.html with a fresh screenshot + stats
+cloudflared tunnel --url http://localhost:8000
 ```
 
-Open `evony_status.html` in a browser, or regenerate it on a loop for a live view.
-
-### 3. Live stream + stats API
+### Build the frontend after UI changes
 
 ```bash
-python live_stream.py          # serves on http://localhost:8088
+cd keep/web && npm install && npm run build
 ```
 
-- `/`       — combined dashboard page (live MJPEG video + auto-refreshing stats).
-- `/stream` — raw MJPEG (`multipart/x-mixed-replace`).
-- `/stats`  — JSON: `{own, food, running, pct, to_go, ...}`, re-OCR'd every 10s.
-
-Expose it publicly with Cloudflare (QUIC/UDP is often blocked, so force http2):
+### Run the bot
 
 ```bash
-cloudflared tunnel --url http://localhost:8088 --protocol http2
+python run_bot.py                # orchestrator + feature modules on the scheduler
 ```
-
-### 4. Smooth HD stream (HLS)
-
-For higher quality than MJPEG, stream H.264 via screenrecord:
-
-```bash
-./hls_stream.sh                # writes hls/stream.m3u8 + segments
-```
-
-Serve the `hls/` directory and point an `<video>`/hls.js player (or the same tunnel) at it.
-
-### 5. Food top-up
-
-`food_topup.py` opens resource food items in **bounded amounts** (hard OCR cap, so it
-never "opens all food"). Call it when the trainer reports low food, or run it standalone.
 
 ---
 
 ## How it works
 
-1. **Capture** — `adb exec-out screencap -p` grabs the current frame.
-2. **Detect state** — `cv2.matchTemplate` against `templates/*.png` (match > ~0.9) tells us
-   which screen/popup we're on: idle barracks, mid-training (speedup button visible),
-   capacity popup, exit dialog, etc. Templates are cropped tight so they match across
-   camera pans and minor UI shifts.
-3. **Read numbers** — Tesseract OCR on fixed screen regions reads the owned-troop count
-   and food, with sanity bounds to reject misreads.
-4. **Act** — `adb input tap/swipe/text/keyevent` performs the click.
-5. **Recover** — if knocked off the training screen by an event popup, the recovery
-   playbook dismisses it (Cancel/Back only — never taps anything that could spend gems)
-   and re-locates the barracks by template before resuming.
+1. **Capture** — a shared `screenrecord`→`ffmpeg` pipeline produces both the browser HLS
+   stream and a fresh JPEG frame; the bot reads the frame (one ADB capture, two consumers).
+2. **Understand** — OpenCV templates and OCR identify the screen and read numbers; Holo1.5
+   grounds free-form queries ("where is X?") when a template doesn't exist yet.
+3. **Decide** — the scheduler picks the most-due task; `strategist`/`brain` consult the
+   knowledge base for strategy calls.
+4. **Act** — humanized `adb input tap/swipe` performs the move (gem buttons are never targets).
+5. **Recover** — a watchdog handles crashes/stuck screens; on disconnect it stops and notifies
+   rather than tapping anything risky.
+
+See **[ORCHESTRATOR.md](ORCHESTRATOR.md)** for the engine design and `kb/` for the game
+mechanics and decisions behind the safety rails.
 
 ---
 
-## Self-healing (runs for hours unattended)
+## History
 
-Out of food, Evony forces the training quantity to 1 and puts a timer on the Train button,
-so `train_one_batch` returns `NAV`, not `NOFOOD`. The loop therefore refills on **sustained
-failure of any kind**, not a specific code:
-
-- **3 and 6 consecutive fails** → `auto_refill.refill()` opens ~5B food (5000 × 1M items) and
-  navigates back to the barracks. Bounded and gated so it never opens all food or taps a gem
-  button.
-- **8 fails** → `auto_refill.app_refresh()` force-stops and relaunches the app (resets the
-  camera to default zoom where templates match again), then re-navigates.
-- **10 fails** → stop for a human look (rare).
-
-The modal quantity is read with a **color mask** (orange-on-beige defeats grayscale
-thresholding): keep pixels where `r-g > 45 && r-b > 60`, invert, upscale, OCR.
-
-Run the refill or a refresh manually any time:
-
-```bash
-python auto_refill.py 5000     # open ~5B food and return to Warriors
-python auto_refill.py refresh  # force-stop + relaunch + navigate to Warriors
-```
-
-A 2-minute monitor loop restarts the bot if it dies, confirms each refill fired, and refreshes
-the dashboards. See `kb/11-self-healing-food-refill.md` for the full write-up.
-
-## Notes & safety rails
-
-- **The bot never spends gems.** Its recovery is dismiss/back-only; blind taps that once hit
-  a gem "Instant Finish" button were removed. The *one* deliberate exception is operator-run:
-  clearing a batch stranded at its full multi-day timer with Instant Finish (~4.3k gems), a
-  distinct stall from out-of-food — see `kb/12-instant-finish-recovery.md`.
-- **Never "opens all" food.** Food top-up is hard-capped.
-- **Know your ceiling.** Food, not the bot, caps how far a run reaches (~59M food/batch). The
-  batch math and the 500M→1B budget are in `kb/13-scaling-1b-resource-ceiling.md`.
-- **Stale display resync:** if the in-game resource display desyncs, a force-stop +
-  relaunch (`am force-stop` / `monkey`) re-syncs it.
-- The `kb/` folder documents the game mechanics and design decisions behind these rails.
-
-This is a personal automation tool for a single self-owned account. Use responsibly.
+Murder Bot began as a single-purpose **troop trainer** and ran multiple unattended
+campaigns (e.g. a T2 ground push to **500M Conscripts** — 294 batches, 8 food refills, 0
+failures) before growing into the multi-feature, gem-safe, vision-driven bot it is today.
+Those early runs proved out the self-healing and safety-rail design the current modules
+inherit.

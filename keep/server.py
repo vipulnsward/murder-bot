@@ -38,8 +38,11 @@ def create_app(bridge: ControlBridge | None = None) -> FastAPI:
     stream = HLSStreamManager()
     frame_source = active.frame_source
 
-    def stream_owned_frame() -> None:
-        return None
+    def stream_owned_frame() -> bytes | None:
+        # While the H.264 stream owns adb, its ffmpeg also writes the shared JPEG.
+        # Serve that to MJPEG clients so the live screen never goes blank (reading a
+        # file is free — no second adb capture, no conflict with the stream).
+        return stream.latest_frame_bytes()
 
     app = FastAPI(title="Murder Bot")
     app.state.bridge = active

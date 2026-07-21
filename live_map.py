@@ -26,6 +26,30 @@ import vision_db
 
 DEV = "127.0.0.1:5555"
 ROOT = os.path.dirname(os.path.abspath(__file__))
+PKG = "com.topgamesinc.evony.flexion"
+
+
+def game_foreground():
+    """True if Evony is the focused app (guards against a stray tap opening a browser)."""
+    try:
+        out = subprocess.run(["adb", "-s", DEV, "shell", "dumpsys", "window"],
+                             capture_output=True, text=True, timeout=8).stdout
+    except Exception:
+        return False
+    for line in out.splitlines():
+        if "mCurrentFocus" in line:
+            return PKG in line
+    return PKG in out
+
+
+def ensure_game():
+    """Bring Evony to the foreground if it isn't (e.g. a browser/home took over)."""
+    if game_foreground():
+        return True
+    subprocess.run(["adb", "-s", DEV, "shell", "monkey", "-p", PKG,
+                    "-c", "android.intent.category.LAUNCHER", "1"], capture_output=True)
+    time.sleep(10)
+    return game_foreground()
 
 BUILDINGS = ["research factory","forge","academy","barracks","stable","archer camp","archer range","range",
  "workshop","hospital","embassy","rally spot","war hall","watchtower","keep","wall","warehouse","market",
@@ -102,6 +126,9 @@ def main():
         n.ensure_city(tries=3)
         return name
 
+    if not ensure_game():
+        print("Evony not in foreground and relaunch failed — aborting pass", flush=True)
+        return
     print("ensure city:", n.ensure_city(), flush=True)
     import random
     jx, jy = random.randint(-65, 65), random.randint(-65, 65)   # jitter so repeated sweeps hit new points
@@ -110,6 +137,8 @@ def main():
               ("west", (300, 900, 880, 900)), ("east", (880, 900, 300, 900)),
               ("nw", (760, 700, 320, 1250)), ("se", (320, 1250, 760, 700))]
     for bname, mv in blocks:
+        if not ensure_game():                    # guard: don't tap a browser/home screen
+            print("Evony left foreground mid-sweep — aborting pass", flush=True); return
         if mv:
             subprocess.run(["adb", "-s", DEV, "shell", "input", "swipe", *map(str, mv), "500"]); time.sleep(1.5)
             n.ensure_city(tries=2)

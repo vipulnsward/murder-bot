@@ -60,8 +60,9 @@ class ControlBridge:
             import game_hud
 
             # Prefer the mapper's clean-city HUD file — it catches the live values
-            # even while we're inside menus. Fall back to reading the frame directly.
-            fresh = game_hud.read_hud_file()
+            # even while we're inside menus. Resources/power change slowly, so a read up
+            # to 10 min old still beats blanks during popup-heavy stretches.
+            fresh = game_hud.read_hud_file(max_age_s=600)
             if fresh:
                 self._hud = fresh
                 return self._hud

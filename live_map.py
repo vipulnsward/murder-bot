@@ -41,6 +41,25 @@ def _maybe_write_hud(img, min_interval=8.0):
             _last_hud[0] = now
     except Exception:
         pass
+
+
+def clear_popups(max_iters=6):
+    """Dismiss stacked sale/event popups with Android Back (safe — never buys; the
+    close-X moves per popup). Stops at the city; cancels an exit-game dialog with
+    Cancel (never Quit); leaves a disconnect for the caller. Returns True if city."""
+    for _ in range(max_iters):
+        img = shared_capture.grab_wait(DEV, timeout=6)
+        if img is None or screen_fsm.is_disconnect(img):
+            return False
+        if nav.is_city(ocr_read.read_all(img, box=nav.CITY_BOX)):
+            return True
+        if screen_fsm.identify(img) == "exit_dialog":
+            subprocess.run(["adb", "-s", DEV, "shell", "input", "tap",
+                            str(nav.EXIT_CANCEL[0]), str(nav.EXIT_CANCEL[1])])
+        else:
+            subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"])
+        time.sleep(1.6)
+    return False
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PKG = "com.topgamesinc.evony.flexion"
 
@@ -160,6 +179,7 @@ def main():
     for bname, mv in blocks:
         if not ensure_game():                    # guard: don't tap a browser/home screen
             print("Evony left foreground mid-sweep — aborting pass", flush=True); return
+        clear_popups()                           # a sale/event popup may have appeared mid-sweep
         if mv:
             subprocess.run(["adb", "-s", DEV, "shell", "input", "swipe", *map(str, mv), "500"]); time.sleep(1.5)
             n.ensure_city(tries=2)

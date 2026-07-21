@@ -214,6 +214,12 @@ export interface GuideQuery {
   category?: string
 }
 
+export interface CityMap {
+  ok: boolean
+  stats: { screens?: number; captures?: number; elements?: number }
+  buildings: string[]
+}
+
 export type ControlAction = 'start' | 'pause' | 'resume' | 'panic_stop' | 'reclaim_session'
 
 export class ApiError extends Error {
@@ -275,6 +281,7 @@ export const api = {
   getGuides: ({ q, category }: GuideQuery = {}) =>
     request<{ guides: Guide[]; total: number }>(withQuery('/api/guides', { q, category })),
   getKnowledgeDocs: () => request<{ docs: string[] }>('/api/kb'),
+  getCity: () => request<CityMap>('/api/city'),
   getKnowledgeDoc: (name: string) =>
     request<{ name: string; markdown: string }>(`/api/kb/${encodeURIComponent(name)}`),
   toggleTask: (name: string) =>

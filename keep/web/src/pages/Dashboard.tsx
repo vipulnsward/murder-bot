@@ -22,6 +22,7 @@ export function Dashboard() {
     refetchInterval: 5_000,
   })
   const status = query.data
+  const city = useQuery({ queryKey: ['city'], queryFn: api.getCity, retry: false, refetchInterval: 10_000 })
 
   return (
     <div>
@@ -64,13 +65,21 @@ export function Dashboard() {
         </section>
 
         <section className="card xl:col-span-2">
-          <div className="mb-4 flex items-center justify-between"><div><p className="eyebrow">Task summary</p><h2 className="mt-1 text-lg font-semibold">{status?.current_task ?? 'No active task'}</h2></div><span className="font-mono text-xs text-muted">{status ? `${number.format(status.ticks)} ticks` : '—'}</span></div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="mini-chart"><span>Own</span><span className="tracking-[0.3em] text-accent">▁▂▃▄▅▆▇</span></div>
-            <div className="mini-chart"><span>Food</span><span className="tracking-[0.3em] text-warn">▇▆▅▄▃▂▁</span></div>
+          <div className="mb-4 flex items-center justify-between"><div><p className="eyebrow">Vision</p><h2 className="mt-1 text-lg font-semibold">Mapped city</h2></div><span className="font-mono text-xs text-muted">{city.data?.stats?.elements != null ? `${number.format(city.data.stats.elements)} elements` : '—'}</span></div>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="rounded-lg border border-border bg-surface-2 py-3"><p className="text-[10px] uppercase tracking-wide text-muted">Buildings</p><p className="mt-0.5 font-mono text-xl font-semibold tabular-nums">{city.data?.buildings?.length ?? '—'}</p></div>
+            <div className="rounded-lg border border-border bg-surface-2 py-3"><p className="text-[10px] uppercase tracking-wide text-muted">Screens</p><p className="mt-0.5 font-mono text-xl font-semibold tabular-nums">{city.data?.stats?.screens ?? '—'}</p></div>
+            <div className="rounded-lg border border-border bg-surface-2 py-3"><p className="text-[10px] uppercase tracking-wide text-muted">Captures</p><p className="mt-0.5 font-mono text-xl font-semibold tabular-nums">{city.data?.stats?.captures ?? '—'}</p></div>
           </div>
+          {city.data?.buildings?.length ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {city.data.buildings.map((b) => (
+                <span key={b} className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-xs capitalize text-muted">{b.replace(/_/g, ' ')}</span>
+              ))}
+            </div>
+          ) : null}
           <div className="mt-4 rounded-lg bg-surface-2 p-3 text-sm text-muted">
-            {status?.last_event ? <><time className="mr-2 font-mono tabular-nums">{new Date(status.last_event.ts).toLocaleTimeString([], { hour12: false })}</time>{status.last_event.msg}</> : 'Recent events will appear here.'}
+            {status?.last_event ? <><time className="mr-2 font-mono tabular-nums">{new Date(status.last_event.ts).toLocaleTimeString([], { hour12: false })}</time>{status.last_event.msg}</> : 'The mapper is sweeping the city; new buildings appear here as they are found.'}
           </div>
         </section>
       </div>

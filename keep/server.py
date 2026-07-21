@@ -185,6 +185,23 @@ def create_app(bridge: ControlBridge | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail="kb doc not found")
         return {"name": name, "markdown": p.read_text()}
 
+    @app.get("/api/city")
+    def city_map() -> dict[str, Any]:
+        """Live view of what the mapper has learned about the city (vision.db)."""
+        try:
+            import vision_db
+
+            db = vision_db.VisionDB(str(ROOT / "game_brain" / "vision.db"))
+            stats = db.stats()
+            buildings = sorted(
+                s["label"].removeprefix("bldg_")
+                for s in db.list_screens()
+                if str(s.get("label", "")).startswith("bldg_")
+            )
+        except Exception as exc:
+            return {"ok": False, "error": str(exc), "stats": {}, "buildings": []}
+        return {"ok": True, "stats": stats, "buildings": buildings}
+
     @app.get("/api/screen.mjpeg")
     def screen_mjpeg() -> StreamingResponse:
         async def frames():

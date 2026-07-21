@@ -184,6 +184,26 @@ def find_building_candidates(img):
     return pts
 
 
+_KEEP_TMPL = [None]
+
+
+def find_keep(img, thresh=0.72):
+    """Template-match the Keep (the city's anchor). Returns its center (x, y) if it's
+    in view above the confidence threshold, else None. Match ~0.96 when present, ~0.58
+    when absent, so 0.72 separates cleanly."""
+    if _KEEP_TMPL[0] is None:
+        _KEEP_TMPL[0] = cv2.imread(f"{ROOT}/templates/buildings/keep.png")
+    t = _KEEP_TMPL[0]
+    if img is None or t is None:
+        return None
+    th, tw = t.shape[:2]
+    res = cv2.matchTemplate(img, t, cv2.TM_CCOEFF_NORMED)
+    _, mx, _, ml = cv2.minMaxLoc(res)
+    if mx >= thresh:
+        return (ml[0] + tw // 2, ml[1] + th // 2)
+    return None
+
+
 def radial_name(texts):
     # Only name a building when a KNOWN building label appears in the panel text.
     # The old "any capitalized word" fallback recorded OCR noise and button labels
@@ -309,6 +329,45 @@ def main():
         for cx, cy in cands:
             if probe(cx, cy) == "DISCONNECT":
                 print("DISCONNECT - stopping", flush=True); return
+
+    # Phase 2: anchor on the Keep (fixed reference) and tightly map the inner city where
+    # the military buildings cluster — the drift-prone blind raster can't reliably reach it.
+    def center_on_keep(max_iter=18):
+        for _ in range(max_iter):
+            if not ensure_game():
+                return False
+            clear_popups(); exit_ideal_land()
+            img = cap()
+            if img is None or has_popup(img):
+                continue
+            k = find_keep(img)
+            if k is None:
+                swipe(EAST)   # scan for it
+                continue
+            kx, ky = k
+            if abs(kx - 540) < 150 and abs(ky - 950) < 150:
+                return True   # Keep is centered
+            swipe((kx, ky, 540, 950))   # drag the Keep toward screen center
+        return False
+
+    if center_on_keep():
+        print("== centered on Keep — mapping inner city ==", flush=True)
+        inner = [None, (700, 900, 400, 900), (400, 900, 700, 900),
+                 (540, 1080, 540, 720), (540, 720, 540, 1080),
+                 (680, 1050, 420, 760), (420, 760, 680, 1050)]
+        for mv in inner:
+            if not ensure_game():
+                break
+            clear_popups(); exit_ideal_land()
+            if mv:
+                swipe(mv); clear_popups(); exit_ideal_land()
+            img = cap()
+            if img is None or has_popup(img):
+                continue
+            for cx, cy in find_building_candidates(img):
+                if probe(cx, cy) == "DISCONNECT":
+                    return
+            center_on_keep(max_iter=6)   # re-anchor after each small pan
 
     have = {s["label"].replace("bldg_", "") for s in db.list_screens()
             if str(s.get("label", "")).startswith("bldg_")}

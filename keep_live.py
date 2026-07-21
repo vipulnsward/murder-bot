@@ -21,7 +21,19 @@ DEVICE = "127.0.0.1:5555"
 
 
 def make_frame_source(device, quality):
+    import shared_capture
+
     def frame():
+        # Prefer the stream's shared JPEG (one capture, no adb conflict). Only fall
+        # back to adb screencap when the stream is off.
+        if shared_capture.stream_active(3):
+            try:
+                with open(shared_capture.FRAME_PATH, "rb") as fh:
+                    data = fh.read()
+                if data:
+                    return data
+            except OSError:
+                pass
         img = fast_screenshot.grab(device)
         if img is None:
             return None

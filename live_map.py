@@ -270,24 +270,33 @@ def main():
     print("ensure city:", n.ensure_city(), flush=True)
     exit_ideal_land()   # if a prior probe drilled into Ideal Land, return to the main city
     # Cover the whole city with camera pans; at each stop tap ONLY detected building
-    # structures (targeted, ~5 taps/view) instead of a blind 63-point grid.
-    # Big swipes so the camera actually crosses the walls into the inner city where the
-    # military buildings sit. Two full up-sweeps (drag content down = reveal inner city),
-    # then a ring around it.
-    PANS = [("center", None),
-            ("in_north", (540, 520, 540, 1500)), ("in_north2", (540, 520, 540, 1500)),
-            ("west", (250, 900, 900, 900)), ("east", (900, 900, 250, 900)),
-            ("nw", (280, 560, 850, 1460)), ("ne", (850, 560, 280, 1460)),
-            ("south", (540, 1500, 540, 520)),
-            ("sw", (280, 1460, 850, 560)), ("se", (850, 1460, 280, 560)),
-            ("in_north3", (540, 520, 540, 1500)), ("west2", (250, 900, 900, 900)),
-            ("east2", (900, 900, 250, 900))]
+    # structures (targeted). Reset toward the NW corner first so every sweep starts from
+    # the same place, then snake-raster a 4x4 grid -> deterministic full coverage.
+    def swipe(mv):
+        subprocess.run(["adb", "-s", DEV, "shell", "input", "swipe", *map(str, mv), "500"])
+        time.sleep(1.3)
+
+    NW = (300, 620, 840, 1360)      # drag content down-right -> camera moves NW (corner)
+    EAST = (860, 900, 320, 900)     # camera east
+    WEST = (320, 900, 860, 900)     # camera west
+    SOUTH = (540, 1340, 540, 640)   # camera south
+    for _ in range(4):
+        if not ensure_game():
+            return
+        clear_popups(); swipe(NW)
+    PANS = [("r0c0", None), ("r0c1", EAST), ("r0c2", EAST), ("r0c3", EAST)]
+    for row in range(1, 4):          # snake down the rows
+        across = [EAST, EAST, EAST] if row % 2 == 0 else [WEST, WEST, WEST]
+        PANS.append((f"r{row}c0", SOUTH))
+        for col, mv in enumerate(across):
+            PANS.append((f"r{row}c{col + 1}", mv))
+
     for label, mv in PANS:
         if not ensure_game():                    # guard: don't tap a browser/home screen
             print("Evony left foreground mid-sweep — aborting pass", flush=True); return
         clear_popups(); exit_ideal_land()
         if mv:
-            subprocess.run(["adb", "-s", DEV, "shell", "input", "swipe", *map(str, mv), "450"]); time.sleep(1.4)
+            swipe(mv)
             clear_popups(); exit_ideal_land()
         img = cap()
         # Only detect buildings on a clean city frame — a centered popup would otherwise

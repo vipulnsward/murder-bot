@@ -1,6 +1,6 @@
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000').replace(/\/$/, '')
 
-export type EngineState = 'running' | 'paused' | 'stopped' | 'disconnected' | 'starting'
+export type EngineState = 'idle' | 'running' | 'paused' | 'stopped' | 'disconnected' | 'starting'
 export type MacroState = 'active' | 'micro_break' | 'sleep'
 
 export interface StatusResponse {
@@ -99,6 +99,43 @@ export interface NumberRange {
   hi: number
 }
 
+export interface ScheduleSegment {
+  start: string
+  end: string
+  state: MacroState
+}
+
+export interface LogLine {
+  ts: string
+  level: 'debug' | 'info' | 'warn' | 'alert'
+  task: string | null
+  msg: string
+  cursor: string
+}
+
+export interface EventItem {
+  ts: string
+  level: string
+  channel_sent: string[]
+  msg: string
+}
+
+export interface SafetyResponse {
+  gem_spend: false
+  locked: true
+  disconnect_policy: 'stop_only'
+  humanize_required: boolean
+  reclaim_requires_confirm: boolean
+}
+
+export interface ScreenFrame {
+  seq: number
+  ts: string
+  jpg_b64: string | null
+  screen: string | null
+  no_signal: boolean
+}
+
 export type ControlAction = 'start' | 'pause' | 'resume' | 'panic_stop' | 'reclaim_session'
 
 export class ApiError extends Error {
@@ -134,6 +171,10 @@ export const api = {
       body: JSON.stringify(config),
     }),
   getTasks: () => request<{ tasks: TaskRuntime[] }>('/api/tasks'),
+  getLogs: () => request<{ lines: LogLine[]; cursor: string }>('/api/logs'),
+  getEvents: () => request<{ events: EventItem[] }>('/api/events'),
+  getSchedule: () => request<ScheduleSegment[]>('/api/schedule'),
+  getSafety: () => request<SafetyResponse>('/api/safety'),
   toggleTask: (name: string) =>
     request<{ name: string; enabled: boolean; reload: 'queued'; warning?: string }>(
       `/api/tasks/${encodeURIComponent(name)}/toggle`,

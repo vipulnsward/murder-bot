@@ -2,15 +2,15 @@ import { NavLink } from 'react-router-dom'
 
 const items = [
   ['/', '▚', 'Dashboard', true],
-  ['/live', '⧉', 'Live', false],
+  ['/live', '⧉', 'Live', true],
   ['/tasks', '☰', 'Tasks', true],
   ['/config', '⚙', 'Config', true],
-  ['/schedule', '⏱', 'Schedule', false],
+  ['/schedule', '⏱', 'Schedule', true],
   ['/fleet', '⚔', 'Fleet', false],
-  ['/logs', '▤', 'Logs', false],
+  ['/logs', '▤', 'Logs', true],
   ['/vision', '◉', 'Vision', false],
   ['/knowledge', '▤', 'Knowledge', false],
-  ['/safety', '🔒', 'Safety', false],
+  ['/safety', '🔒', 'Safety', true],
 ] as const
 
 export function Nav() {

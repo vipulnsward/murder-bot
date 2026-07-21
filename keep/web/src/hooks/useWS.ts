@@ -15,7 +15,7 @@ export function useWS<T>(channel: string) {
 
     const connect = () => {
       setStatus('connecting')
-      const url = new URL(API_BASE_URL)
+      const url = new URL(API_BASE_URL || window.location.origin)
       url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
       url.pathname = channel
       socket = new WebSocket(url)

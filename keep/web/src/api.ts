@@ -1,4 +1,6 @@
-export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000').replace(/\/$/, '')
+// Default to same-origin (empty) so the app works wherever it's served — localhost,
+// a tunnel, or a deploy. Only set VITE_API_BASE_URL when the API is on a different host.
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '')
 
 export type EngineState = 'idle' | 'running' | 'paused' | 'stopped' | 'disconnected' | 'starting'
 export type MacroState = 'active' | 'micro_break' | 'sleep'

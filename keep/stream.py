@@ -214,7 +214,7 @@ class HLSStreamManager:
             str(playlist),
             # 2nd output from the same decoded input: a fresh native-1080p JPEG for the
             # mapper's OCR (real detail; coords already == device space).
-            "-map", "0:v:0", "-vf", "fps=8", "-q:v", "3", "-update", "1",
+            "-map", "0:v:0", "-vf", "fps=15", "-q:v", "3", "-update", "1",
             "-atomic_writing", "1", "-y", str(self.frame_path),
         ]
 

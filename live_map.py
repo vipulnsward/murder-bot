@@ -100,11 +100,11 @@ GENERIC = {"detail","upgrade","cancel","help","info","move","store","recall","bo
 def cap():
     return shared_capture.grab_wait(DEV)          # SHARED frame (no second adb capture)
 
-def tap(x, y, d=1.9):
+def tap(x, y, d=0.8):
     subprocess.run(["adb", "-s", DEV, "shell", "input", "tap", str(int(x)), str(int(y))]); time.sleep(d)
 
 def adb_back():
-    subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"]); time.sleep(1.5)
+    subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"]); time.sleep(0.7)
 
 
 def radial_name(texts):
@@ -130,6 +130,12 @@ def main():
 
     def probe(x, y):
         pre = cap()
+        # Safety + productivity: only tap while actually in the city. If a sale/event
+        # popup is up, clear it (Back, never Buy) and skip this probe — never blind-tap
+        # popup UI, which could land on a Buy button.
+        if pre is None or not nav.is_city(ocr_read.read_all(pre, box=nav.CITY_BOX, cache=True)):
+            clear_popups()
+            return None
         _maybe_write_hud(pre)  # pre-tap city frame -> refresh the dashboard HUD (throttled)
         tap(x, y)
         img = cap()

@@ -29,10 +29,13 @@ CITY_BOX = (760, 1400, 1080, 1920)
 
 
 def is_city(texts):
-    """True if the OCR text set looks like the city view (fixed menus, no map coords)."""
+    """True if the OCR text set looks like the city view (fixed bottom menus, no map
+    coords). Either the Alliance or Mail button is enough: they sit together bottom-right
+    but 'Alliance' OCR is flaky (a 'FOR SALE' badge overlays it), while 'Mail' reads
+    cleanly. The world map shows X:/Y: coords, which excludes it here."""
     low = " ".join(str(t).lower() for t, *_ in texts)
     flat = low.replace(" ", "")
-    return ("alliance" in low and "mail" in low) and ("x:0" not in flat and "y:0" not in flat)
+    return ("alliance" in low or "mail" in low) and ("x:0" not in flat and "y:0" not in flat)
 
 
 def is_worldmap(texts):
@@ -71,6 +74,8 @@ class Nav:
     def state(self, img=None):
         """Return 'disconnect' | 'exit_dialog' | 'city' | 'world_map' | 'other'."""
         img = self._frame() if img is None else img
+        if img is None:
+            return "other"  # transient: stream blip / no frame — caller retries
         if self.screen_fsm.is_disconnect(img):
             return "disconnect"
         if self.screen_fsm.identify(img) == "exit_dialog":

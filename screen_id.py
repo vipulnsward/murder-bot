@@ -34,7 +34,28 @@ def classify(img, describe_fn=None, min_hits=1):
     if describe_fn is None:
         from holo_vision import describe as describe_fn
 
-    description = describe_fn(img, QUESTION)
+    # The Holo backend needs a path/PIL image; a raw cv2/numpy frame is written to
+    # a temp PNG first (injected describe_fns for tests just get the value as-is).
+    describe_arg, _tmp = img, None
+    try:
+        import numpy as _np
+        if isinstance(img, _np.ndarray):
+            import cv2 as _cv2
+            import tempfile as _tf
+            _tmp = _tf.NamedTemporaryFile(suffix=".png", delete=False).name
+            _cv2.imwrite(_tmp, img)
+            describe_arg = _tmp
+    except Exception:
+        describe_arg = img
+    try:
+        description = describe_fn(describe_arg, QUESTION)
+    finally:
+        if _tmp:
+            import os as _os
+            try:
+                _os.unlink(_tmp)
+            except OSError:
+                pass
     lowered = description.lower()
     best_label = "unknown"
     best_score = 0

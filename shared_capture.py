@@ -43,6 +43,20 @@ def grab(device="127.0.0.1:5555", max_age_s=STALE_S, fallback=True):
     return None
 
 
+def grab_wait(device="127.0.0.1:5555", timeout=6.0, poll=0.2):
+    """Wait for a FRESH shared frame and return it — NEVER falls back to adb screencap
+    (so it can't fight the stream's screenrecord). Tolerates the brief screenrecord
+    175s-cycle gap. Returns None only if the stream stays down past `timeout`."""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if stream_active(1.5):
+            img = cv2.imread(FRAME_PATH)
+            if img is not None:
+                return img
+        time.sleep(poll)
+    return None
+
+
 if __name__ == "__main__":
     print("shared frame path:", FRAME_PATH)
     print("stream active:", stream_active())

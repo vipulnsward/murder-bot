@@ -39,7 +39,7 @@ GENERIC = {"detail","upgrade","cancel","help","info","move","store","recall","bo
 
 
 def cap():
-    return shared_capture.grab(DEV)          # SHARED frame (no second adb capture)
+    return shared_capture.grab_wait(DEV)          # SHARED frame (no second adb capture)
 
 def tap(x, y, d=1.9):
     subprocess.run(["adb", "-s", DEV, "shell", "input", "tap", str(int(x)), str(int(y))]); time.sleep(d)
@@ -63,7 +63,7 @@ def radial_name(texts):
 def main():
     db = vision_db.VisionDB(f"{ROOT}/game_brain/vision.db")
     ctx = orchestrator.Ctx(DEV, logger=lambda m: None)
-    ctx.screencap = lambda: shared_capture.grab(DEV)     # nav reads the shared frame
+    ctx.screencap = lambda: shared_capture.grab_wait(DEV)     # nav reads the shared frame
     n = nav.Nav(ctx)
     os.makedirs(f"{ROOT}/templates/buildings", exist_ok=True)
     os.makedirs(f"{ROOT}/game_brain/screens", exist_ok=True)
@@ -103,7 +103,9 @@ def main():
         return name
 
     print("ensure city:", n.ensure_city(), flush=True)
-    grid = [(x, y) for y in range(340, 1300, 140) for x in range(180, 950, 140)]
+    import random
+    jx, jy = random.randint(-65, 65), random.randint(-65, 65)   # jitter so repeated sweeps hit new points
+    grid = [(x + jx, y + jy) for y in range(300, 1320, 120) for x in range(160, 960, 120)]
     blocks = [("center", None), ("north", (540, 700, 540, 1280)), ("south", (540, 1280, 540, 700)),
               ("west", (300, 900, 880, 900)), ("east", (880, 900, 300, 900)),
               ("nw", (760, 700, 320, 1250)), ("se", (320, 1250, 760, 700))]

@@ -1,130 +1,176 @@
-# evonyguidewiki.com — Crawl Sitemap (219 guide URLs discovered)
+# Evony Guide Wiki Sitemap
 
-Categorized inventory of guide pages on evonyguidewiki.com (English `/en/`), harvested from the nav +
-related-links of the generals guides. Use this to ingest the rest of the site. `data/generals.jsonl`
-+ `kb/36-generals.md` already cover the generals guides marked **[DONE]** below.
+Enumerated from the English [site menu](https://evonyguidewiki.com/en/) and [generals hub](https://evonyguidewiki.com/en/general-list-by-type-and-how-to-get-en/), fetched through the Jina Reader proxy on 2026-07-21.
 
-## Access note (important for any crawler)
-The site is behind a JavaScript "One moment, please… verifying" wall (openresty). Plain `WebFetch`
-and `curl` get the challenge shell or a 415 — they do NOT see content. **A real (headed) browser
-passes it automatically**, then a clearance cookie persists for the whole session. Crawl method used:
-gstack `/browse` skill in **`--headed`** mode (masks `navigator.webdriver`), `goto` the URL, wait
-~15-20s on the first hit for the challenge to clear, then all later pages load instantly. Extract
-tables via `browse eval` (querySelectorAll on `.entry-content`). Pass `--headed` on every browse call.
+Total unique guide URLs: **144**.
 
----
+## Generals (26)
 
-## GENERALS — core DB source
-**[DONE]** (parsed into generals.jsonl):
-- https://evonyguidewiki.com/en/best-ground-general-en/
-- https://evonyguidewiki.com/en/best-mounted-general-en/
-- https://evonyguidewiki.com/en/best-ranged-general-en/
-- https://evonyguidewiki.com/en/best-siege-general-en/
-- https://evonyguidewiki.com/en/best-defense-general-en/  (Wall)
-- https://evonyguidewiki.com/en/best-boss-monster-general-en/
-- https://evonyguidewiki.com/en/list-of-generals-worth-hiring-en/  (Best Generals & Combinations / F2P vs paid)
-- https://evonyguidewiki.com/en/general-list-by-type-and-how-to-get-en/  (master roster + how-to-get)
+- [Art Hall General (General Hall) – List of Ways to Get](https://evonyguidewiki.com/en/art-hall-general-list-en/)
+- [Best of Assistant Generals: Defense (Wall)](https://evonyguidewiki.com/en/best-defense-assistant-en/)
+- [Best of Assistant Generals: Ground PvP](https://evonyguidewiki.com/en/best-ground-assistant-en/)
+- [Best of Assistant Generals: Mounted PvP](https://evonyguidewiki.com/en/best-mounted-assistant-en/)
+- [Best of Assistant Generals: Ranged PvP](https://evonyguidewiki.com/en/best-ranged-assistant-en/)
+- [Best of Assistant Generals: Siege PvP](https://evonyguidewiki.com/en/best-siege-assistant-en/)
+- [Best of Boss General / Monster Hunter](https://evonyguidewiki.com/en/best-boss-monster-general-en/)
+- [Best of Main Generals: Defense (Wall)](https://evonyguidewiki.com/en/best-defense-general-en/)
+- [Best of Main Generals: Ground PvP](https://evonyguidewiki.com/en/best-ground-general-en/)
+- [Best of Main Generals: Mounted PvP](https://evonyguidewiki.com/en/best-mounted-general-en/)
+- [Best of Main Generals: Ranged PvP](https://evonyguidewiki.com/en/best-ranged-general-en/)
+- [Best of Main Generals: Siege PvP](https://evonyguidewiki.com/en/best-siege-general-en/)
+- [Compatibility List of Combinations](https://evonyguidewiki.com/en/assistant_general-en/)
+- [Details](https://evonyguidewiki.com/en/how-to-get-generals-en/)
+- [Duty Officer Guide](https://evonyguidewiki.com/en/duty-officer-guide-en/)
+- [Duty Officer – Required General Level, Star, etc](https://evonyguidewiki.com/en/duty-officer-general-level-en/)
+- [Fastest way to earn General EXP & level up](https://evonyguidewiki.com/en/fastest-way-to-level-up-general-en/)
+- [General Hall Reward List (Art Hall)](https://evonyguidewiki.com/en/general-hall-reward-en/)
+- [General Skill – How to add 3 Skills “You Want”](https://evonyguidewiki.com/en/how-to-add-skill-en/)
+- [How to get Skill Book](https://evonyguidewiki.com/en/how-to-get-skillbook-en/)
+- [How to increase the General’s Power (and the Danger)](https://evonyguidewiki.com/en/how-to-increase-general-power-en/)
+- [How to increase the Max Number of Generals you can hold](https://evonyguidewiki.com/en/how-to-increase-max-number-general-en/)
+- [List of Best Generals](https://evonyguidewiki.com/en/list-of-generals-worth-hiring-en/)
+- [List of Generals by Role (+ How to Get)](https://evonyguidewiki.com/en/general-list-by-type-and-how-to-get-en/)
+- [Skillbook List (Lv1~4 Effects)](https://evonyguidewiki.com/en/skill-book-list-en/)
+- [What is Historic General](https://evonyguidewiki.com/en/what-is-historic-general-en/)
 
-**[TODO] — highest value for enriching the DB (assistant/subcity/detail):**
-- https://evonyguidewiki.com/en/best-ground-assistant-en/
-- https://evonyguidewiki.com/en/best-mounted-assistant-en/
-- https://evonyguidewiki.com/en/best-ranged-assistant-en/
-- https://evonyguidewiki.com/en/best-siege-assistant-en/
-- https://evonyguidewiki.com/en/best-defense-assistant-en/
-- https://evonyguidewiki.com/en/assistant_general-en/  (and best_ground_assistant-en/ — dup slug)
-- https://evonyguidewiki.com/en/sub-city-generals-debuff-comparison-tool-en/  (per-general debuff values)
-- https://evonyguidewiki.com/en/art-hall-general-list-en/
-- https://evonyguidewiki.com/en/duty-officer-guide-en/  ·  duty-officer-general-level-en/
-- https://evonyguidewiki.com/en/general-hall-reward-en/  ·  what-is-historic-general-en/
-- Mechanics for stats/leveling: general-cultivate-en, general-enhance-star-level-en,
-  general-exp-per-level-en, general-power-recipe-en, general-rare-color-en, soul-binding-en,
-  how-to-get-generals-en, how-to-increase-general-power-en, fastest-way-to-level-up-general-en,
-  how-to-increase-max-number-general-en.
-- Note: **NO dedicated "best monarch general" page exists** — monarch officer slots = Duty Officers.
-- Per-general DETAIL pages (skill/specialty/ascending for each of the 303) are NOT in this list; they
-  are individual pages reachable from the general-list — needed to fill `skill`/`specialties`/`ascending`.
+## Buffs (13)
 
-## BUFFS / DEBUFFS / SKILLS
-- https://evonyguidewiki.com/en/buff_debuff_basic_guide-en/
-- https://evonyguidewiki.com/en/debuff-simulator-en/
-- https://evonyguidewiki.com/en/sub-city-buff-list-en/
-- https://evonyguidewiki.com/en/rank-buff-en/
-- https://evonyguidewiki.com/en/recommended-skills-en/
-- https://evonyguidewiki.com/en/skill-book-list-en/
-- https://evonyguidewiki.com/en/specialty-en/
-- https://evonyguidewiki.com/en/how-to-add-skill-en/
-- https://evonyguidewiki.com/en/blazon-en/  ·  how_to_get_blazon-en/
+- [Buff / Debuff – Basic Guide](https://evonyguidewiki.com/en/buff_debuff_basic_guide-en/)
+- [Civilization Treasure](https://evonyguidewiki.com/en/civilization-treasure-en/)
+- [Debuff Simulator](https://evonyguidewiki.com/en/debuff-simulator-en/)
+- [How to get more March Slot](https://evonyguidewiki.com/en/how-to-get-more-march-slot-en/)
+- [How to increase March Speed](https://evonyguidewiki.com/en/how-to-increase-march-speed-en/)
+- [How to increase VIP Level & earn VIP Points](https://evonyguidewiki.com/en/how-to-increase-vip-level-en/)
+- [How to raise Rank quickly (how to get Prestige efficiently)](https://evonyguidewiki.com/en/how-to-get-prestige-en/)
+- [List of Subordinate City Buff](https://evonyguidewiki.com/en/sub-city-buff-list-en/)
+- [List of VIP Buffs & Benefits by VIP Level](https://evonyguidewiki.com/en/vip-benefits-list-en/)
+- [Maximum march size by keep level](https://evonyguidewiki.com/en/march-size-per-level-en/)
+- [Rank Type, Buff List](https://evonyguidewiki.com/en/rank-buff-en/)
+- [Troop Upgrade Guide (Arsenal)](https://evonyguidewiki.com/en/troop-upgrade-en/)
+- [Troops Initial Stats List](https://evonyguidewiki.com/en/troop-initial-stats-en/)
 
-## GEAR / EQUIPMENT
-- https://evonyguidewiki.com/en/monarch-gear-en/  ·  monarch-gear-level-up-en/  ·  how-to-use-monarch-gear-en/
-- https://evonyguidewiki.com/en/civilization-equipment-en/
-- https://evonyguidewiki.com/en/imperial-parthian-equipment-en/
-- https://evonyguidewiki.com/en/red-equipment-combination-en/  ·  red-equipment-compare-en/
-- https://evonyguidewiki.com/en/forge-en/  ·  forge-master-certificate-en/
-- https://evonyguidewiki.com/en/how-to-get-refining-stone-en/  ·  seal-en/
-- https://evonyguidewiki.com/en/category/equipment-en/
+## Gear/Equipment (4)
 
-## SPIRITUAL BEASTS / DRAGONS
-- https://evonyguidewiki.com/en/spiritual-beast-en/
-- https://evonyguidewiki.com/en/dragon-guide-en/  ·  dragon-cliff-en/
-- https://evonyguidewiki.com/en/how-to-get-spiritual-beast-exp-en/
+- [Blazon](https://evonyguidewiki.com/en/blazon-en/)
+- [Fastest & Cheapest Way to Level Up Monarch Gear](https://evonyguidewiki.com/en/monarch-gear-level-up-en/)
+- [Red Equipment Combination List (Which Should You Make?)](https://evonyguidewiki.com/en/red-equipment-combination-en/)
+- [Red Equipment Comparison (Dragon, Ares, Achaemenidae)](https://evonyguidewiki.com/en/red-equipment-compare-en/)
 
-## MONSTERS / BOSSES / MONSTER-HUNT  (cross-ref kb/25, kb/24)
-- https://evonyguidewiki.com/en/boss-power-list-en/  ·  boss-drop-item-list-en/
-- https://evonyguidewiki.com/en/how-to-get-stamina-en/  ·  how-to-get-blood-of-ares-en/
-- https://evonyguidewiki.com/en/calculator-number-of-troops-to-kill-boss-en/  ·  how-many-troops-defeat-boss-en/
-- https://evonyguidewiki.com/en/monster-battle-mechanics-en/  ·  world-boss-en/
-- how-to-kill: bayard, behemoth, cerberus, fafnir, golem, griffin, hydra, ifrit, kamaitachi,
-  lava-turtle, pan, phoenix, sphinx, warlord, witch, ymir (each `/en/how-to-kill-<name>-en/`)
-- https://evonyguidewiki.com/en/how-to-defeat-royal-thief-en/
-- https://evonyguidewiki.com/en/category/monster-hunt-en/
+## Spiritual Beasts (3)
 
-## SvS / WARFARE / PvP
-- https://evonyguidewiki.com/en/pvp-check-list-en/
-- https://evonyguidewiki.com/en/how-to-find-enemies-server-war-en/
-- https://evonyguidewiki.com/en/coc-clash-of-civilizations-en/  (Clash of Civilizations / SvS)
-- https://evonyguidewiki.com/en/contents-of-chest-battlefield-svs-en/  ·  battlefield-shop-item-list-en/
-- https://evonyguidewiki.com/en/what-is-kill-event-en/  ·  how-to-gain-relics-en/
-- https://evonyguidewiki.com/en/rally-spot-en/  ·  war-hall-en/
-- https://evonyguidewiki.com/en/arctic_barbarians_invasion-en/
-- https://evonyguidewiki.com/en/category/pvp-tips-knowledge-en/
+- [How to get Spiritual Beast EXP efficiently](https://evonyguidewiki.com/en/how-to-get-spiritual-beast-exp-en/)
+- [Pasture](https://evonyguidewiki.com/en/pasture-en/)
+- [Spiritual Beast – Type, Buff, Enhance](https://evonyguidewiki.com/en/spiritual-beast-en/)
 
-## SUBORDINATE CITY
-- https://evonyguidewiki.com/en/subordinate-city-guide-en/  ·  subordinate-city-advantages-en/
-- https://evonyguidewiki.com/en/council-of-state-en/
-- https://evonyguidewiki.com/en/category/subordinate-city-en/
+## Monsters/Bosses (4)
 
-## CITY DEVELOPMENT / BUILDINGS / TROOPS  (cross-ref kb/16, kb/27)
-- Buildings: academy, barracks, army-camp, archer-camp, archer-tower, stables, military-academy,
-  hospital, embassy, walls, watch-tower, trap-factory, bunker, warehouse, market, farm, mine, quarry,
-  sawmill, pasture, construction, research-factory, workshop, arsenal, prison, holy-palace, wonder,
-  shrine, victory-column, triumphal-arch, bacchus-tavern, tavern, auction, art-hall (each `/en/<name>-en/`)
-- Troops: troop-type-en, troop-initial-stats-en, troop-upgrade-en
-- Ref: upgrade-requirements-keep-en, dead-keep-power-list-en, ideal-land-en, tavern-level-and-drop-rates-en,
-  black-market-products-list-en, art_treasure-en
+- [Battle Mechanics (Monster, Boss)](https://evonyguidewiki.com/en/monster-battle-mechanics-en/)
+- [Boss Battle Simulator (+ RSS Balance)](https://evonyguidewiki.com/en/calculator-number-of-troops-to-kill-boss-en/)
+- [Boss Chest & Drop Item List](https://evonyguidewiki.com/en/boss-drop-item-list-en/)
+- [World Boss](https://evonyguidewiki.com/en/world-boss-en/)
 
-## EVENTS
-- category/event-en, consuming_return_event, crazy_egg, dwarfs_lucky_apple, kings-party, treasure-hunt,
-  lucky-composing, exhibition-hall-reward, limited-time-promotion, revelation-of-horus, revelation-of-maya,
-  shadow-of-dawn, dawn-of-civilization, mysterious-puzzle-1-5-egypt, hecates-moon, ekaterina-garden,
-  wisdom_dome, cleopatras_treasure, civilization-treasure, server-gift, ghost, contents-of-chest-event,
-  event-pack-1-5, eventpack-5vs1 (each `/en/<name>-en/`)
+## SvS/Warfare (5)
 
-## ITEMS / RESOURCES / ECONOMY  (cross-ref kb/02, kb/14, kb/15)
-- how-to-get: gem, gold-efficiently, hammer, medal, badge, scroll, runestone, soul-crystal, prestige,
-  monarch-exp, resource, skillbook, tactic-scroll, teleporter, speed-up-items, march-speedup,
-  march-size-increase, more-march-slot, vip-time, arrest-warrant, artwork-fragment, ascension-fragment
-- how-to-increase: general-power, march-size, march-speed, vip-level, max-number-general
-- VIP/economy: vip-en, vip-benefits-list-en, pay-cheap-en, make-profit-purchase-pack-en,
-  make-wounded-as-you-need-en, march-size-per-level-en, material-chest-bag-contents-en,
-  alliance-shop-item-list-en, what-is-adv-dispatch-en, category/list-of-item-en
+- [Chest Contents (Battlefield, SVS)](https://evonyguidewiki.com/en/contents-of-chest-battlefield-svs-en/)
+- [Dead City Power List](https://evonyguidewiki.com/en/dead-keep-power-list-en/)
+- [How to Find Enemies Easily in Server War](https://evonyguidewiki.com/en/how-to-find-enemies-server-war-en/)
+- [How to take advantage of Arrest Warrant & how to use](https://evonyguidewiki.com/en/how-to-use-arrest-warrant-en/)
+- [What is KE (Kill Event)?](https://evonyguidewiki.com/en/what-is-kill-event-en/)
 
-## MECHANICS / MISC
-- alliance-competition-en, server-time-chart-en, server-merge-en, how-to-change-server-en,
-  how-to-make-sub-account-en, option-en, quiz_answer_list-en, term-translation-list-en,
-  correct-translation-tips-en
+## City Development (40)
 
-## CATEGORY INDEX PAGES (use to discover any pages missed above)
-- /en/category/{beginners-guide,coining,free-item-gathering,general,general-list,military-buildup,
-  misc,skill,equipment,event,monster-hunt,pvp-tips-knowledge,subordinate-city,list-of-item}-en/
-- Site index: https://evonyguidewiki.com/en/index-en
+- [Academy](https://evonyguidewiki.com/en/academy-en/)
+- [Archer Camp](https://evonyguidewiki.com/en/archer-camp-en/)
+- [Archer Tower](https://evonyguidewiki.com/en/archer-tower-en/)
+- [Army Camp](https://evonyguidewiki.com/en/army-camp-en/)
+- [Arsenal](https://evonyguidewiki.com/en/arsenal-en/)
+- [Art Hall](https://evonyguidewiki.com/en/art-hall-en/)
+- [Barracks](https://evonyguidewiki.com/en/barracks-en/)
+- [Bunker](https://evonyguidewiki.com/en/bunker-en/)
+- [Council of State](https://evonyguidewiki.com/en/council-of-state-en/)
+- [Embassy](https://evonyguidewiki.com/en/embassy-en/)
+- [Farm](https://evonyguidewiki.com/en/farm-en/)
+- [Forge](https://evonyguidewiki.com/en/forge-en/)
+- [Holy Palace](https://evonyguidewiki.com/en/holy-palace-en/)
+- [Hospital](https://evonyguidewiki.com/en/hospital-en/)
+- [How to get Resources Efficiently (Items, Gathering, Production)](https://evonyguidewiki.com/en/how-to-get-resource-en/)
+- [How to get Speedup items efficiently](https://evonyguidewiki.com/en/how-to-get-speed-up-items-en/)
+- [Ideal Land](https://evonyguidewiki.com/en/ideal-land-en/)
+- [Important Usage of Subordinate City](https://evonyguidewiki.com/en/subordinate-city-advantages-en/)
+- [Keep](https://evonyguidewiki.com/en/upgrade-requirements-keep-en/)
+- [Market](https://evonyguidewiki.com/en/market-en/)
+- [Military Academy](https://evonyguidewiki.com/en/military-academy-en/)
+- [Mine](https://evonyguidewiki.com/en/mine-en/)
+- [Prison](https://evonyguidewiki.com/en/prison-en/)
+- [Quarry](https://evonyguidewiki.com/en/quarry-en/)
+- [Rally Spot](https://evonyguidewiki.com/en/rally-spot-en/)
+- [Research Factory](https://evonyguidewiki.com/en/research-factory-en/)
+- [Sawmill](https://evonyguidewiki.com/en/sawmill-en/)
+- [Shrine](https://evonyguidewiki.com/en/shrine-en/)
+- [Stables](https://evonyguidewiki.com/en/stables-en/)
+- [Tavern](https://evonyguidewiki.com/en/tavern-en/)
+- [Trap Factory](https://evonyguidewiki.com/en/trap-factory-en/)
+- [Triumphal Arch](https://evonyguidewiki.com/en/triumphal-arch-en/)
+- [Victory Column](https://evonyguidewiki.com/en/victory-column-en/)
+- [Walls](https://evonyguidewiki.com/en/walls-en/)
+- [War Hall](https://evonyguidewiki.com/en/war-hall-en/)
+- [Warehouse](https://evonyguidewiki.com/en/warehouse-en/)
+- [Watchtower](https://evonyguidewiki.com/en/watch-tower-en/)
+- [Wisdom Dome](https://evonyguidewiki.com/en/wisdom_dome-en/)
+- [Wonder](https://evonyguidewiki.com/en/wonder-en/)
+- [Workshop](https://evonyguidewiki.com/en/workshop-en/)
+
+## Events (15)
+
+- [Alliance Competition Event](https://evonyguidewiki.com/en/alliance-competition-en/)
+- [Chest Contents (Event chest)](https://evonyguidewiki.com/en/contents-of-chest-event-en/)
+- [Cleopatra’s Treasure](https://evonyguidewiki.com/en/cleopatras_treasure-en/)
+- [Consuming Return Event](https://evonyguidewiki.com/en/consuming_return_event-en/)
+- [Crazy Eggs](https://evonyguidewiki.com/en/crazy_egg-en/)
+- [Dwarf’s Lucky Apple](https://evonyguidewiki.com/en/dwarfs_lucky_apple-en/)
+- [Ekaterina’s Garden](https://evonyguidewiki.com/en/ekaterina-garden-en/)
+- [Event Package 1-5 All Contents (total: $185)](https://evonyguidewiki.com/en/event-pack-1-5-en/)
+- [Event Package – Should you buy “5th” or “a lot of 1st”?](https://evonyguidewiki.com/en/eventpack-5vs1-en/)
+- [Hecate’s Moon Event](https://evonyguidewiki.com/en/hecates-moon-en/)
+- [King’s Party](https://evonyguidewiki.com/en/kings-party-en/)
+- [Lucky Composing Event](https://evonyguidewiki.com/en/lucky-composing-en/)
+- [Revelation of Horus Event](https://evonyguidewiki.com/en/revelation-of-horus-en/)
+- [Revelation of Maya Event](https://evonyguidewiki.com/en/revelation-of-maya-en/)
+- [Treasure Hunt Event (Pyramid)](https://evonyguidewiki.com/en/treasure-hunt-en/)
+
+## Other (34)
+
+- [Alliance Shop Item List](https://evonyguidewiki.com/en/alliance-shop-item-list-en/)
+- [Auction House – Product lists, Winning bid prices, etc](https://evonyguidewiki.com/en/auction-en/)
+- [Battlefield Shop Item List](https://evonyguidewiki.com/en/battlefield-shop-item-list-en/)
+- [Dawn of Civilization](https://evonyguidewiki.com/en/dawn-of-civilization-en/)
+- [Exhibition Hall Reward List (Art Hall)](https://evonyguidewiki.com/en/exhibition-hall-reward-en/)
+- [How to change Server](https://evonyguidewiki.com/en/how-to-change-server-en/)
+- [How to get 21,000 Gems in a Week](https://evonyguidewiki.com/en/how-to-get-gem-en/)
+- [How to get Adv City Teleporter a lot](https://evonyguidewiki.com/en/how-to-get-teleporter-en/)
+- [How to get Adv Troop March Speedup](https://evonyguidewiki.com/en/how-to-get-march-speedup-en/)
+- [How to get Arrest Warrant](https://evonyguidewiki.com/en/how-to-get-arrest-warrant-en/)
+- [How to get Artwork Fragment Chest](https://evonyguidewiki.com/en/how-to-get-artwork-fragment-en/)
+- [How to get Badge (& Useage)](https://evonyguidewiki.com/en/how-to-get-badge-en/)
+- [How to get Forge Master Certificate](https://evonyguidewiki.com/en/forge-master-certificate-en/)
+- [How to get Gold efficiently](https://evonyguidewiki.com/en/how-to-get-gold-efficiently-en/)
+- [How to get Hammer efficiently](https://evonyguidewiki.com/en/how-to-get-hammer-efficiently-en/)
+- [How to get March Size Increase](https://evonyguidewiki.com/en/how-to-get-march-size-increase-en/)
+- [How to get Medals efficiently](https://evonyguidewiki.com/en/how-to-get-medal-en/)
+- [How to get Refining Stone](https://evonyguidewiki.com/en/how-to-get-refining-stone-en/)
+- [How to Get Runestone](https://evonyguidewiki.com/en/how-to-get-runestone-en/)
+- [How to get Scroll](https://evonyguidewiki.com/en/how-to-get-scroll-en/)
+- [How to get Soul Crystal](https://evonyguidewiki.com/en/how-to-get-soul-crystal-en/)
+- [How to get Stamina](https://evonyguidewiki.com/en/how-to-get-stamina-en/)
+- [How to Get Tactic Scroll](https://evonyguidewiki.com/en/how-to-get-tactic-scroll-en/)
+- [How to get VIP Time](https://evonyguidewiki.com/en/how-to-get-vip-time-en/)
+- [How to make Alt Account (Sub Account)](https://evonyguidewiki.com/en/how-to-make-sub-account-en/)
+- [How to translate correctly without using Evony’s translation feature](https://evonyguidewiki.com/en/correct-translation-tips-en/)
+- [Limited Time Promotion – All Package Contents](https://evonyguidewiki.com/en/limited-time-promotion-en/)
+- [Material Chest & Bag Contents](https://evonyguidewiki.com/en/material-chest-bag-contents-en/)
+- [Option settings that Beginners tend to Fail](https://evonyguidewiki.com/en/option-en/)
+- [Server Gifts on Wall – Item List](https://evonyguidewiki.com/en/server-gift-en/)
+- [Server Time vs Country Time Table (US, UK, RU, JP)](https://evonyguidewiki.com/en/server-time-chart-en/)
+- [TIPS for Intentionally Creating Wounded Troops (make as many as you need)](https://evonyguidewiki.com/en/make-wounded-as-you-need-en/)
+- [What is “Adv Dispatch” ?](https://evonyguidewiki.com/en/what-is-adv-dispatch-en/)
+- [When is Server Merges ? & What happens?](https://evonyguidewiki.com/en/server-merge-en/)

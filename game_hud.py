@@ -44,7 +44,7 @@ def parse_amount(text):
     if not m:
         return None
     try:
-        return int(float(m.group(1).replace(",", "")) * _MULT[m.group(2).upper()])
+        return round(float(m.group(1).replace(",", "")) * _MULT[m.group(2).upper()])
     except (ValueError, KeyError):
         return None
 
@@ -106,13 +106,62 @@ def read_hud_file(path=HUD_FILE, max_age_s=90.0):
     return None
 
 
+def _selftest():
+    """Pure-logic self-test (no ADB): amount parsing, the city guard, HUD-file round-trip."""
+    import tempfile
+    ok = True
+
+    amt_cases = [("515.8M", 515_800_000), ("7,780,719", 7_780_719), ("1.2B", 1_200_000_000),
+                 ("300K", 300_000), ("42", 42), ("abc", None), ("", None), (None, None)]
+    for raw, want in amt_cases:
+        got = parse_amount(raw)
+        if got != want:
+            print(f"FAIL parse_amount({raw!r}) -> {got} (want {want})"); ok = False
+
+    if read_hud(None).get("ok") is not False:
+        print("FAIL read_hud(None) not ok=False"); ok = False
+
+    orig = ocr_read.read_all
+    dummy = object()
+    try:
+        ocr_read.read_all = lambda img, *a, **k: []                       # no city markers
+        if read_hud(dummy).get("ok") is not False:
+            print("FAIL read_hud(non-city) not ok=False"); ok = False
+        ocr_read.read_all = lambda img, *a, **k: [("Mail", (987, 1685), 0.9),
+                                                  ("515.8M", (300, 30), 0.95)]
+        hud = read_hud(dummy)
+        if hud.get("ok") is not True or hud.get("power") != 515_800_000:
+            print(f"FAIL read_hud(city) -> {hud}"); ok = False
+    finally:
+        ocr_read.read_all = orig
+
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, "hud.json")
+        if write_hud({"ok": False}, p) is not False:
+            print("FAIL write_hud(not ok) not False"); ok = False
+        if write_hud({"ok": True, "power": 5, "resources": {}}, p) is not True:
+            print("FAIL write_hud(ok) not True"); ok = False
+        rd = read_hud_file(p, max_age_s=90)
+        if not rd or rd.get("power") != 5:
+            print(f"FAIL read_hud_file roundtrip -> {rd}"); ok = False
+        if read_hud_file(p, max_age_s=-1) is not None:
+            print("FAIL read_hud_file(stale) not None"); ok = False
+
+    print("SELF-TEST:", "PASS" if ok else "FAIL")
+    return ok
+
+
 if __name__ == "__main__":
     import sys
 
-    import cv2
+    if "--live" in sys.argv:
+        import cv2
 
-    path = sys.argv[1] if len(sys.argv) > 1 else "/tmp/hud_clean.jpg"
-    hud = read_hud(cv2.imread(path))
-    print(f"ok={hud['ok']} power={hud['power']} gems={hud['gems']} vip={hud['vip']}")
-    for k, v in hud["resources"].items():
-        print(f"  {k:8s} {v}")
+        args = [a for a in sys.argv[1:] if a != "--live"]
+        path = args[0] if args else "/tmp/hud_clean.jpg"
+        hud = read_hud(cv2.imread(path))
+        print(f"ok={hud['ok']} power={hud['power']} gems={hud['gems']} vip={hud['vip']}")
+        for k, v in hud["resources"].items():
+            print(f"  {k:8s} {v}")
+    else:
+        raise SystemExit(0 if _selftest() else 1)

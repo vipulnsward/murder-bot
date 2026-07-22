@@ -151,9 +151,61 @@ def run(max_marches=6):
     return joined
 
 
+def _selftest():
+    """Pure-logic self-test (no ADB): rally-list parsing and text-grounded button finds."""
+    import ocr_read as _ocr
+    ok = True
+    dummy = object()
+    orig = _ocr.read_all
+    try:
+        # read_rallies: right-side 'Join'/'Joined' only, sorted top-to-bottom; left text ignored
+        _ocr.read_all = lambda img, *a, **k: [
+            ("Join", (820, 500), 0.9),
+            ("Joined", (820, 700), 0.9),
+            ("Join", (820, 300), 0.9),
+            ("Rally", (400, 300), 0.9),   # left of x=780 -> not a button
+        ]
+        rs = read_rallies(dummy)
+        joinable = [r for r in rs if r["status"] == "joinable"]
+        joined = [r for r in rs if r["status"] == "joined"]
+        if len(joinable) != 2 or len(joined) != 1:
+            print(f"FAIL read_rallies counts: {rs}"); ok = False
+        elif joinable[0]["join_xy"][1] != 300:
+            print(f"FAIL read_rallies not sorted top-first: {joinable}"); ok = False
+        if read_rallies(None) != []:
+            print("FAIL read_rallies(None) not []"); ok = False
+
+        # on_war_screen: needs 'alliance war' AND a war sub-label
+        _ocr.read_all = lambda img, *a, **k: [("Alliance War", (500, 100), 0.9),
+                                              ("Monster War", (300, 200), 0.9)]
+        if not on_war_screen(dummy):
+            print("FAIL on_war_screen positive"); ok = False
+        _ocr.read_all = lambda img, *a, **k: [("City", (500, 100), 0.9), ("Mail", (980, 1600), 0.9)]
+        if on_war_screen(dummy):
+            print("FAIL on_war_screen negative"); ok = False
+
+        # _find: respects xmin, returns first match, None on miss / None frame
+        _ocr.read_all = lambda img, *a, **k: [("March", (810, 1830), 0.9), ("march", (100, 100), 0.9)]
+        if _find(dummy, "march", xmin=780) != (810, 1830):
+            print("FAIL _find xmin"); ok = False
+        if _find(dummy, "zzz") is not None:
+            print("FAIL _find miss not None"); ok = False
+        if _find(None, "march") is not None:
+            print("FAIL _find(None) not None"); ok = False
+    finally:
+        _ocr.read_all = orig
+
+    print("SELF-TEST:", "PASS" if ok else "FAIL")
+    return ok
+
+
 if __name__ == "__main__":
     import sys
 
-    n = int(sys.argv[1]) if len(sys.argv) > 1 else 6
-    joined = run(max_marches=n)
-    print(f"run() joined {joined} monster rally(ies), returned to city")
+    if "--live" in sys.argv:
+        args = [a for a in sys.argv[1:] if a != "--live"]
+        n = int(args[0]) if args else 6
+        joined = run(max_marches=n)
+        print(f"run() joined {joined} monster rally(ies), returned to city")
+    else:
+        raise SystemExit(0 if _selftest() else 1)

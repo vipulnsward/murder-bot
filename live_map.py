@@ -411,5 +411,53 @@ def main():
     print("stats:", db.stats(), flush=True)
 
 
+def _selftest():
+    """Pure-logic self-test (no ADB): popup / Ideal-Land detection and radial naming."""
+    ok = True
+    orig = ocr_read.read_all
+    dummy = object()
+    try:
+        # has_popup: purchase price, reward banner -> True; clean city -> False
+        ocr_read.read_all = lambda img, *a, **k: [("CHF 8.76", (500, 900), 0.9)]
+        if not has_popup(dummy):
+            print("FAIL has_popup(sale)"); ok = False
+        ocr_read.read_all = lambda img, *a, **k: [("Congratulations!", (500, 400), 0.9)]
+        if not has_popup(dummy):
+            print("FAIL has_popup(banner)"); ok = False
+        ocr_read.read_all = lambda img, *a, **k: [("Mail", (987, 1685), 0.9), ("Alliance", (988, 1515), 0.9)]
+        if has_popup(dummy):
+            print("FAIL has_popup(clean city)"); ok = False
+
+        # is_ideal_land: >=2 decoration-UI tokens
+        ocr_read.read_all = lambda img, *a, **k: [("Ornament", (100, 1200), 0.9), ("Construct", (100, 1400), 0.9)]
+        if not is_ideal_land(dummy):
+            print("FAIL is_ideal_land(positive)"); ok = False
+        ocr_read.read_all = lambda img, *a, **k: [("Ornament", (100, 1200), 0.9)]
+        if is_ideal_land(dummy):
+            print("FAIL is_ideal_land(one token)"); ok = False
+    finally:
+        ocr_read.read_all = orig
+
+    # radial_name: only names KNOWN buildings (longest match first); generics -> None
+    radial_cases = [
+        ([("Barracks", (0, 0), 0.9)], "barracks"),
+        ([("Archer Range", (0, 0), 0.9)], "archer_range"),
+        ([("Detail", (0, 0), 0.9), ("Upgrade", (0, 0), 0.9)], None),
+        ([], None),
+    ]
+    for texts, want in radial_cases:
+        got = radial_name(texts)
+        if got != want:
+            print(f"FAIL radial_name({texts}) -> {got} (want {want})"); ok = False
+
+    print("SELF-TEST:", "PASS" if ok else "FAIL")
+    return ok
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+
+    if "--live" in sys.argv:
+        main()
+    else:
+        raise SystemExit(0 if _selftest() else 1)

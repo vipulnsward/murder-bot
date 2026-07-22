@@ -81,7 +81,7 @@ SALE_WORDS = ("chf", "purchase", "%return", "unlock privileges", "flash sale",
 
 BANNER_WORDS = ("congratulations", "obtained", "you have received", "reward received",
                 "subordinate city", "all accept", "revival time", "instant heal",
-                "post-war revival")
+                "post-war revival", "daily rewards", "sign-in reward", "advanced daily")
 
 
 CONFIRM_BOX = (120, 1030, 960, 1240)   # the Cancel/Confirm button row of a centered dialog

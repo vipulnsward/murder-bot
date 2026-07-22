@@ -177,28 +177,43 @@ def scan_train_screen(building, max_batches=8):
     """On a Train screen: scroll the tier selector to the start, then step through every
     tier icon (READ-ONLY tap = just selects it), reading + recording each. Returns the
     {tier: name} map recorded."""
-    for _ in range(5):                        # reveal the lowest tiers
-        swipe((300, ROW_Y, 860, ROW_Y))
-    seen = {}
+    seen = {}   # keyed by troop NAME (each tier is a unique troop) -> dedupes + tolerates
+    #             bad tier reads; record() upserts by (building, name) so this matches the db.
+
+    def take(tier):
+        info = troop_intel.read_train_screen(cap())
+        nm = info.get("name") if info else None
+        if nm and nm not in seen:
+            troop_intel.record(building, tier, info)
+            seen[nm] = tier
+            print(f"  T{tier} {nm:<22} own={info['own']} "
+                  f"cost(w/s/o/g)={info['cost']['wood']}/{info['cost']['stone']}/"
+                  f"{info['cost']['ore']}/{info['cost']['gold']}", flush=True)
+            return True
+        return False
+
+    take(None)                                # the currently-shown tier (works even if the
+    #                                           selector OCR fails this frame)
+    for _ in range(6):                        # scroll the selector to the lowest tiers
+        swipe((300, ROW_Y, 880, ROW_Y))
+    # Tap FIXED x-positions along the row rather than OCR-locating each icon (the selector
+    # OCR is flaky); read whatever tier each tap selects. Tier numbers are best-effort from
+    # selector_tiers when it reads, but records are keyed by troop name regardless.
+    xs = [140, 300, 460, 620, 780, 940]
     stale = 0
     for _ in range(max_batches):
-        img = cap()
-        tiers = troop_intel.selector_tiers(img)
+        tmap = {cx: t for t, cx in troop_intel.selector_tiers(cap())}
         progressed = False
-        for tier, cx in tiers:
-            if tier in seen:
-                continue
-            tap(cx, ROW_Y)                    # select the tier (safe: never a Train button)
-            info = troop_intel.read_train_screen(cap())
-            if info and info.get("name"):
-                troop_intel.record(building, tier, info)
-                seen[tier] = info["name"]
+        for x in xs:
+            tap(x, ROW_Y)                     # select whatever icon is here (safe)
+            tier = None
+            if tmap:
+                nx = min(tmap, key=lambda c: abs(c - x))
+                if abs(nx - x) < 90:
+                    tier = tmap[nx]
+            if take(tier):
                 progressed = True
-                print(f"  T{tier:<2} {info['name']:<22} own={info['own']} "
-                      f"cost(w/s/o/g)={info['cost']['wood']}/{info['cost']['stone']}/"
-                      f"{info['cost']['ore']}/{info['cost']['gold']} t={info['train_seconds']}s",
-                      flush=True)
-        swipe((860, ROW_Y, 300, ROW_Y))       # advance toward higher tiers
+        swipe((880, ROW_Y, 300, ROW_Y))       # advance toward higher tiers
         stale = 0 if progressed else stale + 1
         if stale >= 2:
             break

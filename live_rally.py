@@ -13,6 +13,8 @@ from __future__ import annotations
 import subprocess
 import time
 
+import live_map
+import nav
 import ocr_read
 import shared_capture
 
@@ -28,6 +30,63 @@ def _cap():
 def _tap(x, y, d=1.8):
     subprocess.run(["adb", "-s", DEV, "shell", "input", "tap", str(int(x)), str(int(y))])
     time.sleep(d)
+
+
+def _find(img, needle, min_conf=0.5, xmin=0, ymin=0):
+    """Center (x,y) of the first OCR token containing `needle`, or None. Buttons are
+    located by text so this survives layout shifts, not fixed coordinates."""
+    if img is None:
+        return None
+    for txt, (cx, cy), conf in ocr_read.read_all(img):
+        if conf >= min_conf and cx >= xmin and cy >= ymin and needle in str(txt).lower():
+            return (cx, cy)
+    return None
+
+
+def _is_city(img):
+    return img is not None and nav.is_city(ocr_read.read_all(img, box=nav.CITY_BOX))
+
+
+def ensure_city(tries=6):
+    for _ in range(tries):
+        img = _cap()
+        if _is_city(img) and not live_map.has_popup(img):
+            return True
+        if live_map.has_popup(img):
+            subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"]); time.sleep(1.2)
+        else:
+            _tap(80, 72)
+    return _is_city(_cap())
+
+
+def on_war_screen(img):
+    low = " ".join(str(t).lower() for t, *_ in ocr_read.read_all(img))
+    return "alliance war" in low and ("monster war" in low or "rallying" in low or "pvp war" in low)
+
+
+def open_monster_war(tries=3):
+    """Navigate from anywhere to the Alliance War (Monster War) rally list, verifying each
+    step. City -> Alliance button -> 'Alliance War' menu item -> war screen. Returns True
+    only when the war screen is confirmed on-screen."""
+    for _ in range(tries):
+        img = _cap()
+        if on_war_screen(img):
+            return True
+        if not ensure_city():
+            continue
+        img = _cap()
+        a = _find(img, "alliance", xmin=820, ymin=1400)   # bottom-right Alliance button
+        if not a:
+            continue
+        _tap(a[0], a[1] - 10)
+        img = _cap()
+        w = _find(img, "alliance war")                    # menu item in the alliance panel
+        if not w:
+            continue
+        _tap(*w)
+        if on_war_screen(_cap()):
+            return True
+    return False
 
 
 def read_rallies(img):
@@ -81,12 +140,20 @@ def auto_join():
     _tap(*AUTO_JOIN_XY)
 
 
+def run(max_marches=6):
+    """Full hands-free cycle: navigate to the Monster War list, join up to max_marches
+    joinable monster rallies (preset fills generals + 1 T1 ground), return to the city.
+    Returns the number joined. Gem-safe; leaves the game on a clean city."""
+    if not open_monster_war():
+        return 0
+    joined = join_all(max_marches=max_marches)
+    ensure_city()
+    return joined
+
+
 if __name__ == "__main__":
     import sys
 
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 6
-    img = _cap()
-    rallies = read_rallies(img)
-    print("rallies on screen:", rallies)
-    joined = join_all(max_marches=n)
-    print(f"joined {joined} rally(ies)")
+    joined = run(max_marches=n)
+    print(f"run() joined {joined} monster rally(ies), returned to city")

@@ -35,6 +35,40 @@ SOUTH = (540, 1340, 540, 640)
 NW = (300, 620, 840, 1360)
 
 
+import glob  # noqa: E402
+import os  # noqa: E402
+
+_TMPLS = None
+TRAIN_BUILDINGS = ("barracks", "stable", "archer_camp", "workshop")
+
+
+def _templates():
+    global _TMPLS
+    if _TMPLS is None:
+        _TMPLS = {}
+        for f in glob.glob("/Users/sward/work/scratch/evony-bot/templates/buildings/*.png"):
+            n = os.path.basename(f)[:-4]
+            if n in TRAIN_BUILDINGS:
+                t = cv2.imread(f)
+                if t is not None:
+                    _TMPLS[n] = t
+    return _TMPLS
+
+
+def template_hits(img, thresh=0.50):
+    """Tap points where a training-building template matches. Weak signal (used ON TOP of
+    blob candidates), so a miss just wastes one harmless tap. Returns [(cx, cy, name)]."""
+    if img is None:
+        return []
+    hits = []
+    for name, t in _templates().items():
+        res = cv2.matchTemplate(img, t, cv2.TM_CCOEFF_NORMED)
+        _mn, mx, _ml, loc = cv2.minMaxLoc(res)
+        if mx >= thresh:
+            hits.append((loc[0] + t.shape[1] // 2, loc[1] + t.shape[0] // 2, name, mx))
+    return [(cx, cy, n) for cx, cy, n, _s in sorted(hits, key=lambda h: -h[3])]
+
+
 def cap():
     return shared_capture.grab_wait(DEV, timeout=6)
 
@@ -55,12 +89,19 @@ def is_city(img):
     return img is not None and nav.is_city(ocr_read.read_all(img, box=nav.CITY_BOX, cache=True))
 
 
-def to_city(tries=4):
+def to_city(tries=5):
+    """Return to the city using the in-game back-arrow (via clear_popups) rather than raw
+    Android Back, which on a bare city opens the exit dialog and can quit Evony."""
     for _ in range(tries):
         if is_city(cap()):
             return True
-        back()
-    live_map.clear_popups(max_iters=4)
+        if not live_map.game_foreground():
+            live_map.ensure_game()
+            continue
+        live_map.clear_popups(max_iters=3)
+        if is_city(cap()):
+            return True
+        back()   # for a Train screen etc. that clear_popups didn't close
     return is_city(cap())
 
 
@@ -100,7 +141,8 @@ def find_training_building():
         img = cap()
         if img is None or live_map.has_popup(img):
             continue
-        cands = live_map.find_building_candidates(img)
+        # template hits (training buildings, incl. those on pavement) first, then blobs
+        cands = [(cx, cy) for cx, cy, _n in template_hits(img)] + live_map.find_building_candidates(img)
         names = []
         for cx, cy in cands:
             pre = cap()
@@ -113,15 +155,20 @@ def find_training_building():
             name, train = radial_train(img2, cx, cy)
             if name:
                 names.append(name + ("+train" if train else ""))
-            if train is None:
-                if not is_city(img2):
-                    back()
+            if train is not None:
+                tap(*train)                  # -> training screen
+                if troop_intel.is_train_screen(cap()):
+                    print(f"pan{i}: opened {name} train screen", flush=True)
+                    return name or "unknown"
+                to_city()
                 continue
-            tap(*train)                      # -> training screen
-            if troop_intel.is_train_screen(cap()):
-                print(f"pan{i}: opened {name} train screen", flush=True)
-                return name or "unknown"
-            to_city()
+            # Only back out when a menu/radial actually opened (name found, or not city).
+            # NEVER blind-back a clean city -- that opens the exit dialog and, repeated,
+            # quits Evony to the launcher. clear_popups then cancels any exit/confirm dialog.
+            if name is not None or not is_city(img2):
+                back()
+                if not is_city(cap()) or live_map.has_popup(cap()):
+                    live_map.clear_popups(max_iters=4)
         print(f"pan{i}: {len(cands)} cands, radials={names}", flush=True)
     return None
 

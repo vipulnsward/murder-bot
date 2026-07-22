@@ -43,17 +43,26 @@ def grab(device="127.0.0.1:5555", max_age_s=STALE_S, fallback=True):
     return None
 
 
-def grab_wait(device="127.0.0.1:5555", timeout=6.0, poll=0.2):
-    """Wait for a FRESH shared frame and return it — NEVER falls back to adb screencap
-    (so it can't fight the stream's screenrecord). Tolerates the brief screenrecord
-    175s-cycle gap. Returns None only if the stream stays down past `timeout`."""
+def grab_wait(device="127.0.0.1:5555", timeout=6.0, poll=0.2, fallback=True):
+    """Wait for a FRESH shared frame and return it, preferring the stream so it doesn't
+    fight the screenrecord. Tolerates the brief screenrecord 175s-cycle gap. If the stream
+    stays down for the whole `timeout` (e.g. the HLS pipeline broke), fall back to a
+    one-shot adb screencap so callers keep working — a dead stream isn't producing frames,
+    so there's nothing to fight. Returns None only if both are unavailable."""
     deadline = time.time() + timeout
+    saw_stream = False
     while time.time() < deadline:
         if stream_active(1.5):
+            saw_stream = True
             img = cv2.imread(FRAME_PATH)
             if img is not None:
                 return img
+        elif fallback and not saw_stream:
+            break   # stream isn't producing frames at all -> screencap now, don't wait
         time.sleep(poll)
+    if fallback:
+        import fast_screenshot
+        return fast_screenshot.grab(device)
     return None
 
 

@@ -84,12 +84,25 @@ BANNER_WORDS = ("congratulations", "obtained", "you have received", "reward rece
                 "post-war revival")
 
 
+CONFIRM_BOX = (120, 1030, 960, 1240)   # the Cancel/Confirm button row of a centered dialog
+
+
+def has_confirm_dialog(img):
+    """A centered Cancel/Confirm dialog ('Use 24 Hour Speedup?', 'Confirm', etc.). Mail
+    stays visible so is_city misses it — these MUST be dismissed with Back (= Cancel),
+    NEVER confirmed (a blind Confirm would spend a speedup / gems / resources)."""
+    if img is None:
+        return False
+    low = " ".join(str(t).lower() for t, *_ in ocr_read.read_all(img, box=CONFIRM_BOX, cache=True))
+    return "cancel" in low and "confirm" in low
+
+
 def has_popup(img):
-    """True if a purchase modal or a reward/menu overlay is over the city. Purchase
-    modals are CENTERED and leave Mail visible (so is_city can't see them) — detect by
-    price/title. Reward banners ('Congratulations') and menus also block mapping."""
+    """True if a purchase modal, reward/menu overlay, or a Cancel/Confirm dialog is over
+    the city. These are CENTERED and leave Mail visible (so is_city can't see them) —
+    detect by price/title/buttons. All of them block mapping and must be dismissed."""
     low = " ".join(str(t).lower() for t, *_ in ocr_read.read_all(img))
-    return any(w in low for w in SALE_WORDS) or any(w in low for w in BANNER_WORDS)
+    return any(w in low for w in SALE_WORDS) or any(w in low for w in BANNER_WORDS) or has_confirm_dialog(img)
 
 
 def clear_popups(max_iters=10):
@@ -107,7 +120,8 @@ def clear_popups(max_iters=10):
             time.sleep(1.2)
             continue
         low = " ".join(str(t).lower() for t, *_ in ocr_read.read_all(img))
-        if any(w in low for w in SALE_WORDS) or any(w in low for w in BANNER_WORDS):
+        if any(w in low for w in SALE_WORDS) or any(w in low for w in BANNER_WORDS) or has_confirm_dialog(img):
+            # Back cancels a Confirm dialog (never taps Confirm) and closes sale/reward popups.
             subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"])
             time.sleep(1.2)
             continue
@@ -432,6 +446,11 @@ def _selftest():
         ocr_read.read_all = lambda img, *a, **k: [("Mail", (987, 1685), 0.9), ("Alliance", (988, 1515), 0.9)]
         if has_popup(dummy):
             print("FAIL has_popup(clean city)"); ok = False
+        # Cancel/Confirm dialog (e.g. speedup) — Mail visible so is_city misses it
+        ocr_read.read_all = lambda img, *a, **k: [("Cancel", (362, 1130), 0.9), ("Confirm", (715, 1130), 0.9),
+                                                  ("Mail", (987, 1685), 0.9)]
+        if not has_confirm_dialog(dummy) or not has_popup(dummy):
+            print("FAIL has_confirm_dialog(speedup)"); ok = False
 
         # is_ideal_land: >=2 decoration-UI tokens
         ocr_read.read_all = lambda img, *a, **k: [("Ornament", (100, 1200), 0.9), ("Construct", (100, 1400), 0.9)]

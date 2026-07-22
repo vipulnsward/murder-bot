@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "embedding_backend": "numpy hashing bag-of-words fallback",
+  "vector_file": "skill_index.npy",
+  "skills": [
+    {
+      "name": "join_monster_rallies",
+      "description": "Navigate to Alliance War Monster War and join forming boss-monster rallies with the saved preset, then return to city.",
+      "fn": "live_rally:run",
+      "tags": [
+        "rally",
+        "monster",
+        "alliance",
+        "action"
+      ],
+      "verify": "is_city"
+    },
+    {
+      "name": "open_monster_war",
+      "description": "Open the Alliance War Monster War screen to view forming boss-monster rallies.",
+      "fn": "live_rally:open_monster_war",
+      "tags": [
+        "rally",
+        "monster",
+        "navigation",
+        "action"
+      ],
+      "verify": "on_war_screen"
+    },
+    {
+      "name": "dismiss_popups",
+      "description": "Dismiss blocking purchase popups, reward banners, dialogs, and menus to reveal the city.",
+      "fn": "live_map:clear_popups",
+      "tags": [
+        "popup",
+        "city",
+        "navigation",
+        "action"
+      ],
+      "verify": "no_popup"
+    },
+    {
+      "name": "exit_ideal_land",
+      "description": "Leave the decorative Ideal Land area and return to the main city.",
+      "fn": "live_map:exit_ideal_land",
+      "tags": [
+        "ideal-land",
+        "city",
+        "navigation",
+        "action"
+      ],
+      "verify": "not_ideal_land"
+    },
+    {
+      "name": "read_city_stats",
+      "description": "Read city HUD resources, power, gems, and VIP stats without changing the game state.",
+      "fn": "game_hud:read_hud",
+      "tags": [
+        "hud",
+        "resources",
+        "power",
+        "gems",
+        "read-only"
+      ],
+      "verify": "hud_ok"
+    },
+    {
+      "name": "detect_buildings",
+      "description": "Detect candidate city building locations in the current frame without tapping anything.",
+      "fn": "live_map:find_building_candidates",
+      "tags": [
+        "buildings",
+        "vision",
+        "city",
+        "read-only"
+      ],
+      "verify": "buildings_detected"
+    },
+    {
+      "name": "classify_screen",
+      "description": "Classify the current game screen into a learned state label using local vision and OCR.",
+      "fn": "gen_fsm:classify",
+      "tags": [
+        "screen",
+        "vision",
+        "state",
+        "read-only"
+      ],
+      "verify": "valid_screen_label"
+    }
+  ]
+}

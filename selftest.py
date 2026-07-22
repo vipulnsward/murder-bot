@@ -27,7 +27,7 @@ PURE = [
     "gather", "rally_join", "monster",
     "perception", "screen_id", "screen_fsm",
     "scheduler", "multiscale", "orchestrator",
-    "nav", "game_hud", "live_map", "live_rally", "stamina",
+    "nav", "game_hud", "live_map", "live_rally", "stamina", "troop_intel",
 ]
 RUN_BOT = ("run_bot", {"RUN_BOT_SELFTEST": "1"})
 HOLO = ["holo_vision"]

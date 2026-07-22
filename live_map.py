@@ -80,7 +80,8 @@ SALE_WORDS = ("chf", "purchase", "%return", "unlock privileges", "flash sale",
 
 
 BANNER_WORDS = ("congratulations", "obtained", "you have received", "reward received",
-                "subordinate city", "all accept")
+                "subordinate city", "all accept", "revival time", "instant heal",
+                "post-war revival")
 
 
 def has_popup(img):
@@ -424,6 +425,10 @@ def _selftest():
         ocr_read.read_all = lambda img, *a, **k: [("Congratulations!", (500, 400), 0.9)]
         if not has_popup(dummy):
             print("FAIL has_popup(banner)"); ok = False
+        ocr_read.read_all = lambda img, *a, **k: [("Remaining Revival Time:", (500, 1200), 0.9),
+                                                  ("Mail", (987, 1685), 0.9)]   # Mail visible -> is_city can't catch it
+        if not has_popup(dummy):
+            print("FAIL has_popup(post-war revival)"); ok = False
         ocr_read.read_all = lambda img, *a, **k: [("Mail", (987, 1685), 0.9), ("Alliance", (988, 1515), 0.9)]
         if has_popup(dummy):
             print("FAIL has_popup(clean city)"); ok = False

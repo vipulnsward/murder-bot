@@ -95,7 +95,7 @@ def selector_tiers(img):
     got = []
     for t, (cx, _cy), cf in ocr_read.read_all(img, box=SELECTOR_BOX, cache=True):
         r = roman_to_int(t)
-        if r is not None:
+        if r is not None and 1 <= r <= 30:   # reject garbled reads (e.g. 'T1009', 'T64')
             got.append((r, cx))
     got.sort(key=lambda p: p[1])
     if len(got) >= 2:

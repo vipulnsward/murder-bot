@@ -55,9 +55,11 @@ def _templates():
     return _TMPLS
 
 
-def template_hits(img, thresh=0.50):
-    """Tap points where a training-building template matches. Weak signal (used ON TOP of
-    blob candidates), so a miss just wastes one harmless tap. Returns [(cx, cy, name)]."""
+def template_hits(img, thresh=0.55):
+    """Tap points where a training-building template matches, at the building BASE. The
+    templates were cropped as pre[y-230:y+40, x-130:x+130], so the tap point is the match
+    offset (+130,+230) -- NOT the template centre (tapping the roof opens no radial).
+    Returns [(cx, cy, name)] strongest first."""
     if img is None:
         return []
     hits = []
@@ -65,7 +67,7 @@ def template_hits(img, thresh=0.50):
         res = cv2.matchTemplate(img, t, cv2.TM_CCOEFF_NORMED)
         _mn, mx, _ml, loc = cv2.minMaxLoc(res)
         if mx >= thresh:
-            hits.append((loc[0] + t.shape[1] // 2, loc[1] + t.shape[0] // 2, name, mx))
+            hits.append((min(1079, loc[0] + 130), min(1900, loc[1] + 230), name, mx))
     return [(cx, cy, n) for cx, cy, n, _s in sorted(hits, key=lambda h: -h[3])]
 
 

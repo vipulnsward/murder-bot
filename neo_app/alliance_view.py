@@ -8,6 +8,7 @@ local ``game_brain/alliance.db`` SQLite database.
 from __future__ import annotations
 
 import html
+import os
 import sqlite3
 import sys
 from pathlib import Path
@@ -19,7 +20,7 @@ from pydantic import BaseModel, Field, field_validator
 
 BASE_DIR = Path(__file__).resolve().parent
 REPO_ROOT = BASE_DIR.parent
-DB_PATH = REPO_ROOT / "game_brain" / "alliance.db"
+DB_PATH = Path(os.environ.get("ALLIANCE_DB_PATH") or (REPO_ROOT / "game_brain" / "alliance.db"))
 
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))

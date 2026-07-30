@@ -98,6 +98,7 @@ services:
       BOT_STATUS_PATH: /state/bot_status.json
       BOT_LOG_PATH: /state/bot.log
       BOT_PIDFILE: /state/bot.pid
+      ALLIANCE_DB_PATH: /state/alliance.db
       # the manager serves the web UI without the emulator (live view degrades gracefully),
       # so it starts immediately and does NOT wait for or depend on Redroid.
       WAIT_FOR_BOOT: "0"

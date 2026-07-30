@@ -19,7 +19,7 @@ from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError
 from cryptography.fernet import Fernet
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response, StreamingResponse
 from itsdangerous import BadSignature, SignatureExpired, TimestampSigner
 from pydantic import BaseModel, Field
 from psycopg2.errors import UniqueViolation
@@ -829,51 +829,159 @@ th, td { padding: .65rem; border-bottom: 1px solid #30363d; text-align: left; wh
 </style>
 """
 
-AUTH_PAGE = f"""
+AUTH_PAGE = """
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Murder Bot</title>
-{SHARED_CSS}
+<title>Murder Bot — the Evony bot that thinks | Easy Bot alternative</title>
+<meta name="description" content="Murder Bot runs your Evony account 24/7 and out-thinks your enemies with a real battle-sim AI. Everything Easy Bot does, cheaper, plus AI PvP counters, enemy intel, and attack planning. From $5/mo.">
+<meta name="keywords" content="evony bot, easy bot alternative, evony automation, evony rally bot, evony pvp counter, evony auto farm, evony bot cheap, best evony bot 2026">
+<link rel="canonical" href="https://murderbot.gg/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Murder Bot — the Evony bot that thinks">
+<meta property="og:description" content="Everything Easy Bot does, cheaper — plus an AI PvP brain that counters every attacker. From $5/mo.">
+<meta property="og:url" content="https://murderbot.gg/">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Murder Bot","applicationCategory":"GameApplication","operatingSystem":"Web","description":"AI-powered Evony automation and PvP counter engine. An Easy Bot alternative with a real battle-sim brain.","offers":[{"@type":"Offer","name":"Brain","price":"5","priceCurrency":"USD"},{"@type":"Offer","name":"Auto","price":"9","priceCurrency":"USD"}]}
+</script>
+<style>
+:root{--bg:#0b0c10;--card:#14161e;--line:#23262f;--ink:#e9e7e4;--mut:#9aa0ab;--dim:#6b7280;--red:#e5484d;--red2:#ff6b6f;--gold:#d8a24a;--grn:#3fb27f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding:0 22px}
+a{color:var(--red2);text-decoration:none}
+h1,h2,h3{line-height:1.12;letter-spacing:-.02em;margin:0;text-wrap:balance}
+.num{font-variant-numeric:tabular-nums}
+header{padding:70px 0 46px;background:radial-gradient(1100px 420px at 12% -10%,rgba(229,72,77,.16),transparent 60%),radial-gradient(900px 360px at 100% 0%,rgba(216,162,74,.10),transparent 55%);border-bottom:1px solid var(--line)}
+.pill{display:inline-flex;gap:8px;align-items:center;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:6px 12px;background:var(--card)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--grn);box-shadow:0 0 0 3px rgba(63,178,127,.18)}
+h1{font-size:clamp(34px,6vw,56px);font-weight:800;margin:20px 0 14px}
+h1 .r{color:var(--red)}
+.lede{font-size:clamp(17px,2.4vw,21px);color:var(--mut);max-width:60ch}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
+.btn{display:inline-block;padding:13px 22px;border-radius:12px;font-weight:700;border:1px solid var(--line)}
+.btn.p{background:var(--red);color:#fff;border-color:var(--red)}
+.btn.s{background:var(--card);color:var(--ink)}
+section{padding:46px 0;border-bottom:1px solid var(--line)}
+.eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--red2);font-weight:700}
+h2{font-size:clamp(22px,3.2vw,30px);font-weight:800;margin:6px 0 20px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:760px){.grid3{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.card .ic{font-size:22px;display:block;margin-bottom:10px}
+.card h3{font-size:16px;font-weight:750;margin-bottom:6px}
+.card p{color:var(--mut);font-size:14.5px;margin:0}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+thead th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);font-weight:700}
+tbody tr:last-child td{border-bottom:0}
+td.c,th.c{text-align:center}
+.yes{color:var(--grn);font-weight:700}.no{color:var(--dim)}.us{color:var(--red2);font-weight:750}
+.price{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:760px){.price{grid-template-columns:1fr}}
+.tier{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+.tier.hot{border-color:rgba(229,72,77,.5);box-shadow:0 0 0 1px rgba(229,72,77,.25)}
+.tier .t{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
+.tier .p{font-size:30px;font-weight:800;margin:4px 0}.tier .p small{font-size:13px;color:var(--dim);font-weight:600}
+.tier ul{margin:10px 0 0;padding:0;list-style:none;font-size:13px;color:var(--mut)}
+.tier li{padding:4px 0 4px 18px;position:relative}.tier li:before{content:"▸";position:absolute;left:0;color:var(--red)}
+.auth{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:640px}
+@media(max-width:620px){.auth{grid-template-columns:1fr}}
+form{display:flex;flex-direction:column;gap:10px}
+label{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--mut)}
+input{padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:15px}
+button{padding:12px;border-radius:10px;border:0;background:var(--red);color:#fff;font-weight:700;font-size:15px;cursor:pointer}
+.card h2{font-size:17px;margin-bottom:12px}
+.error{color:var(--red2);min-height:20px}
+footer{padding:32px 0 60px;color:var(--dim);font-size:13px}
+</style>
 </head>
 <body>
-<main>
-<h1>Murder Bot</h1>
-<div class="grid">
-<section class="card">
-<h2>Log in</h2>
-<form id="login">
-<label>Email<input name="email" type="email" autocomplete="email" required></label>
-<label>Password<input name="password" type="password" autocomplete="current-password" minlength="8" required></label>
-<button>Log in</button>
-</form>
-</section>
-<section class="card">
-<h2>Create account</h2>
-<form id="signup">
-<label>Email<input name="email" type="email" autocomplete="email" required></label>
-<label>Password<input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
-<button>Sign up</button>
-</form>
-</section>
-</div>
-<p id="message" class="error"></p>
-</main>
+<header><div class="wrap">
+  <span class="pill"><span class="dot"></span> Live &middot; trusted by NFG</span>
+  <h1>The Evony bot that <span class="r">thinks.</span></h1>
+  <p class="lede">Everything Easy Bot does &mdash; auto-rally, farm, reports &mdash; <b>cheaper</b>, plus a real battle-sim AI that tells you exactly how to counter every attacker. Automate your account <em>and</em> out-think your enemies.</p>
+  <div class="cta">
+    <a class="btn p" href="#start">Start free &rarr;</a>
+    <a class="btn s" href="/counter">See the brain counter an attack</a>
+  </div>
+</div></header>
+
+<section><div class="wrap">
+  <span class="eyebrow">Why switch</span>
+  <h2>Automation, plus an intelligence Easy&nbsp;Bot doesn't have</h2>
+  <div class="grid3">
+    <div class="card"><span class="ic">&#9876;&#65039;</span><h3>Full automation</h3><p>Joins rallies every minute, tops stamina, farms, scans battle reports, auto-reclaims after a kickout. Runs 24/7. The parity you expect.</p></div>
+    <div class="card"><span class="ic">&#129504;</span><h3>AI PvP brain</h3><p>Paste an incoming attack or an enemy &mdash; a real battle simulator + learned meta says <b>defend / rally / ghost / bubble</b> and the exact lead. Easy Bot has nothing like it.</p></div>
+    <div class="card"><span class="ic">&#128225;</span><h3>Enemy intel + attack planner</h3><p>A live database on every player &mdash; troops, buffs, generals, W/L &mdash; and a planner that ranks favorable trades. Learns the meta nightly.</p></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <span class="eyebrow">Murder Bot vs Easy Bot</span>
+  <h2>Same automation. Lower price. A brain.</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Feature</th><th class="c">Easy Bot</th><th class="c">Murder Bot</th></tr></thead>
+    <tbody>
+      <tr><td>Price / user / mo</td><td class="c num">$8</td><td class="c us num">from $5</td></tr>
+      <tr><td>Auto rally-join, farm, stamina</td><td class="c yes">&check;</td><td class="c yes">&check;</td></tr>
+      <tr><td>Battle-report parsing</td><td class="c yes">&check;</td><td class="c yes">&check;</td></tr>
+      <tr><td>AI counter engine (sim-backed)</td><td class="c no">&mdash;</td><td class="c yes">&check;</td></tr>
+      <tr><td>Enemy intel database</td><td class="c no">&mdash;</td><td class="c yes">&check;</td></tr>
+      <tr><td>Attack / favorable-trade planner</td><td class="c no">&mdash;</td><td class="c yes">&check;</td></tr>
+      <tr><td>Learns the meta 24/7</td><td class="c no">&mdash;</td><td class="c yes">&check;</td></tr>
+    </tbody>
+  </table></div>
+</div></section>
+
+<section><div class="wrap">
+  <span class="eyebrow">Pricing</span>
+  <h2>Cheaper than Easy Bot, at every tier</h2>
+  <div class="price">
+    <div class="tier hot"><div class="t" style="color:var(--red2)">Brain</div><div class="p">$5<small>/mo</small></div><ul><li>Unlimited AI counters</li><li>Enemy intel</li><li>Attack planner</li><li>No setup &mdash; works instantly</li></ul></div>
+    <div class="tier"><div class="t">Auto</div><div class="p">$9<small>/mo</small></div><ul><li>Everything in Brain</li><li>24/7 account automation</li><li>Rally + farm + reports</li></ul></div>
+    <div class="tier"><div class="t">Alliance</div><div class="p">$29<small>/mo</small></div><ul><li>Up to 5 accounts</li><li>Fleet dashboard</li><li>Intel on everyone</li></ul></div>
+  </div>
+</div></section>
+
+<section id="start"><div class="wrap">
+  <span class="eyebrow">Switching from Easy Bot?</span>
+  <h2>Migrate in under a minute</h2>
+  <p class="lede" style="margin-bottom:22px">Create an account, connect your Evony login, and Murder Bot takes it from there. No downtime, no lock-in.</p>
+  <div class="auth">
+    <section class="card"><h2>Create account</h2>
+      <form id="signup">
+        <label>Email<input name="email" type="email" autocomplete="email" required></label>
+        <label>Password<input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
+        <button>Start free &rarr;</button>
+      </form>
+    </section>
+    <section class="card"><h2>Log in</h2>
+      <form id="login">
+        <label>Email<input name="email" type="email" autocomplete="email" required></label>
+        <label>Password<input name="password" type="password" autocomplete="current-password" minlength="8" required></label>
+        <button>Log in</button>
+      </form>
+    </section>
+  </div>
+  <p id="message" class="error"></p>
+</div></section>
+
+<footer><div class="wrap">Murder Bot &middot; the Evony bot that thinks. Everything Easy Bot does, cheaper &mdash; plus a brain. Built for alliances.</div></footer>
+
 <script>
-async function authenticate(event, path) {{
+async function authenticate(event, path) {
   event.preventDefault();
   const body = Object.fromEntries(new FormData(event.currentTarget));
-  const response = await fetch(path, {{
-    method: "POST",
-    headers: {{"Content-Type": "application/json"}},
-    body: JSON.stringify(body)
-  }});
+  const response = await fetch(path, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
   const result = await response.json();
   if (response.ok) location.reload();
   else document.getElementById("message").textContent = result.detail || "Request failed";
-}}
+}
 document.getElementById("login").addEventListener("submit", event => authenticate(event, "/api/login"));
 document.getElementById("signup").addEventListener("submit", event => authenticate(event, "/api/signup"));
 </script>
@@ -1350,6 +1458,19 @@ def index(request: Request):
                 if cursor.fetchone() is not None:
                     return RedirectResponse("/home", status_code=303)
     return AUTH_PAGE
+
+
+@app.get("/robots.txt", response_class=PlainTextResponse)
+def robots_txt():
+    return "User-agent: *\nAllow: /\nSitemap: https://murderbot.gg/sitemap.xml\n"
+
+
+@app.get("/sitemap.xml")
+def sitemap_xml():
+    urls = ["/"]
+    body = "".join(f"<url><loc>https://murderbot.gg{u}</loc><changefreq>weekly</changefreq></url>" for u in urls)
+    xml = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{body}</urlset>'
+    return Response(content=xml, media_type="application/xml")
 
 
 # --- Murder Bot feature routers (self-contained modules) ---

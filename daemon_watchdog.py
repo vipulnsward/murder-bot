@@ -21,7 +21,7 @@ DAEMONS = [
     ("rally_night", [PY, "rally_night.py"], "rally_night.py"),
     ("research_night", [PY, "research_night.py"], "research_night.py"),
     ("keep_live_murderbot", [PY, "keep_live.py", "--device", "127.0.0.1:5555", "--port", "8000"],
-     "keep_live.py --port 8000"),
+     "keep_live.py --device 127.0.0.1:5555"),
     ("keep_live_easybot", [PY, "keep_live.py", "--device", "emulator-5554", "--port", "8001"],
      "keep_live.py --device emulator-5554"),
 ]

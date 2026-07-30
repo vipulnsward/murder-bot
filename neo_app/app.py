@@ -907,9 +907,70 @@ footer{padding:32px 0 60px;color:var(--dim);font-size:13px}
 .dout .act{font-size:20px;font-weight:800;color:var(--red2);text-transform:uppercase;letter-spacing:.02em}
 .dout .conf{color:var(--gold);font-weight:700}
 </style>
+<style>
+/* ===== EVONY WAR-ROOM — epic gaming theme (layered override) ===== */
+:root{
+  --bg:#0a0806;--card:#16120b;--line:#3a2f1a;--ink:#efe6d2;--mut:#b8a888;--dim:#8a7a5a;
+  --red:#c0392b;--red2:#ff7d5c;--gold:#e6c35c;--gold2:#f7dd8f;--grn:#57c08a;
+}
+body{
+  background:
+    radial-gradient(1200px 520px at 14% -8%, rgba(230,195,92,.11), transparent 60%),
+    radial-gradient(1000px 480px at 100% 0%, rgba(192,57,43,.16), transparent 55%),
+    radial-gradient(1000px 800px at 50% 118%, rgba(230,195,92,.06), transparent 60%),
+    #0a0806;
+  background-attachment:fixed;
+}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.55;
+  background-image:repeating-linear-gradient(115deg,rgba(255,255,255,.014) 0 2px,transparent 2px 8px);}
+.wrap{position:relative;z-index:1}
+h1,h2{font-family:Georgia,"Iowan Old Style","Times New Roman",serif!important;letter-spacing:.005em}
+h1{background:linear-gradient(180deg,var(--gold2),var(--gold) 55%,#b8902f);-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;text-shadow:0 2px 34px rgba(230,195,92,.22);filter:drop-shadow(0 1px 0 rgba(0,0,0,.65))}
+h1 .r{-webkit-text-fill-color:var(--red2);color:var(--red2)}
+h2{color:var(--gold2)}
+.eyebrow{color:var(--gold)}
+header{background:
+  radial-gradient(1100px 480px at 12% -12%,rgba(230,195,92,.15),transparent 60%),
+  radial-gradient(900px 400px at 100% -4%,rgba(192,57,43,.20),transparent 55%)!important;
+  border-bottom:1px solid rgba(230,195,92,.22)!important;text-align:center}
+header .cta{justify-content:center}
+.pill{border-color:rgba(230,195,92,.32);color:var(--gold);background:rgba(22,18,11,.8)}
+.dot{background:var(--gold)!important;box-shadow:0 0 0 3px rgba(230,195,92,.20)!important;animation:pulse 2.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.8}50%{opacity:1}}
+.card,.tier,.tw,.demo{border:1px solid var(--line)!important;
+  background:linear-gradient(180deg,rgba(42,33,18,.62),rgba(16,12,7,.9))!important;
+  box-shadow:inset 0 0 0 1px rgba(230,195,92,.07),0 20px 44px -24px rgba(0,0,0,.95)!important;position:relative}
+.card::before{content:"";position:absolute;inset:4px;border-radius:12px;border:1px solid rgba(230,195,92,.16);pointer-events:none}
+.card .ic{filter:drop-shadow(0 2px 10px rgba(230,195,92,.35))}
+.card h3{color:var(--gold2)}
+thead th{color:var(--gold)}
+.yes{color:var(--grn)!important}.us{color:var(--gold2)!important}
+.btn.p,button,.tier button{background:linear-gradient(180deg,#e0553f,#a02a1c)!important;color:#fff!important;
+  box-shadow:0 0 0 1px rgba(255,190,130,.4),0 10px 26px -12px rgba(192,57,43,.75),inset 0 1px 0 rgba(255,255,255,.28)!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.45);transition:transform .12s ease,box-shadow .12s ease}
+.btn.p:hover,button:hover{transform:translateY(-1px);box-shadow:0 0 0 1px rgba(255,205,150,.6),0 14px 30px -12px rgba(192,57,43,.9),inset 0 1px 0 rgba(255,255,255,.35)!important}
+.btn.s{border-color:rgba(230,195,92,.42)!important;color:var(--gold)!important;background:rgba(22,18,11,.7)!important}
+.tier.hot{border-color:rgba(230,195,92,.55)!important;box-shadow:0 0 0 1px rgba(230,195,92,.5),0 0 44px -8px rgba(230,195,92,.3)!important}
+.tier .p{color:var(--gold2)}.tier li:before{color:var(--gold)}
+.demo{box-shadow:inset 0 0 0 1px rgba(230,195,92,.16),0 0 56px -16px rgba(230,195,92,.3)!important}
+.demo::before{display:none}
+.dout{background:rgba(8,6,4,.72)!important;border-color:rgba(230,195,92,.22)!important}
+.dout .act{color:var(--gold2)!important;text-shadow:0 0 22px rgba(230,195,92,.45)}
+.drow input,.drow select,input{background:rgba(8,6,4,.7)!important;border-color:rgba(230,195,92,.22)!important;color:var(--ink)!important}
+.crest{width:104px;height:104px;display:block;margin:0 auto 10px;filter:drop-shadow(0 6px 20px rgba(230,195,92,.4))}
+footer{border-top:1px solid rgba(230,195,92,.14);color:var(--dim)}
+</style>
 </head>
 <body>
 <header><div class="wrap">
+  <svg class="crest" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7dd8f"/><stop offset=".55" stop-color="#e6c35c"/><stop offset="1" stop-color="#b8902f"/></linearGradient></defs>
+    <g stroke="url(#cg)" stroke-width="4" stroke-linecap="round" opacity=".88"><path d="M26 26 L84 84"/><path d="M94 26 L36 84"/><circle cx="26" cy="26" r="4" fill="url(#cg)"/><circle cx="94" cy="26" r="4" fill="url(#cg)"/></g>
+    <path d="M60 16 L98 30 V58 C98 80 80 94 60 102 C40 94 22 80 22 58 V30 Z" fill="#140f08" stroke="url(#cg)" stroke-width="4"/>
+    <path d="M60 34 C52 42 52 54 60 62 C68 54 68 42 60 34 Z" fill="url(#cg)"/>
+    <path d="M48 68 Q60 80 72 68 Q60 74 48 68 Z" fill="url(#cg)"/>
+  </svg>
   <span class="pill"><span class="dot"></span> Live &middot; trusted by NFG</span>
   <h1>The Evony bot that <span class="r">thinks.</span></h1>
   <p class="lede">Everything Easy Bot does &mdash; auto-rally, farm, reports &mdash; <b>cheaper</b>, plus a real battle-sim AI that tells you exactly how to counter every attacker. Automate your account <em>and</em> out-think your enemies.</p>

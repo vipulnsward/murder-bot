@@ -16,6 +16,7 @@ sys.path.insert(0, "/Users/sward/work/scratch/evony-bot")
 import fast_screenshot
 from keep.bridge import ControlBridge
 from keep.server import create_app
+from game_tables import register_game_tables
 
 DEVICE = "127.0.0.1:5555"
 
@@ -53,6 +54,7 @@ def main():
     bridge.status = "running"
     bridge.screen = "live"
     app = create_app(bridge)
+    register_game_tables(app)
 
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=args.port, log_level="warning")

@@ -1606,7 +1606,7 @@ def robots_txt():
 
 @app.get("/sitemap.xml")
 def sitemap_xml():
-    urls = ["/"]
+    urls = ["/", *sitemap_paths()]
     body = "".join(f"<url><loc>https://murderbot.gg{u}</loc><changefreq>weekly</changefreq></url>" for u in urls)
     xml = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{body}</urlset>'
     return Response(content=xml, media_type="application/xml")
@@ -1703,8 +1703,11 @@ from attack_view import build_router as build_attack_router  # noqa: E402
 from brain_view import build_router as build_brain_router  # noqa: E402
 from settings_view import build_router as build_settings_router  # noqa: E402
 from alliance_view import build_router as build_alliance_router  # noqa: E402
+from guides_view import build_router as build_guides_router, sitemap_paths, static_files as guide_static_files  # noqa: E402
 
+app.mount("/static/guides", guide_static_files, name="guide-images")
 app.include_router(reports_router)                                  # GET /reports, /api/reports[/{rid}]
+app.include_router(build_guides_router())                           # PUBLIC: /guides, /generals
 app.include_router(build_generals_router(current_user, database))   # GET /generals-gallery, portraits
 app.include_router(build_counter_router(current_user, database))    # GET /counter — AI counter engine
 app.include_router(build_map_router(current_user, database))        # GET /map — vision-DB world map

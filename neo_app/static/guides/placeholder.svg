@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" role="img" aria-labelledby="title">
+  <title id="title">Evony strategy guide</title>
+  <defs>
+    <radialGradient id="ember" cx="50%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#6f321d"/>
+      <stop offset=".52" stop-color="#25160d"/>
+      <stop offset="1" stop-color="#090705"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#fff0a8"/>
+      <stop offset=".55" stop-color="#d6a83d"/>
+      <stop offset="1" stop-color="#795217"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="520" fill="url(#ember)"/>
+  <path d="M400 82 524 142v112c0 90-50 153-124 190-74-37-124-100-124-190V142z"
+        fill="#110d08" stroke="url(#gold)" stroke-width="8"/>
+  <path d="m400 130 24 73 77 1-62 45 23 74-62-45-62 45 23-74-62-45 77-1z"
+        fill="url(#gold)"/>
+  <text x="400" y="486" text-anchor="middle" fill="#e8c867" font-family="Georgia,serif"
+        font-size="30" letter-spacing="7">EVONY INTELLIGENCE</text>
+</svg>

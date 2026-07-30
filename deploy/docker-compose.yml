@@ -17,12 +17,16 @@ services:
     privileged: true                     # required: binder + Android init
     restart: always
     command:
+      # Keep 1080x1920 — the bot's tap coordinates are calibrated to it (matches BlueStacks);
+      # lowering res would break every tap. Headless Redroid is already lean (no GUI).
       - androidboot.redroid_width=1080
       - androidboot.redroid_height=1920
       - androidboot.redroid_dpi=480
-      # Software GL (SwiftShader). No GPU passthrough on CAX -> this is the
-      # honest, working default. Perf is modest; see README "Risks".
+      # Software GL (SwiftShader). No GPU passthrough -> honest, working default.
       - androidboot.redroid_gpu_mode=guest
+      # Run ARM apps (Evony's APK is arm64) on this x86 host via libndk translation.
+      # On a native ARM (CAX) box this line is harmless/ignored.
+      - androidboot.redroid_ndk_translation=1
     volumes:
       - redroid-data:/data
     healthcheck:

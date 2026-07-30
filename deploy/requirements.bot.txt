@@ -8,10 +8,12 @@
 # fallback on the server, swap it for a remote API call — do not add mlx here.
 #
 # opencv-python is swapped for the -headless build (no X/GL libs, server-correct).
-numpy==2.5.1
-pillow==12.3.0
-opencv-python-headless==5.0.0.93
+# Pinned for the bot image's Python 3.11 base (numpy 2.5.x needs 3.12; opencv 5.x
+# lacks py3.11 wheels). These are the known-good Linux versions.
+numpy==2.1.3
+pillow==11.0.0
+opencv-python-headless==4.10.0.84
 rapidocr-onnxruntime==1.2.3
-onnxruntime==1.27.0
+onnxruntime==1.19.2
 pytesseract
 psycopg2-binary==2.9.12

@@ -39,6 +39,17 @@ def _cycle():
         game_hud.write_hud(game_hud.read_hud(shared_capture.grab_wait(DEV, timeout=6)))
     except Exception:
         pass
+    # Continuous vision-DB mapping, for free: map the SAME shared frame the loop
+    # already captured (no extra adb capture, no taps, no conflict). The vision DB
+    # grows every cycle as the bot plays -> "exploring + mapping Evony continuously".
+    try:
+        import game_mapper
+        import shared_capture as _sc
+        frame = _sc.grab(DEV)
+        if frame is not None:
+            game_mapper.map_current(img=frame, log=None)
+    except Exception:
+        pass
     return joined, stamina
 
 
@@ -55,7 +66,16 @@ def main():
             print(f"[{stamp}] cycle={cycles} joined={joined} stamina={stamina} total_joined={total}",
                   flush=True)
         except Exception as exc:  # noqa: BLE001 — never let one bad cycle kill the night
-            print(f"[{stamp}] cycle={cycles} ERROR: {exc!r}", flush=True)
+            print(f"[{stamp}] cycle={cycles} ERROR: {exc!r}; retrying once", flush=True)
+            try:
+                time.sleep(3)                       # let a transient empty-capture / stream gap pass
+                joined, stamina = _cycle()
+                if isinstance(joined, int):
+                    total += joined
+                print(f"[{stamp}] cycle={cycles} RETRY joined={joined} stamina={stamina} "
+                      f"total_joined={total}", flush=True)
+            except Exception as exc2:  # noqa: BLE001
+                print(f"[{stamp}] cycle={cycles} retry also failed: {exc2!r}", flush=True)
         time.sleep(CADENCE_S)
 
 

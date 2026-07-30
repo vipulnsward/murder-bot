@@ -29,8 +29,8 @@ RUN pip install -r /app/neo_app/requirements.txt
 # the manager app + all feature-router modules (reports/generals/counter/map/billing views)
 COPY neo_app/ /app/neo_app/
 # root deps the views import (counter_view -> counter_ai; counter_ai reads the brain KB)
-COPY counter_ai.py config.py /app/
-COPY game_brain/pvp_brain.md game_brain/knowledge_distilled.md /app/game_brain/
+COPY counter_ai.py counter_general.py game_kb.py config.py /app/
+COPY game_brain/pvp_brain.md game_brain/knowledge_distilled.md game_brain/game_kb.db /app/game_brain/
 
 COPY deploy/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh

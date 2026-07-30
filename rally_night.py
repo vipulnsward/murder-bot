@@ -21,7 +21,11 @@ def _cycle():
     try:
         import evony_update
         if evony_update.needs_update():
-            evony_update.handle_update(log=lambda m: print(f"[UPDATE] {m}", flush=True))
+            # Detect + ALERT only. The AppGallery auto-update flow is unvalidated and its
+            # wait loop can hang/disrupt a cycle on a false positive, so it must NOT run
+            # unattended — build + validate handle_update together, awake.
+            print("[UPDATE] update wall detected — manual update needed (auto-update deferred)",
+                  flush=True)
     except Exception as exc:  # noqa: BLE001 — an update-check hiccup must not stop rallies
         print(f"[UPDATE] check failed: {exc!r}", flush=True)
     live_map.clear_popups(max_iters=6)
@@ -37,17 +41,6 @@ def _cycle():
         import game_hud
         import shared_capture
         game_hud.write_hud(game_hud.read_hud(shared_capture.grab_wait(DEV, timeout=6)))
-    except Exception:
-        pass
-    # Continuous vision-DB mapping, for free: map the SAME shared frame the loop
-    # already captured (no extra adb capture, no taps, no conflict). The vision DB
-    # grows every cycle as the bot plays -> "exploring + mapping Evony continuously".
-    try:
-        import game_mapper
-        import shared_capture as _sc
-        frame = _sc.grab(DEV)
-        if frame is not None:
-            game_mapper.map_current(img=frame, log=None)
     except Exception:
         pass
     return joined, stamina

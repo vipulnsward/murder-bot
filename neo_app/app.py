@@ -1666,6 +1666,31 @@ def demo_counter(request: Request, power: float = 60, lead: str = "SIEGE",
              "confidence": 0.5}, status_code=200)
 
 
+@app.get("/api/counter-generals")
+def counter_generals_api(request: Request, enemy: str = "ground", role: str = "attack", top: int = 5):
+    """PUBLIC alliance intel lookup: given an enemy troop type OR a named general,
+    return the best counter generals from the roster — grounded troop-type table
+    (Mounted>Ground/Siege, Ranged>Mounted, Siege>Ranged, Ground>Ranged/Siege) plus
+    the tiered ratings. Rate-limited per IP."""
+    _rate_limit(request, "demo", 40, 60)
+    try:
+        top = max(1, min(int(top), 8))
+    except (TypeError, ValueError):
+        top = 5
+    role = "defense" if str(role).lower().startswith("def") else "attack"
+    try:
+        import sys as _sys
+        import os as _os
+        _root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+        if _root not in _sys.path:
+            _sys.path.insert(0, _root)
+        from counter_general import recommend_counters  # noqa: E402
+        return recommend_counters(enemy, role=role, top=top)
+    except Exception as exc:  # noqa: BLE001
+        return JSONResponse({"enemy": enemy, "error": str(exc), "recommendations": []},
+                            status_code=200)
+
+
 # --- Murder Bot feature routers (self-contained modules) ---
 from reports_view import router as reports_router  # noqa: E402
 from generals_view import build_router as build_generals_router  # noqa: E402

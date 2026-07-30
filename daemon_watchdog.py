@@ -19,6 +19,7 @@ CHECK_S = 120
 # dashboard covers both bots side by side.
 DAEMONS = [
     ("rally_night", [PY, "rally_night.py"], "rally_night.py"),
+    ("map_night", [PY, "map_night.py"], "map_night.py"),
     ("research_night", [PY, "research_night.py"], "research_night.py"),
     ("keep_live_murderbot", [PY, "keep_live.py", "--device", "127.0.0.1:5555", "--port", "8000"],
      "keep_live.py --device 127.0.0.1:5555"),

@@ -751,6 +751,13 @@ def decide_vs(opponent, situation="open_map", incoming=None, lead_type=None):
     d = decide(state)
     d["intel_used"] = bool(intel)
     d["intel"] = intel
+    enemy_lead = inc.get("lead_type") or lead_type
+    if enemy_lead:
+        try:
+            from counter_general import recommend_counters
+            d["counter_generals"] = recommend_counters(enemy_lead, top=3).get("recommendations", [])
+        except Exception:
+            d["counter_generals"] = []
     return d
 
 

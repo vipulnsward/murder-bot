@@ -216,12 +216,18 @@ def initialize_database() -> None:
         connection.commit()
 
 
-try:
-    initialize_database()
-except Exception as _db_exc:  # noqa: BLE001
-    # Don't let a DB hiccup at import crash the web process; /healthz reports DB
-    # state and the schema self-applies on the next successful boot.
-    print(f"[startup] initialize_database deferred: {_db_exc}", flush=True)
+# Retry init for ~60s: on a fresh deploy Postgres may not accept connections the
+# instant the manager imports (even with depends_on), which previously left the
+# schema uncreated. Retry so the schema self-applies without any manual step.
+for _attempt in range(30):
+    try:
+        initialize_database()
+        break
+    except Exception as _db_exc:  # noqa: BLE001
+        if _attempt >= 29:
+            print(f"[startup] initialize_database gave up after retries: {_db_exc}", flush=True)
+        else:
+            time.sleep(2)
 
 
 class AuthInput(BaseModel):

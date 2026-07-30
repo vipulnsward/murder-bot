@@ -48,12 +48,20 @@ write_files:
       fi
       systemctl enable --now docker
 
-      # --- Android binder module (Redroid dependency) ---
-      # binderfs is built into the 24.04 kernel; load the device nodes.
-      modprobe binder_linux devices=binder,hwbinder,vndbinder 2>/dev/null || true
-      if [ ! -e /dev/binder ] && [ ! -d /dev/binderfs ]; then
-        mkdir -p /dev/binderfs
-        mount -t binder binder /dev/binderfs 2>/dev/null || true
+      # --- Android binder (Redroid dependency) ---
+      # Hetzner's base image ships WITHOUT linux-modules-extra, which contains
+      # binder_linux.ko (the kernel config has CONFIG_ANDROID_BINDER_IPC=m but the
+      # module file is absent). Install it, load binder, and mount binderfs. Without
+      # this Redroid never boots (no /dev/binder) — the exact failure hit on 2026-07-30.
+      apt-get install -y "linux-modules-extra-$(uname -r)" >/dev/null 2>&1 || true
+      modprobe binder_linux 2>/dev/null || true
+      mkdir -p /dev/binderfs
+      mountpoint -q /dev/binderfs 2>/dev/null || mount -t binder binder /dev/binderfs 2>/dev/null || true
+
+      # --- Fetch the app code from the public GitHub repo (idempotent self-deploy) ---
+      if [ ! -f "${APP_DIR}/deploy/docker-compose.yml" ]; then
+        rm -rf "${APP_DIR}"
+        git clone --depth 1 https://github.com/vipulnsward/murder-bot "${APP_DIR}"
       fi
 
       # --- Generate secrets into deploy/.env (only once) ---

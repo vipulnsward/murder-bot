@@ -59,27 +59,38 @@ PLANS: dict[str, dict] = {
             "No automation, no AI counter, no reports",
         ],
     },
-    "pro": {
+    "brain": {
         "rank": 1,
-        "name": "Pro",
-        "price_usd": 7,
+        "name": "Brain",
+        "price_usd": 5,
+        "tagline": "The AI edge Easy Bot doesn't have. No setup.",
+        "features": [
+            "Unlimited AI counters (real battle sim)",
+            "Enemy intel database",
+            "Attack / favorable-trade planner",
+            "Works instantly — no emulator needed",
+        ],
+    },
+    "auto": {
+        "rank": 2,
+        "name": "Auto",
+        "price_usd": 9,
         "tagline": "The full bot for a single commander.",
         "features": [
-            "Everything in Free",
-            "Full automation: rally, stamina top-up, kickout reclaim",
-            "AI counter engine (matchup recommendations)",
+            "Everything in Brain",
+            "Full 24/7 automation: rally, stamina top-up, kickout reclaim",
             "Battle-report scanning + parsed history",
             "One Evony account, fully automated",
         ],
     },
     "alliance": {
-        "rank": 2,
+        "rank": 3,
         "name": "Alliance",
         "price_usd": 29,
         "tagline": "Run the whole R4 desk: many accounts, intel on everyone.",
         "features": [
-            "Everything in Pro",
-            "Multi-account control (up to 10 linked Evony accounts)",
+            "Everything in Auto",
+            "Multi-account control (up to 5 linked Evony accounts)",
             "Alliance-wide intel: scout + track every enemy you see",
             "Shared counter/PvP brain across accounts",
             "Priority scan cadence",
@@ -274,7 +285,7 @@ def make_require_plan(current_user, database):
         require_plan = billing_router.require_plan
         ...
         @app.post("/api/bot/start")
-        def start_bot(user_id: int = Depends(require_plan("pro"))):
+        def start_bot(user_id: int = Depends(require_plan("auto"))):
             ...
 
     A caller below the required tier — or a lapsed subscriber — gets HTTP 402.

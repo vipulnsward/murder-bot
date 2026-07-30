@@ -18,6 +18,12 @@ STAMINA_FLOOR = 5000
 
 def _cycle():
     live_map.ensure_game()
+    try:
+        import evony_update
+        if evony_update.needs_update():
+            evony_update.handle_update(log=lambda m: print(f"[UPDATE] {m}", flush=True))
+    except Exception as exc:  # noqa: BLE001 — an update-check hiccup must not stop rallies
+        print(f"[UPDATE] check failed: {exc!r}", flush=True)
     live_map.clear_popups(max_iters=6)
     joined = live_rally.run(max_marches=6)
     stamina = "off"

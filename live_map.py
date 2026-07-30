@@ -84,6 +84,17 @@ BANNER_WORDS = ("congratulations", "obtained", "you have received", "reward rece
                 "post-war revival", "daily rewards", "sign-in reward", "advanced daily")
 
 
+# Promotional PACK / coupon notices that stack on launch and block rally/mail nav.
+# These are NOT caught by SALE_WORDS (the coupon modal shows no CHF price), so the bot
+# would otherwise get stuck and MISS RALLIES. Words chosen to appear ONLY on the pack
+# modal, never on the bare city (avoid "login gifts"/"quests"/"event" — those are city
+# HUD buttons). Close via the learned modal cross, then Back. (User rule: pack notices
+# -> cross button, never Buy.)
+PACK_WORDS = ("package coupon", "coupon will expire", "double down", "remaining claims",
+              "privilege rewards")
+COUPON_MODAL_X = (955, 405)   # cross of the centered coupon/event modal — never the Buy (center-bottom)
+
+
 CONFIRM_BOX = (120, 1030, 960, 1240)   # the Cancel/Confirm button row of a centered dialog
 
 
@@ -120,8 +131,34 @@ def clear_popups(max_iters=10):
             time.sleep(1.2)
             continue
         low = " ".join(str(t).lower() for t, *_ in ocr_read.read_all(img))
-        if any(w in low for w in SALE_WORDS) or any(w in low for w in BANNER_WORDS) or has_confirm_dialog(img):
-            # Back cancels a Confirm dialog (never taps Confirm) and closes sale/reward popups.
+        is_sale = any(w in low for w in SALE_WORDS)
+        if is_sale or any(w in low for w in BANNER_WORDS) or has_confirm_dialog(img):
+            # Full-screen purchase/deal modals (SALE_WORDS: they show a CHF price) IGNORE
+            # Android Back — they only close via the top-right X. Tap that first (the corner is
+            # never the Buy button, which sits center-bottom), then fall back to Back for reward
+            # banners / Confirm dialogs. This unblocks mail/report + rally nav the deals were eating.
+            if is_sale:
+                subprocess.run(["adb", "-s", DEV, "shell", "input", "tap", "1016", "48"])  # close X, never Buy
+                time.sleep(0.8)
+            subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"])
+            time.sleep(1.2)
+            continue
+        if "membership" in low or "on sale" in low:
+            # Full-screen Store (tabs: Membership / Gems / Items / On Sale). The in-game
+            # back-arrow (80,72) does NOT close it — Android Back does, and those titles never
+            # appear on the bare city so there's no exit-dialog risk. This is what trapped the
+            # bot on the Store (joined=0 every cycle) until it was freed.
+            subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"])
+            time.sleep(1.2)
+            continue
+        if any(w in low for w in PACK_WORDS):
+            # Promo pack/coupon notice (stacks on launch) — close via the learned modal
+            # cross (never Buy, which is center-bottom), then Back for any stacked panel.
+            # This is what stops the bot getting trapped on a pack notice and missing rallies.
+            # The cross tap only fires once a pack notice is actually detected.
+            subprocess.run(["adb", "-s", DEV, "shell", "input", "tap",
+                            str(COUPON_MODAL_X[0]), str(COUPON_MODAL_X[1])])  # coupon modal cross
+            time.sleep(0.8)
             subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"])
             time.sleep(1.2)
             continue

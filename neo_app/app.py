@@ -1106,9 +1106,18 @@ async function runDemo() {
     const p = await r.json();
     const conf = (p.confidence != null) ? Math.round(p.confidence * 100) + "% confidence" : "";
     const lt = p.lead_type ? " · counter-lead " + p.lead_type : "";
+    let gens = "";
+    if (p.counter_generals && p.counter_generals.length) {
+      gens = '<div style="margin-top:12px"><div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;opacity:.7">Field these generals</div>' +
+        p.counter_generals.map(g =>
+          '<div style="margin-top:5px"><b>' + (g.general || "") + '</b>' +
+          '<span style="opacity:.7"> — ' + (g.counter_type || "") +
+          (g.tier ? ' · Tier ' + g.tier : "") + '</span></div>'
+        ).join("") + '</div>';
+    }
     out.innerHTML = '<div class="act">' + (p.action || "—") + lt + '</div>' +
       '<div style="margin-top:8px">' + (p.reasoning || "") + '</div>' +
-      '<div style="margin-top:8px" class="conf">' + conf + '</div>';
+      '<div style="margin-top:8px" class="conf">' + conf + '</div>' + gens;
   } catch (e) { out.textContent = "Brain unavailable, try again in a moment."; }
 }
 const dgo = document.getElementById("d-go");
@@ -1632,6 +1641,11 @@ def demo_counter(request: Request, power: float = 60, lead: str = "SIEGE",
             "mode": mode,
             "incoming": {"kind": kind, "lead_type": lead, "total_millions": power},
         })
+        try:
+            from counter_general import recommend_counters  # noqa: E402
+            cg = recommend_counters(lead, top=3).get("recommendations", [])
+        except Exception:
+            cg = []
         return {
             "action": plan.get("action"),
             "lead_type": plan.get("lead_type"),
@@ -1639,6 +1653,10 @@ def demo_counter(request: Request, power: float = 60, lead: str = "SIEGE",
             "confidence": plan.get("confidence"),
             "expected_loss_pct": plan.get("expected_loss_pct"),
             "sim_used": plan.get("sim_used"),
+            "counter_generals": [
+                {"general": p.get("general"), "counter_type": p.get("counter_type"),
+                 "tier": p.get("tier"), "why": p.get("why")} for p in cg
+            ],
         }
     except Exception as exc:  # noqa: BLE001
         return JSONResponse(

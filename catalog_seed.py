@@ -88,6 +88,48 @@ SCREEN_DETAILS = {
     ),
 }
 
+# Obvious common screens the classifier's SCREENS list doesn't yet name as distinct
+# nodes. SEED-ONLY: structure + reach knowledge so the catalog KNOWS these exist before
+# the live-capture pass grounds their coordinates. (train -> training_barracks, monster
+# and rally -> the existing `monster` / `rally_list` nodes, so only the genuinely-missing
+# common screens are added here.) Shape: label -> (keywords, description, nav).
+SEED_CAPTURE_NOTE = " Seed only; reach path is knowledge — confirm coords on a live frame."
+EXTRA_SEED_SCREENS = {
+    "barracks": (
+        ("barracks", "train troops", "training queue", "recruit", "ground troop"),
+        "Barracks building/radial that opens the troop training queue (Train, Speed Up)." + SEED_CAPTURE_NOTE,
+        {"from_city": "tap the Barracks building sprite", "to_training_barracks": "tap Train",
+         "to_city": "back arrow (80,72), never a radial option"},
+    ),
+    "shop": (
+        ("shop", "store", "gems", "daily deals", "packages", "chf"),
+        "In-game item/gem shop (daily deals, packages)."
+        " Catalog only: NEVER auto-buy — every purchase spends gems/currency." + SEED_CAPTURE_NOTE,
+        {"from_city": "tap the gem/shop cluster top-right", "to_city": "tap X or back arrow"},
+    ),
+    "generals": (
+        ("generals", "general", "cultivate", "recruit general", "ascend", "star"),
+        "Generals roster / management list reached from the More menu." + SEED_CAPTURE_NOTE,
+        {"from_city": "tap More (…) then Generals", "to_city": "back arrow (80,72)"},
+    ),
+    "quests": (
+        ("quests", "tasks", "main quest", "daily quest", "claim", "objective"),
+        "Quests / Tasks panel listing claimable objectives." + SEED_CAPTURE_NOTE,
+        {"from_city": "tap the Quests tab", "to_city": "back arrow (80,72)"},
+    ),
+    "reports": (
+        ("reports", "battle report", "scout report", "war report", "monster report"),
+        "Battle/scout Reports list (opened from Mail)." + SEED_CAPTURE_NOTE,
+        {"from_mail": "tap the Reports tab", "to_city": "back arrow (80,72)"},
+    ),
+    "items_bag": (
+        ("items", "backpack", "inventory", "use item", "speedups", "resource item"),
+        "Items / backpack inventory."
+        " Catalog only: never auto-use consumables (may spend speedups/resources)." + SEED_CAPTURE_NOTE,
+        {"from_city": "tap the Items/backpack icon", "to_city": "tap X or back arrow"},
+    ),
+}
+
 TEMPLATE_MAP = {
     "back_arrow.png": ("global", "back"),
     "barracks_bldg.png": ("city", "barracks"),
@@ -122,6 +164,9 @@ def seed(db_path="game_brain/vision.db"):
     try:
         for label, keywords in SCREENS:
             description, nav = SCREEN_DETAILS[label]
+            db.upsert_screen(label, description=description, keywords=" ".join(keywords), nav=nav)
+
+        for label, (keywords, description, nav) in EXTRA_SEED_SCREENS.items():
             db.upsert_screen(label, description=description, keywords=" ".join(keywords), nav=nav)
 
         for filename, (screen_label, element_name) in TEMPLATE_MAP.items():

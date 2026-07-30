@@ -196,8 +196,8 @@ def scan_train_screen(building, max_batches=8):
 
     take(None)                                # the currently-shown tier (works even if the
     #                                           selector OCR fails this frame)
-    for _ in range(6):                        # scroll the selector to the lowest tiers
-        swipe((300, ROW_Y, 880, ROW_Y))
+    for _ in range(14):                       # scroll the selector all the way down to T1
+        swipe((200, ROW_Y, 980, ROW_Y))
     # Tap FIXED x-positions along the row rather than OCR-locating each icon (the selector
     # OCR is flaky); read whatever tier each tap selects. Tier numbers are best-effort from
     # selector_tiers when it reads, but records are keyed by troop name regardless.
@@ -236,21 +236,36 @@ def gather_once():
     return building, len(seen)
 
 
-def watch_and_scan(poll_s=3.0, rounds=200):
-    """Reliable guided capture: poll the screen; whenever a Train screen is on-screen,
-    scan all its tiers and record. Lets a human open each training building's Train
-    screen (Barracks / Stable / Archer Camp / Workshop) while this records automatically.
-    Building name is inferred from the top-left back emblem area, else 'train'."""
+def _infer_building(name):
+    """Map a troop name to its training building (each building trains one troop type)."""
+    n = (name or "").lower()
+    if any(k in n for k in ("arch", "bow", "arquebus")):
+        return "archer_camp"
+    if any(k in n for k in ("caval", "lancer", "rider", "hussar", "horse")):
+        return "stable"
+    if any(k in n for k in ("helepolis", "catapult", "trebuch", "rebuch", "ballista", "cannon", "ram", "siege")):
+        return "workshop"
+    if any(k in n for k in ("warrior", "sword", "pike", "guard", "infantry", "axe", "spear", "hoplite", "legion", "halberd")):
+        return "barracks"
+    return "train"
+
+
+def watch_and_scan(poll_s=3.0, rounds=600):
+    """Reliable GUIDED capture: poll the screen; whenever a Train screen is on-screen, scan
+    every tier (T1 up) and record. A human opens each training building's Train screen and
+    this records automatically, labelling the building from the troop names."""
     done = set()
+    print("watch mode: open a building's Train screen (Barracks/Stable/Archer Camp/Workshop)...", flush=True)
     for _ in range(rounds):
         img = cap()
         if troop_intel.is_train_screen(img):
-            # infer which building via the small icon row won't help; use a rotating label
-            key = tuple(sorted(t for t, _x in troop_intel.selector_tiers(img)))
-            if key and key not in done:
-                seen = scan_train_screen("train")
-                print(f"recorded {len(seen)} tiers: {seen}", flush=True)
-                done.add(key)
+            info = troop_intel.read_train_screen(img)
+            bld = _infer_building(info.get("name") if info else None)
+            if bld not in done:
+                seen = scan_train_screen(bld)
+                if seen:
+                    print(f"[{bld}] recorded {len(seen)} tiers: {sorted(seen)}", flush=True)
+                    done.add(bld)
         else:
             time.sleep(poll_s)
     return done

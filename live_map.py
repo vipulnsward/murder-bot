@@ -130,6 +130,23 @@ def clear_popups(max_iters=10):
         subprocess.run(["adb", "-s", DEV, "shell", "input", "tap", "80", "72"])  # back arrow: close menu
         time.sleep(1.2)
     return False
+
+
+def safe_back(settle=0.9):
+    """Press Android Back, then IMMEDIATELY cancel the 'exit the game?' dialog if it popped
+    (tap Cancel via nav.EXIT_CANCEL — NEVER Quit). Use this everywhere instead of a raw
+    `keyevent 4`: a back press at a screen root pops the exit dialog, and if that happens
+    mid-flow the next taps land on the dialog (the 'wrong position' bug). This closes it at
+    the source. Returns True if it had to cancel an exit dialog."""
+    subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"])
+    time.sleep(settle)
+    img = shared_capture.grab_wait(DEV, timeout=6)
+    if img is not None and screen_fsm.identify(img) == "exit_dialog":
+        subprocess.run(["adb", "-s", DEV, "shell", "input", "tap",
+                        str(nav.EXIT_CANCEL[0]), str(nav.EXIT_CANCEL[1])])  # Cancel, never Quit
+        time.sleep(0.8)
+        return True
+    return False
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PKG = "com.topgamesinc.evony.flexion"
 

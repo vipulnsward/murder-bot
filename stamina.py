@@ -34,7 +34,7 @@ def _tap(x, y, d=1.9):
 
 
 def _back():
-    subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"]); time.sleep(1.1)
+    live_map.safe_back(settle=1.1)   # back + auto-cancel any exit dialog (never Quit)
 
 
 def _tokens(img):

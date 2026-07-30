@@ -216,7 +216,12 @@ def initialize_database() -> None:
         connection.commit()
 
 
-initialize_database()
+try:
+    initialize_database()
+except Exception as _db_exc:  # noqa: BLE001
+    # Don't let a DB hiccup at import crash the web process; /healthz reports DB
+    # state and the schema self-applies on the next successful boot.
+    print(f"[startup] initialize_database deferred: {_db_exc}", flush=True)
 
 
 class AuthInput(BaseModel):

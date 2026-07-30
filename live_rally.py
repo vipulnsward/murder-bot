@@ -53,7 +53,7 @@ def ensure_city(tries=6):
         if _is_city(img) and not live_map.has_popup(img):
             return True
         if live_map.has_popup(img):
-            subprocess.run(["adb", "-s", DEV, "shell", "input", "keyevent", "4"]); time.sleep(1.2)
+            live_map.safe_back(settle=1.2)   # back + auto-cancel any exit dialog (never Quit)
         else:
             _tap(80, 72)
     return _is_city(_cap())

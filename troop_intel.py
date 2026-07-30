@@ -81,12 +81,13 @@ def _amount(img, box):
 
 
 def is_train_screen(img):
-    """True if this looks like a Train screen. The bottom-button LABELS are unreadable
-    (only their numbers OCR), so anchor on the reliable 'Own:' line plus a tier selector."""
+    """True if this looks like a Train screen. Anchor on the reliable 'Own: N' line — NOT
+    the tier selector, whose low-tier roman numerals (I, II, III) barely OCR, which would
+    make the Barracks' low tiers read as 'not a train screen'."""
     if img is None:
         return False
     own = " ".join(str(t).lower() for t, *_ in ocr_read.read_all(img, box=OWN_BOX, cache=True))
-    return "own" in own and bool(selector_tiers(img))
+    return "own" in own
 
 
 def selector_tiers(img):

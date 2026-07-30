@@ -292,7 +292,12 @@ def build_router(current_user, database, fernet) -> APIRouter:
         The host app's ``cryptography.fernet.Fernet`` instance used to encrypt
         secrets at rest with the same key as the rest of the app.
     """
-    _ensure_integrations_table(database)
+    try:
+        _ensure_integrations_table(database)
+    except Exception as exc:  # noqa: BLE001
+        # Don't crash app boot if the DB is unreachable; schema.sql creates this
+        # table on first successful connect and requests re-check as needed.
+        print(f"[settings_view] integrations-table ensure deferred: {exc}", flush=True)
 
     router = APIRouter(tags=["settings"])
 

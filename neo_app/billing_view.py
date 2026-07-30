@@ -520,7 +520,12 @@ def build_router(current_user, database) -> APIRouter:
     * ``router.require_plan(min_plan)`` — a gating dependency factory.
     * ``router.subscription_status(user_id)`` — the current-plan lookup helper.
     """
-    _ensure_schema(database)
+    try:
+        _ensure_schema(database)
+    except Exception as exc:  # noqa: BLE001
+        # Non-fatal at boot: schema.sql creates the subscriptions table on first
+        # successful DB connect.
+        print(f"[billing_view] schema ensure deferred: {exc}", flush=True)
     router = APIRouter(tags=["billing"])
     require_plan = make_require_plan(current_user, database)
 

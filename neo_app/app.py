@@ -999,13 +999,14 @@ footer{border-top:1px solid rgba(230,195,92,.14);color:var(--dim)}
     <path d="M60 34 C52 42 52 54 60 62 C68 54 68 42 60 34 Z" fill="url(#cg)"/>
     <path d="M48 68 Q60 80 72 68 Q60 74 48 68 Z" fill="url(#cg)"/>
   </svg>
-  <span class="pill"><span class="dot"></span> Live &middot; trusted by NFG</span>
+  <span class="pill"><span class="dot"></span> Live &middot; free beta &middot; built for NFG</span>
   <h1>The Evony bot that <span class="r">thinks.</span></h1>
   <p class="lede">Everything Easy Bot does &mdash; auto-rally, farm, reports &mdash; <b>cheaper</b>, plus a real battle-sim AI that tells you exactly how to counter every attacker. Automate your account <em>and</em> out-think your enemies.</p>
   <div class="cta">
     <a class="btn p" href="#start">Start free &rarr;</a>
     <a class="btn s" href="/counter">See the brain counter an attack</a>
   </div>
+  <p style="margin-top:12px;font-size:.9rem;opacity:.72">Free during beta &middot; no credit card &middot; cancel anytime</p>
 </div></header>
 
 <section><div class="wrap">

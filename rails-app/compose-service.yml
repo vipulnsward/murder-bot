@@ -1,0 +1,25 @@
+services:
+  murderbot-rails:
+    build:
+      context: ../rails-app
+    restart: always
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-murderbot}:${POSTGRES_PASSWORD:-changeme-murderbot}@postgres/${POSTGRES_DB:-murderbot}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:?Set SECRET_KEY_BASE}
+      SECRET: ${SECRET:-}
+      BILLING_LIVE: ${BILLING_LIVE:-0}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PRICE_BRAIN: ${STRIPE_PRICE_BRAIN:-}
+      STRIPE_PRICE_AUTO: ${STRIPE_PRICE_AUTO:-}
+      STRIPE_PRICE_ALLIANCE: ${STRIPE_PRICE_ALLIANCE:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/up"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks: [murdernet]

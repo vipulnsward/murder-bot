@@ -1,0 +1,86 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: murderbot_smoke
+      POSTGRES_USER: murderbot
+      POSTGRES_PASSWORD: smoke-password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U murderbot -d murderbot_smoke"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  brain:
+    image: ruby:3.3-slim
+    command:
+      - ruby
+      - -rsocket
+      - -e
+      - |
+        server = TCPServer.new("0.0.0.0", 4000)
+        loop do
+          socket = server.accept
+          request_line = socket.gets.to_s
+          if request_line.empty?
+            socket.close
+            next
+          end
+          line = socket.gets while line != "\r\n"
+          if request_line.start_with?("GET /api/counter-generals?enemy=stub-enemy&role=attack&top=5 ")
+            status = "200 OK"
+            body = '{"enemy":"stub-enemy","recommendations":[{"general":"stub-counter"}]}'
+          elsif request_line.start_with?("HEAD / ")
+            status = "200 OK"
+            body = "{}"
+          else
+            status = "500 Internal Server Error"
+            body = '{"error":"stub rejection"}'
+          end
+          socket.write "HTTP/1.1 #{status}\r\nContent-Type: application/json\r\nContent-Length: #{body.bytesize}\r\nConnection: close\r\n\r\n"
+          socket.write body unless request_line.start_with?("HEAD ")
+          socket.close
+        end
+    healthcheck:
+      test: ["CMD", "ruby", "-rsocket", "-e", "TCPSocket.new('localhost', 4000).close"]
+      interval: 1s
+      timeout: 2s
+      retries: 30
+
+  web:
+    build: .
+    environment: &app_environment
+      DATABASE_URL: postgres://murderbot:smoke-password@postgres/murderbot_smoke
+      BRAIN_URL: http://brain:4000
+      SECRET_KEY_BASE: 9a5cb568913f94d0dc119ecd7573e813c9a8a08ed608d91aa90345ca0f60b347
+      SECRET: smoke-jwt-secret
+      STRIPE_WEBHOOK_SECRET: smoke-webhook-secret
+    depends_on:
+      postgres:
+        condition: service_healthy
+      brain:
+        condition: service_healthy
+    ports:
+      - "3100:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/up"]
+      interval: 1s
+      timeout: 2s
+      retries: 30
+
+  live_guard:
+    build: .
+    environment:
+      <<: *app_environment
+      STRIPE_SECRET_KEY: sk_live_smoke
+      STRIPE_PRICE_BRAIN: price_smoke
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3101:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/up"]
+      interval: 1s
+      timeout: 2s
+      retries: 30

@@ -35,6 +35,7 @@ import html
 import json
 import os
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
@@ -189,6 +190,7 @@ def _upsert_subscription(
     status: str,
     provider_id: str | None,
     current_period_end: datetime | None,
+    provider: str = "stripe",
 ) -> None:
     with database() as connection:
         with connection.cursor() as cursor:
@@ -196,7 +198,7 @@ def _upsert_subscription(
                 """
                 INSERT INTO subscriptions
                     (user_id, plan, status, provider, provider_id, current_period_end, updated_at)
-                VALUES (%s, %s, %s, 'razorpay', %s, %s, now())
+                VALUES (%s, %s, %s, %s, %s, %s, now())
                 ON CONFLICT (user_id) DO UPDATE SET
                     plan = EXCLUDED.plan,
                     status = EXCLUDED.status,
@@ -205,9 +207,62 @@ def _upsert_subscription(
                     current_period_end = EXCLUDED.current_period_end,
                     updated_at = now()
                 """,
-                (user_id, plan, status, provider_id, current_period_end),
+                (user_id, plan, status, provider, provider_id, current_period_end),
             )
         connection.commit()
+
+
+# ---------------------------------------------------------------------------
+# Stripe (primary payment provider). Raw REST — no SDK dependency. Same safety
+# posture as Razorpay below: no key -> "not configured" stub, no network call;
+# a live key (sk_live_...) is refused unless BILLING_LIVE=1. Test keys hit the
+# Stripe test mode (no real money). Set per-plan price IDs in the env:
+#   STRIPE_SECRET_KEY, STRIPE_PRICE_PRO, STRIPE_PRICE_ALLIANCE, STRIPE_WEBHOOK_SECRET
+# ---------------------------------------------------------------------------
+STRIPE_API_ROOT = "https://api.stripe.com/v1"
+
+
+def _stripe_secret() -> str | None:
+    key = os.environ.get("STRIPE_SECRET_KEY", "").strip()
+    if not key:
+        return None
+    if key.startswith("sk_live_") and os.environ.get("BILLING_LIVE") != "1":
+        return None  # live key refused without explicit opt-in
+    return key
+
+
+def _stripe_price_id(plan: str) -> str | None:
+    return os.environ.get(f"STRIPE_PRICE_{plan.upper()}", "").strip() or None
+
+
+def _stripe_mode(secret: str) -> str:
+    return "live" if secret.startswith("sk_live_") else "test"
+
+
+def _stripe_post(path: str, params: dict, secret: str) -> dict:
+    data = urllib.parse.urlencode(params, doseq=True).encode()
+    req = urllib.request.Request(
+        f"{STRIPE_API_ROOT}/{path}",
+        data=data,
+        headers={
+            "Authorization": f"Bearer {secret}",
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        return json.load(resp)
+
+
+def _verify_stripe_sig(body: bytes, sig_header: str, secret: str) -> bool:
+    """Verify a Stripe webhook signature (t=..,v1=..) via HMAC-SHA256."""
+    try:
+        parts = dict(p.split("=", 1) for p in sig_header.split(",") if "=" in p)
+        signed = f"{parts['t']}.{body.decode()}".encode()
+        expected = hmac.new(secret.encode(), signed, sha256).hexdigest()
+        return hmac.compare_digest(expected, parts.get("v1", ""))
+    except Exception:
+        return False
 
 
 def make_require_plan(current_user, database):
@@ -465,8 +520,8 @@ footer {{ margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid #21262d; 
 <section class="tiers">{cards_html}</section>
 <div class="result" id="result"></div>
 <footer>
-  <p>Payments are processed by Razorpay. In sandbox mode no real money moves —
-     use Razorpay test cards.</p>
+  <p>Payments are processed securely by Stripe. In test mode no real money moves —
+     use Stripe test cards. PayPal and crypto are coming next.</p>
   <p><b>Automation notice:</b> Automating Evony may violate Top Games Inc.'s
      Terms of Service and can get accounts banned. Subscribe only if you accept
      that risk. See deploy/COST_MODEL.md.</p>
@@ -483,7 +538,7 @@ document.querySelectorAll('button[data-plan]').forEach((button) => {{
     const plan = button.getAttribute('data-plan');
     button.disabled = true;
     try {{
-      const response = await fetch('/api/billing/subscribe', {{
+      const response = await fetch('/api/billing/checkout', {{
         method: 'POST',
         headers: {{ 'Content-Type': 'application/json' }},
         body: JSON.stringify({{ plan }}),
@@ -492,13 +547,15 @@ document.querySelectorAll('button[data-plan]').forEach((button) => {{
       if (!response.ok) {{
         show('err', 'Error: ' + (data.detail || response.status));
       }} else if (data.configured === false) {{
-        show('warn', data.message || 'Billing not configured.');
+        show('warn', data.message || 'Payments not configured yet.');
       }} else if (data.plan === 'free') {{
         show('ok', 'Switched to the Free plan. Reload to refresh.');
+      }} else if (data.url) {{
+        show('ok', 'Redirecting to secure Stripe checkout' +
+          (data.mode === 'test' ? ' (test mode)' : '') + '…');
+        window.location = data.url;
       }} else {{
-        show('ok', 'Checkout created (' + (data.mode || 'test') + ' ' +
-          (data.kind || '') + '): <code>' + (data.id || '') + '</code>. ' +
-          'Complete payment in Razorpay to activate.');
+        show('err', 'Could not start checkout.');
       }}
     }} catch (error) {{
       show('err', 'Request failed: ' + error);
@@ -622,6 +679,79 @@ def build_router(current_user, database) -> APIRouter:
             return JSONResponse({"ok": True, "event": event_type, "cancelled": True})
 
         return JSONResponse({"ok": True, "ignored": True, "event": event_type})
+
+    @router.post("/api/billing/checkout")
+    def stripe_checkout(body: SubscribeInput, request: Request,
+                        user_id: int = Depends(current_user)):
+        """Create a Stripe Checkout Session for a paid plan and return its URL.
+        Falls back to a 'not configured' stub when Stripe keys/prices are absent."""
+        plan_key = body.plan
+        if plan_key not in PLANS:
+            raise HTTPException(status_code=422, detail=f"Unknown plan: {plan_key}")
+        if plan_key == "free":
+            _upsert_subscription(database, user_id, "free", "active", None, None, provider="stripe")
+            return JSONResponse({"configured": True, "plan": "free", "status": "active"})
+        secret = _stripe_secret()
+        price = _stripe_price_id(plan_key)
+        if not secret or not price:
+            return JSONResponse({
+                "configured": False,
+                "message": (f"Stripe not configured yet. Set STRIPE_SECRET_KEY and "
+                            f"STRIPE_PRICE_{plan_key.upper()} to enable checkout."),
+            })
+        base = str(request.base_url).rstrip("/")
+        try:
+            session = _stripe_post("checkout/sessions", {
+                "mode": "subscription",
+                "line_items[0][price]": price,
+                "line_items[0][quantity]": 1,
+                "success_url": f"{base}/billing?checkout=success",
+                "cancel_url": f"{base}/billing?checkout=cancel",
+                "client_reference_id": str(user_id),
+                "metadata[plan]": plan_key,
+                "metadata[user_id]": str(user_id),
+                "subscription_data[metadata][plan]": plan_key,
+                "subscription_data[metadata][user_id]": str(user_id),
+                "allow_promotion_codes": "true",
+            }, secret)
+        except urllib.error.HTTPError as exc:
+            raise HTTPException(status_code=502, detail=f"Stripe error: {exc.read().decode()[:300]}")
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(status_code=502, detail=f"Stripe error: {exc}")
+        return JSONResponse({
+            "configured": True, "url": session.get("url"), "id": session.get("id"),
+            "provider": "stripe", "mode": _stripe_mode(secret),
+        })
+
+    @router.post("/api/billing/stripe/webhook")
+    async def stripe_webhook(request: Request):
+        wh_secret = os.environ.get("STRIPE_WEBHOOK_SECRET", "").strip()
+        raw = await request.body()
+        if wh_secret and not _verify_stripe_sig(raw, request.headers.get("stripe-signature", ""), wh_secret):
+            raise HTTPException(status_code=400, detail="Invalid Stripe signature")
+        try:
+            event = json.loads(raw.decode() or "{}")
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="Malformed webhook body")
+        etype = event.get("type", "")
+        obj = event.get("data", {}).get("object", {})
+        meta = obj.get("metadata", {}) or {}
+        raw_user = obj.get("client_reference_id") or meta.get("user_id")
+        plan_key = meta.get("plan")
+        try:
+            user_id = int(raw_user) if raw_user is not None else None
+        except (TypeError, ValueError):
+            user_id = None
+
+        if etype == "checkout.session.completed" and user_id and plan_key in PLANS and plan_key != "free":
+            period_end = _now() + timedelta(days=DEFAULT_PERIOD_DAYS)
+            _upsert_subscription(database, user_id, plan_key, "active",
+                                 obj.get("subscription"), period_end, provider="stripe")
+            return JSONResponse({"ok": True, "activated": plan_key})
+        if etype == "customer.subscription.deleted" and user_id:
+            _upsert_subscription(database, user_id, "free", "cancelled", obj.get("id"), None, provider="stripe")
+            return JSONResponse({"ok": True, "cancelled": True})
+        return JSONResponse({"ok": True, "ignored": True, "event": etype})
 
     router.require_plan = require_plan
     router.subscription_status = lambda user_id: subscription_status(database, user_id)

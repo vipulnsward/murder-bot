@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 30 30% 4%;
+    --foreground: 40 40% 90%;
+    --card: 36 34% 7%;
+    --card-foreground: 40 40% 90%;
+    --primary: 9 74% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 40 30% 12%;
+    --secondary-foreground: 44 60% 70%;
+    --muted: 40 20% 12%;
+    --muted-foreground: 40 20% 62%;
+    --border: 38 30% 17%;
+    --input: 38 30% 17%;
+    --ring: 44 76% 63%;
+    --radius: 0.75rem;
+  }
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(1200px 520px at 14% -8%, rgba(230, 195, 92, 0.11), transparent 60%),
+      radial-gradient(1000px 480px at 100% 0%, rgba(192, 57, 43, 0.16), transparent 55%),
+      radial-gradient(1000px 800px at 50% 118%, rgba(230, 195, 92, 0.06), transparent 60%);
+    background-attachment: fixed;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    background-image: repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.013) 0 2px, transparent 2px 8px);
+  }
+}
+
+@layer utilities {
+  .text-gold-gradient {
+    background: linear-gradient(180deg, #f7dd8f, #e6c35c 55%, #b8902f);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.65));
+  }
+}

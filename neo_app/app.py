@@ -118,6 +118,22 @@ fernet = Fernet(persisted_secret("EVONY_ENC_KEY", ".enc_key", Fernet.generate_ke
 password_hasher = PasswordHasher()
 app = FastAPI(title="Murder Bot")
 
+# CORS so the Cloudflare-Pages React SPA (a different origin) can call this API.
+# Allows localhost dev, *.pages.dev previews, and murderbot.gg. Credentialed
+# auth across origins additionally needs HTTPS + SameSite=None cookies (once the
+# domain is on HTTPS); the public /api/demo-counter works cross-origin today.
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+app.add_middleware(
+    CORSMiddleware,
+    allow_origin_regex=os.environ.get(
+        "CORS_ORIGIN_REGEX",
+        r"https?://(localhost|127\.0\.0\.1)(:\d+)?|https://[a-z0-9-]+\.pages\.dev|https://(www\.)?murderbot\.gg",
+    ),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @contextmanager
 def database():

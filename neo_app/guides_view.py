@@ -145,6 +145,14 @@ def image_for(source_url, markdown=None) -> str:
     return local_image(source_url) or next(iter(content_images(markdown)), "/static/guides/placeholder.svg")
 
 
+def general_image(name, source_url) -> str:
+    slug = slugify(name)
+    for extension in IMAGE_EXTENSIONS:
+        if (STATIC_DIR / "generals" / f"{slug}.{extension}").is_file():
+            return f"/static/guides/generals/{slug}.{extension}"
+    return image_for(source_url)
+
+
 def inline_markdown(value) -> str:
     text = str(value or "")
     output, position = [], 0
@@ -302,7 +310,7 @@ def guide_card(guide) -> str:
 def general_card(general, rating) -> str:
     slug = slugify(general.get("name"))
     tier = str((rating or {}).get("tier") or "Unrated").upper()
-    image = image_for(general.get("source_url"))
+    image = general_image(general.get("name"), general.get("source_url"))
     quality = general.get("quality") or "Unknown"
     gtype = general.get("gtype") or "Other"
     return f"""<article class="card portrait general-card" data-name="{esc(general.get('name')).casefold()}"
@@ -472,7 +480,7 @@ document.querySelector("#no-results").classList.toggle("show",!shown);}} control
             f"{name} Evony general guide with skills, specialties, tier ratings, best uses, and counters.",
         )
         canonical = f"{SITE}/generals/{slug}"
-        image = image_for(general.get("source_url"))
+        image = general_image(name, general.get("source_url"))
         rating_html = "".join(
             f'<li><span class="badge {esc(str(r.get("tier") or "").casefold())}">{esc(r.get("tier") or "—")}</span> '
             f'<strong>{esc(str(r.get("role") or "").replace("_", " ").title())}</strong>'

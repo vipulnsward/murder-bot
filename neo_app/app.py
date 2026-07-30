@@ -1702,6 +1702,7 @@ from intel_view import build_router as build_intel_router  # noqa: E402
 from attack_view import build_router as build_attack_router  # noqa: E402
 from brain_view import build_router as build_brain_router  # noqa: E402
 from settings_view import build_router as build_settings_router  # noqa: E402
+from alliance_view import build_router as build_alliance_router  # noqa: E402
 
 app.include_router(reports_router)                                  # GET /reports, /api/reports[/{rid}]
 app.include_router(build_generals_router(current_user, database))   # GET /generals-gallery, portraits
@@ -1714,6 +1715,7 @@ app.include_router(build_brain_router(current_user, database))      # GET /brain
 app.include_router(build_settings_router(current_user, database, fernet))  # GET /settings — accounts + tokens
 from hub_view import build_router as build_hub_router  # noqa: E402
 app.include_router(build_hub_router(current_user, database))        # GET /home — the nav hub
+app.include_router(build_alliance_router(current_user, database))   # GET /alliance — alliance threat board
 
 
 @app.get("/healthz")

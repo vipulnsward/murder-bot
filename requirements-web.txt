@@ -1,0 +1,13 @@
+# Minimal deps for the neo_app manager web service on Render (Linux).
+# The heavy Mac-only vision stack (mlx/rapidocr) is NOT needed to serve the UI;
+# opencv-python-headless satisfies app.py's top-level cv2 import on Linux.
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+psycopg2-binary==2.9.10
+argon2-cffi==23.1.0
+cryptography==44.0.0
+itsdangerous==2.2.0
+pydantic==2.10.4
+python-multipart==0.0.20
+opencv-python-headless==4.10.0.84
+numpy==2.1.3

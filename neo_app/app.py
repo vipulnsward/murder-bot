@@ -1,0 +1,1387 @@
+import asyncio
+import json
+import os
+import secrets
+import signal
+import subprocess
+import tempfile
+import time
+from copy import deepcopy
+from collections import deque
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Annotated, Literal
+
+import cv2
+import numpy as np
+import psycopg2
+from argon2 import PasswordHasher
+from argon2.exceptions import InvalidHashError, VerificationError
+from cryptography.fernet import Fernet
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
+from itsdangerous import BadSignature, SignatureExpired, TimestampSigner
+from pydantic import BaseModel, Field
+from psycopg2.errors import UniqueViolation
+
+BASE_DIR = Path(__file__).resolve().parent
+DB_DSN = os.environ.get("DB_DSN", "dbname=murderbot host=localhost")
+COOKIE_NAME = "neo_session"
+SESSION_MAX_AGE = 7 * 24 * 60 * 60
+DEVICE = os.environ.get("ADB_TARGET", "127.0.0.1:5555")
+BOT_SCRIPT = Path(os.environ.get("BOT_SCRIPT",
+    "/private/tmp/claude-501/-Users-sward-work-scratch/"
+    "c2e71639-9f51-4ec5-b5ef-685684771afc/scratchpad/video_report_loop.sh"))
+BOT_PIDFILE = Path(os.environ.get("BOT_PIDFILE", "/tmp/video_report_loop.pid"))
+BOT_CONFIG_PATH = Path(os.environ.get("BOT_CONFIG_PATH", "/Users/sward/work/scratch/evony-bot/bot_config.json"))
+BOT_STATUS_PATH = Path(os.environ.get("BOT_STATUS_PATH", "/Users/sward/work/scratch/evony-bot/bot_status.json"))
+BOT_LOG_PATH = Path(os.environ.get("BOT_LOG_PATH", "/tmp/video_report_loop.log"))
+BOT_CONFIG_DEFAULTS = {
+    "rally": {"enabled": True, "interval_sec": 60, "max_marches": 6},
+    "stamina": {"topup_enabled": True, "threshold": 5000},
+    "reports": {
+        "scan_enabled": True,
+        "interval_sec": 600,
+        "record_seconds": 170,
+        "keep_videos": 5,
+    },
+    "dashboard": {"deploy_enabled": True},
+    "safety": {
+        "never_tap_quit": True,
+        "wait_on_disconnect": True,
+        "disconnect_wait_sec": 90,
+        "gem_resource_safe": True,
+    },
+    "kickout": {"reclaim_on_disconnect": True, "kickout_wait_sec": 60},
+    "advanced": {
+        "auto_bubble": False,
+        "auto_reinforce": False,
+        "auto_help_alliance": False,
+    },
+}
+BOT_CONFIG_DEFAULTS["kickout"]["_note"] = (
+    "On disconnect (kicked out), wait kickout_wait_sec then tap Restart "
+    "(never Quit) to reclaim. Per-user setting."
+)
+BOT_CONFIG_DEFAULTS["advanced"]["_note"] = (
+    "auto_bubble consumes owned truce items; kept OFF by default (consent-gated)."
+)
+CONFIG_RANGES = {
+    "rally.interval_sec": (10, 3600),
+    "rally.max_marches": (1, 6),
+    "stamina.threshold": (0, None),
+    "reports.interval_sec": (10, 3600),
+    "reports.record_seconds": (1, 3600),
+    "reports.keep_videos": (0, 100),
+    "safety.disconnect_wait_sec": (0, 3600),
+    "kickout.kickout_wait_sec": (0, None),
+}
+RECOMMENDED_GENERALS = {
+    "wall": [
+        "Zhou Yu",
+        "Takenaka Shigeharu",
+        "Stephen II",
+        "Leo III",
+        "Niccolo Piccinino",
+    ],
+    "debuff_mayor": [
+        "Cimon",
+        "Gilgamesh",
+        "Jan Karol Chodkiewicz",
+        "Zizka",
+        "Baldwin IV",
+        "Flavius Aetius",
+    ],
+}
+
+
+def persisted_secret(env_name: str, filename: str, factory) -> bytes:
+    if value := os.environ.get(env_name):
+        return value.encode()
+    path = BASE_DIR / filename
+    try:
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError:
+        pass
+    else:
+        with os.fdopen(descriptor, "wb") as file:
+            file.write(factory())
+    os.chmod(path, 0o600)
+    return path.read_bytes().strip()
+
+
+signer = TimestampSigner(
+    persisted_secret("NEO_SECRET", ".secret", lambda: secrets.token_urlsafe(48).encode()),
+    salt="neo-session",
+)
+fernet = Fernet(persisted_secret("EVONY_ENC_KEY", ".enc_key", Fernet.generate_key))
+password_hasher = PasswordHasher()
+app = FastAPI(title="Murder Bot")
+
+
+@contextmanager
+def database():
+    connection = psycopg2.connect(DB_DSN)
+    try:
+        yield connection
+    finally:
+        connection.close()
+
+
+def _apply_full_schema_if_empty() -> None:
+    """Apply the full schema dump on a brand-new Postgres (e.g. a fresh Render
+    instance) so every page's tables exist. Idempotent: only runs when a core
+    table (enemies) is missing, so it never touches an already-populated DB."""
+    schema_path = Path(__file__).with_name("schema.sql")
+    if not schema_path.exists():
+        return
+    with database() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT to_regclass('public.enemies')")
+            if cursor.fetchone()[0] is not None:
+                return
+            cursor.execute(schema_path.read_text())
+        connection.commit()
+
+
+def initialize_database() -> None:
+    _apply_full_schema_if_empty()
+    with database() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS app_users (
+                    id serial PRIMARY KEY,
+                    email text UNIQUE NOT NULL,
+                    pw_hash text NOT NULL,
+                    created_at timestamptz DEFAULT now()
+                )
+                """
+            )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS evony_accounts (
+                    id serial PRIMARY KEY,
+                    user_id int REFERENCES app_users(id) ON DELETE CASCADE,
+                    label text,
+                    enc_username text NOT NULL,
+                    enc_password text NOT NULL,
+                    created_at timestamptz DEFAULT now()
+                )
+                """
+            )
+            cursor.execute(
+                """
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'generals'
+                          AND column_name = 'troop_type'
+                    ) AND NOT EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'generals'
+                          AND column_name = 'gen_type'
+                    ) THEN
+                        ALTER TABLE generals RENAME TO combat_generals;
+                    END IF;
+                END
+                $$;
+                """
+            )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS generals (
+                    id serial PRIMARY KEY,
+                    name text UNIQUE,
+                    gen_type text,
+                    level int,
+                    stars int,
+                    role text,
+                    owned bool DEFAULT true,
+                    updated_at timestamptz DEFAULT now()
+                )
+                """
+            )
+            cursor.execute(
+                """
+                CREATE UNIQUE INDEX IF NOT EXISTS generals_name_lower_idx
+                ON generals (lower(name))
+                """
+            )
+        connection.commit()
+
+
+initialize_database()
+
+
+class AuthInput(BaseModel):
+    email: Annotated[
+        str,
+        Field(
+            min_length=3,
+            max_length=320,
+            pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+        ),
+    ]
+    password: Annotated[str, Field(min_length=8, max_length=1024)]
+
+
+class AccountInput(BaseModel):
+    label: Annotated[str, Field(min_length=1, max_length=100)]
+    gmail_username: Annotated[str, Field(min_length=1, max_length=320)]
+    gmail_password: Annotated[str, Field(min_length=1, max_length=1024)]
+
+
+class GeneralInput(BaseModel):
+    name: Annotated[str, Field(min_length=1, max_length=100)]
+    gen_type: Literal["ground", "ranged", "mounted", "siege", "other"]
+    level: Annotated[int | None, Field(ge=1, le=45)] = None
+    stars: Annotated[int | None, Field(ge=0, le=5)] = None
+    role: Annotated[str | None, Field(max_length=100)] = None
+    owned: bool = True
+
+
+def enc(value: str) -> str:
+    return fernet.encrypt(value.encode()).decode()
+
+
+def dec(value: str) -> str:
+    return fernet.decrypt(value.encode()).decode()
+
+
+def masked(value: str) -> str:
+    return value[:2] + "***"
+
+
+def session_user_id(request: Request) -> int | None:
+    token = request.cookies.get(COOKIE_NAME)
+    if not token:
+        return None
+    try:
+        return int(signer.unsign(token, max_age=SESSION_MAX_AGE).decode())
+    except (BadSignature, SignatureExpired, ValueError):
+        return None
+
+
+def current_user(request: Request) -> int:
+    user_id = session_user_id(request)
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    with database() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1 FROM app_users WHERE id = %s", (user_id,))
+            if cursor.fetchone() is None:
+                raise HTTPException(status_code=401, detail="Authentication required")
+    return user_id
+
+
+def set_session(response: JSONResponse, user_id: int) -> None:
+    response.set_cookie(
+        COOKIE_NAME,
+        signer.sign(str(user_id)).decode(),
+        max_age=SESSION_MAX_AGE,
+        httponly=True,
+        samesite="lax",
+    )
+
+
+import time as _time  # noqa: E402
+from collections import defaultdict, deque  # noqa: E402
+
+_RATE_HITS: dict = defaultdict(deque)
+
+
+def _rate_limit(request: Request, bucket: str, limit: int = 12, window: int = 60):
+    """In-memory per-IP sliding-window limiter — brute-force protection on public endpoints."""
+    ip = request.client.host if request and request.client else "?"
+    key = f"{bucket}:{ip}"
+    now = _time.time()
+    dq = _RATE_HITS[key]
+    while dq and dq[0] < now - window:
+        dq.popleft()
+    if len(dq) >= limit:
+        raise HTTPException(status_code=429, detail="Too many attempts — slow down and try again shortly.")
+    dq.append(now)
+
+
+@app.post("/api/signup", status_code=201)
+def signup(body: AuthInput, request: Request):
+    _rate_limit(request, "signup", limit=6, window=60)
+    email = body.email.strip().lower()
+    try:
+        with database() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "INSERT INTO app_users (email, pw_hash) VALUES (%s, %s) RETURNING id",
+                    (email, password_hasher.hash(body.password)),
+                )
+                user_id = cursor.fetchone()[0]
+            connection.commit()
+    except UniqueViolation:
+        raise HTTPException(status_code=409, detail="Email already registered")
+    response = JSONResponse({"id": user_id, "email": email}, status_code=201)
+    set_session(response, user_id)
+    return response
+
+
+@app.post("/api/login")
+def login(body: AuthInput, request: Request):
+    _rate_limit(request, "login", limit=10, window=60)
+    email = body.email.strip().lower()
+    with database() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id, pw_hash FROM app_users WHERE email = %s",
+                (email,),
+            )
+            row = cursor.fetchone()
+    if row is None:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    try:
+        password_hasher.verify(row[1], body.password)
+    except (VerificationError, InvalidHashError):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    response = JSONResponse({"id": row[0], "email": email})
+    set_session(response, row[0])
+    return response
+
+
+@app.post("/api/logout")
+def logout():
+    response = JSONResponse({"ok": True})
+    response.delete_cookie(COOKIE_NAME, httponly=True, samesite="lax")
+    return response
+
+
+@app.post("/api/evony-accounts", status_code=201)
+def create_account(body: AccountInput, user_id: int = Depends(current_user)):
+    label = body.label.strip()
+    if not label:
+        raise HTTPException(status_code=422, detail="Label cannot be blank")
+    # These are the user's real Evony/Gmail credentials, encrypted at rest, and must never be printed or logged in plaintext.
+    with database() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO evony_accounts
+                    (user_id, label, enc_username, enc_password)
+                VALUES (%s, %s, %s, %s)
+                RETURNING id
+                """,
+                (
+                    user_id,
+                    label,
+                    enc(body.gmail_username),
+                    enc(body.gmail_password),
+                ),
+            )
+            account_id = cursor.fetchone()[0]
+        connection.commit()
+    return {
+        "id": account_id,
+        "label": label,
+        "username_masked": masked(body.gmail_username),
+    }
+
+
+@app.get("/api/evony-accounts")
+def list_accounts(user_id: int = Depends(current_user)):
+    with database() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, label, enc_username
+                FROM evony_accounts
+                WHERE user_id = %s
+                ORDER BY id
+                """,
+                (user_id,),
+            )
+            rows = cursor.fetchall()
+    return [
+        {"id": row[0], "label": row[1], "username_masked": masked(dec(row[2]))}
+        for row in rows
+    ]
+
+
+def pid_alive(pid: int | None) -> bool:
+    if not isinstance(pid, int) or isinstance(pid, bool) or pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+    return True
+
+
+def bot_status() -> dict:
+    try:
+        pid = int(BOT_PIDFILE.read_text().strip())
+    except (FileNotFoundError, OSError, ValueError):
+        pid = None
+    lines = deque(maxlen=8)
+    try:
+        with BOT_LOG_PATH.open(errors="replace") as log:
+            lines.extend(line.rstrip() for line in log if line.strip())
+    except OSError:
+        pass
+    return {"running": pid_alive(pid), "pid": pid, "last_log": list(lines)}
+
+
+def validate_config(config: dict, partial: bool = False, prefix: str = "") -> None:
+    expected = BOT_CONFIG_DEFAULTS
+    if prefix:
+        for part in prefix.rstrip(".").split("."):
+            expected = expected[part]
+    for key, value in config.items():
+        if key not in expected:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Unknown config key: {prefix}{key}",
+            )
+        expected_value = expected[key]
+        path = f"{prefix}{key}"
+        if isinstance(expected_value, dict):
+            if not isinstance(value, dict):
+                raise HTTPException(status_code=422, detail=f"{path} must be an object")
+            validate_config(value, partial=partial, prefix=f"{path}.")
+            continue
+        if type(value) is not type(expected_value):
+            raise HTTPException(
+                status_code=422,
+                detail=f"{path} must be {type(expected_value).__name__}",
+            )
+        if path in CONFIG_RANGES:
+            minimum, maximum = CONFIG_RANGES[path]
+            if value < minimum or (maximum is not None and value > maximum):
+                limit = f"{minimum}..{maximum}" if maximum is not None else f">= {minimum}"
+                raise HTTPException(status_code=422, detail=f"{path} must be {limit}")
+    if not partial:
+        for key in expected:
+            if key not in config:
+                raise HTTPException(status_code=422, detail=f"Missing config key: {prefix}{key}")
+
+
+def read_bot_config() -> dict:
+    try:
+        config = json.loads(BOT_CONFIG_PATH.read_text())
+        if not isinstance(config, dict):
+            raise ValueError
+        validate_config(config)
+        return config
+    except (OSError, json.JSONDecodeError, ValueError, HTTPException):
+        return deepcopy(BOT_CONFIG_DEFAULTS)
+
+
+def deep_merge(target: dict, update: dict) -> dict:
+    for key, value in update.items():
+        if isinstance(value, dict):
+            deep_merge(target[key], value)
+        else:
+            target[key] = value
+    return target
+
+
+def write_bot_config(config: dict) -> None:
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            "w",
+            dir=BOT_CONFIG_PATH.parent,
+            prefix=f".{BOT_CONFIG_PATH.name}.",
+            delete=False,
+        ) as file:
+            temp_path = Path(file.name)
+            json.dump(config, file, indent=2)
+            file.write("\n")
+            file.flush()
+            os.fsync(file.fileno())
+        os.replace(temp_path, BOT_CONFIG_PATH)
+    except OSError as error:
+        if temp_path is not None:
+            temp_path.unlink(missing_ok=True)
+        raise HTTPException(status_code=500, detail=f"Could not save bot config: {error}")
+
+
+@app.get("/api/bot/status")
+def get_bot_status(_user_id: int = Depends(current_user)):
+    status = bot_status()
+    try:
+        loop_status = json.loads(BOT_STATUS_PATH.read_text())
+        if not isinstance(loop_status, dict):
+            loop_status = {}
+    except (OSError, json.JSONDecodeError):
+        loop_status = {}
+    pid = loop_status.get("pid", status["pid"])
+    alive = pid_alive(pid)
+    status.update(
+        {
+            "pid": pid,
+            "alive": alive,
+            "pid_alive": alive,
+            "state": loop_status.get("state", "offline"),
+            "joined_total": loop_status.get("joined_total", 0),
+            "errors": loop_status.get("errors", 0),
+            "last_rally": loop_status.get("last_rally", ""),
+            "reports_last": loop_status.get("reports_last", ""),
+        }
+    )
+    status["running"] = alive
+    return status
+
+
+@app.get("/api/bot/config")
+def get_bot_config(_user_id: int = Depends(current_user)):
+    return read_bot_config()
+
+
+@app.post("/api/bot/config")
+def update_bot_config(body: dict, _user_id: int = Depends(current_user)):
+    validate_config(body, partial=True)
+    config = deep_merge(read_bot_config(), body)
+    if not config["safety"]["never_tap_quit"] or not config["safety"]["gem_resource_safe"]:
+        raise HTTPException(
+            status_code=422,
+            detail="safety.never_tap_quit and safety.gem_resource_safe are locked on",
+        )
+    validate_config(config)
+    write_bot_config(config)
+    return config
+
+
+@app.get("/api/bot/logs")
+def get_bot_logs(n: int = 120, _user_id: int = Depends(current_user)):
+    lines = deque(maxlen=max(1, min(n, 500)))
+    try:
+        with BOT_LOG_PATH.open(errors="replace") as log:
+            lines.extend(line.rstrip("\n") for line in log)
+    except OSError:
+        pass
+    return {"lines": list(lines)}
+
+
+@app.post("/api/bot/stop")
+def stop_bot(_user_id: int = Depends(current_user)):
+    status = bot_status()
+    if status["running"]:
+        try:
+            os.kill(status["pid"], signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        BOT_PIDFILE.unlink(missing_ok=True)
+    return bot_status()
+
+
+@app.post("/api/bot/start")
+def start_bot(_user_id: int = Depends(current_user)):
+    status = bot_status()
+    if not status["running"]:
+        BOT_PIDFILE.unlink(missing_ok=True)
+        with BOT_LOG_PATH.open("ab") as log:
+            subprocess.Popen(
+                ["bash", str(BOT_SCRIPT)],
+                stdout=log,
+                stderr=subprocess.STDOUT,
+                start_new_session=True,
+            )
+        for _ in range(20):
+            status = bot_status()
+            if status["running"]:
+                break
+            time.sleep(0.01)
+    return status
+
+
+@app.get("/api/generals")
+def list_generals(_user_id: int = Depends(current_user)):
+    with database() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, name, gen_type, level, stars, role, owned, updated_at
+                FROM generals
+                ORDER BY lower(name)
+                """
+            )
+            rows = cursor.fetchall()
+    return [
+        {
+            "id": row[0],
+            "name": row[1],
+            "gen_type": row[2],
+            "level": row[3],
+            "stars": row[4],
+            "role": row[5],
+            "owned": row[6],
+            "updated_at": row[7],
+        }
+        for row in rows
+    ]
+
+
+@app.post("/api/generals")
+def upsert_general(body: GeneralInput, _user_id: int = Depends(current_user)):
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="Name cannot be blank")
+    role = body.role.strip() if body.role else None
+    with database() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO generals (name, gen_type, level, stars, role, owned)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (lower(name)) DO UPDATE SET
+                    name = EXCLUDED.name,
+                    gen_type = EXCLUDED.gen_type,
+                    level = EXCLUDED.level,
+                    stars = EXCLUDED.stars,
+                    role = EXCLUDED.role,
+                    owned = EXCLUDED.owned,
+                    updated_at = now()
+                RETURNING id, name, gen_type, level, stars, role, owned, updated_at
+                """,
+                (name, body.gen_type, body.level, body.stars, role, body.owned),
+            )
+            row = cursor.fetchone()
+        connection.commit()
+    return {
+        "id": row[0],
+        "name": row[1],
+        "gen_type": row[2],
+        "level": row[3],
+        "stars": row[4],
+        "role": row[5],
+        "owned": row[6],
+        "updated_at": row[7],
+    }
+
+
+@app.delete("/api/generals/{general_id}")
+def delete_general(general_id: int, _user_id: int = Depends(current_user)):
+    with database() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM generals WHERE id = %s RETURNING id", (general_id,))
+            row = cursor.fetchone()
+        connection.commit()
+    if row is None:
+        raise HTTPException(status_code=404, detail="General not found")
+    return {"deleted": row[0]}
+
+
+@app.get("/api/generals/recommendations")
+def general_recommendations(_user_id: int = Depends(current_user)):
+    with database() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, name, gen_type, level, stars, role, owned, updated_at
+                FROM generals
+                WHERE owned
+                ORDER BY lower(name)
+                """
+            )
+            rows = cursor.fetchall()
+    owned_names = {row[1].casefold() for row in rows if row[1]}
+    recommended_names = {
+        name.casefold()
+        for names in RECOMMENDED_GENERALS.values()
+        for name in names
+    }
+    recommendations = {
+        group: [
+            {
+                "name": name,
+                "status": "owned" if name.casefold() in owned_names else "needed",
+            }
+            for name in names
+        ]
+        for group, names in RECOMMENDED_GENERALS.items()
+    }
+    recommendations["extras"] = [
+        {
+            "id": row[0],
+            "name": row[1],
+            "gen_type": row[2],
+            "level": row[3],
+            "stars": row[4],
+            "role": row[5],
+            "owned": row[6],
+            "updated_at": row[7],
+        }
+        for row in rows
+        if row[1].casefold() not in recommended_names
+    ]
+    return recommendations
+
+
+def capture_jpeg() -> bytes | None:
+    try:
+        result = subprocess.run(
+            ["adb", "-s", DEVICE, "exec-out", "screencap", "-p"],
+            capture_output=True,
+            check=True,
+            timeout=3,
+        )
+        image = cv2.imdecode(np.frombuffer(result.stdout, dtype=np.uint8), cv2.IMREAD_COLOR)
+        if image is None:
+            return None
+        height, width = image.shape[:2]
+        if width > 720:
+            image = cv2.resize(
+                image,
+                (720, round(height * 720 / width)),
+                interpolation=cv2.INTER_AREA,
+            )
+        success, jpeg = cv2.imencode(
+            ".jpg",
+            image,
+            [cv2.IMWRITE_JPEG_QUALITY, 70],
+        )
+        return jpeg.tobytes() if success else None
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+async def live_frames():
+    while True:
+        frame = await asyncio.to_thread(capture_jpeg)
+        if frame:
+            yield (
+                b"--frame\r\n"
+                b"Content-Type: image/jpeg\r\n"
+                + f"Content-Length: {len(frame)}\r\n\r\n".encode()
+                + frame
+                + b"\r\n"
+            )
+        await asyncio.sleep(0.07)
+
+
+@app.get("/live.mjpeg")
+def live_view(user_id: int = Depends(current_user)):
+    return StreamingResponse(
+        live_frames(),
+        media_type="multipart/x-mixed-replace; boundary=frame",
+    )
+
+
+SHARED_CSS = """
+<style>
+:root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: #0d1117; color: #e6edf3; }
+main { width: min(1100px, 92vw); margin: 0 auto; padding: 3rem 0; }
+h1, h2 { margin-top: 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+.card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 1.25rem; }
+form { display: grid; gap: .8rem; }
+label { display: grid; gap: .35rem; color: #b1bac4; }
+input, select { width: 100%; padding: .7rem; color: inherit; background: #0d1117; border: 1px solid #484f58; border-radius: 7px; }
+button { width: fit-content; padding: .65rem 1rem; color: white; background: #238636; border: 0; border-radius: 7px; cursor: pointer; font-weight: 650; }
+button.secondary { background: #30363d; }
+button.danger { background: #b62324; }
+.error { min-height: 1.2rem; color: #ff7b72; }
+.viewer { overflow: hidden; text-align: center; background: #010409; }
+.viewer img { display: block; max-width: 100%; margin: auto; }
+ul { padding-left: 1.2rem; }
+li { margin: .6rem 0; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.banner { margin: 1rem 0; padding: .75rem 1rem; color: #d2a8ff; background: #231942; border: 1px solid #8957e5; border-radius: 8px; }
+.status { color: #b1bac4; }
+.status.running { color: #3fb950; }
+.status.stopped { color: #ff7b72; }
+.controls { display: flex; gap: .6rem; margin: 1rem 0; }
+pre { min-height: 8rem; max-height: 16rem; overflow: auto; padding: .8rem; white-space: pre-wrap; background: #010409; border-radius: 7px; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: .65rem; border-bottom: 1px solid #30363d; text-align: left; white-space: nowrap; }
+.general-form { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); align-items: end; }
+.general-form .wide { grid-column: span 2; }
+.checkbox { display: flex; align-items: center; gap: .5rem; padding-bottom: .7rem; }
+.checkbox input { width: auto; }
+.row-actions { display: flex; gap: .4rem; }
+.row-actions button { padding: .4rem .6rem; }
+.recommendations { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+.badge { display: inline-block; margin-left: .4rem; padding: .12rem .45rem; border-radius: 999px; font-size: .78rem; }
+.badge.owned { color: #3fb950; background: #173b24; }
+.badge.needed { color: #ff7b72; background: #491b1b; }
+.badge.unknown { color: #d29922; background: #3d2f0b; }
+</style>
+"""
+
+AUTH_PAGE = f"""
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Murder Bot</title>
+{SHARED_CSS}
+</head>
+<body>
+<main>
+<h1>Murder Bot</h1>
+<div class="grid">
+<section class="card">
+<h2>Log in</h2>
+<form id="login">
+<label>Email<input name="email" type="email" autocomplete="email" required></label>
+<label>Password<input name="password" type="password" autocomplete="current-password" minlength="8" required></label>
+<button>Log in</button>
+</form>
+</section>
+<section class="card">
+<h2>Create account</h2>
+<form id="signup">
+<label>Email<input name="email" type="email" autocomplete="email" required></label>
+<label>Password<input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
+<button>Sign up</button>
+</form>
+</section>
+</div>
+<p id="message" class="error"></p>
+</main>
+<script>
+async function authenticate(event, path) {{
+  event.preventDefault();
+  const body = Object.fromEntries(new FormData(event.currentTarget));
+  const response = await fetch(path, {{
+    method: "POST",
+    headers: {{"Content-Type": "application/json"}},
+    body: JSON.stringify(body)
+  }});
+  const result = await response.json();
+  if (response.ok) location.reload();
+  else document.getElementById("message").textContent = result.detail || "Request failed";
+}}
+document.getElementById("login").addEventListener("submit", event => authenticate(event, "/api/login"));
+document.getElementById("signup").addEventListener("submit", event => authenticate(event, "/api/signup"));
+</script>
+</body>
+</html>
+"""
+
+DASHBOARD_PAGE = f"""
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Murder Bot</title>
+{SHARED_CSS}
+</head>
+<body>
+<main>
+<header><h1>Murder Bot</h1><button id="logout" class="secondary">Log out</button></header>
+<section class="card viewer"><img src="/live.mjpeg" alt="Live emulator screen"></section>
+<p class="banner">Phase 2: one emulator serves one Evony account, so these controls operate the single shared bot. Per-user bot isolation requires one device per user in Phase 3.</p>
+<div class="grid" style="margin-top:1rem">
+<section class="card">
+<h2>Add Evony account</h2>
+<form id="account">
+<label>Label<input name="label" maxlength="100" required></label>
+<label>Gmail username<input name="gmail_username" autocomplete="username" required></label>
+<label>Gmail password<input name="gmail_password" type="password" autocomplete="off" required></label>
+<button>Save account</button>
+</form>
+<p id="message" class="error"></p>
+</section>
+<section class="card">
+<h2>Saved accounts</h2>
+<ul id="accounts"></ul>
+</section>
+</div>
+<div class="grid" style="margin-top:1rem">
+<section class="card">
+<h2>Bot control</h2>
+<p id="bot-status" class="status" aria-live="polite">Checking status…</p>
+<div class="controls">
+<button id="bot-start">Start</button>
+<button id="bot-stop" class="secondary">Stop</button>
+</div>
+<pre id="bot-log">No log output.</pre>
+</section>
+<section class="card">
+<h2>My Generals</h2>
+<form id="general-form" class="general-form">
+<label class="wide">Name<input name="name" maxlength="100" required></label>
+<label>Type<select name="gen_type" required>
+<option value="ground">Ground</option>
+<option value="ranged">Ranged</option>
+<option value="mounted">Mounted</option>
+<option value="siege">Siege</option>
+<option value="other">Other</option>
+</select></label>
+<label>Level<input name="level" type="number" min="1" max="45"></label>
+<label>Stars<input name="stars" type="number" min="0" max="5"></label>
+<label>Role<select name="role">
+<option value="">None</option>
+<option value="attacker">Attacker</option>
+<option value="wall">Wall</option>
+<option value="debuff_mayor">Debuff mayor</option>
+<option value="duty">Duty</option>
+<option value="assistant">Assistant</option>
+<option value="other">Other</option>
+</select></label>
+<label class="checkbox"><input name="owned" type="checkbox" checked> Owned</label>
+<button>Save general</button>
+</form>
+<p id="general-message" class="error"></p>
+<p id="roster-empty" class="status" hidden>No owned generals recorded yet.</p>
+<div class="table-wrap">
+<table id="generals-table">
+<thead><tr><th>Name</th><th>Type</th><th>Level</th><th>Stars</th><th>Role</th><th>Actions</th></tr></thead>
+<tbody id="generals"></tbody>
+</table>
+</div>
+<h3>Recommendations</h3>
+<div class="recommendations">
+<div><h3>Wall</h3><ul id="wall"></ul></div>
+<div><h3>Debuff mayor</h3><ul id="debuff-mayor"></ul></div>
+<div><h3>Owned extras</h3><ul id="extras"></ul></div>
+</div>
+</section>
+</div>
+</main>
+<script>
+async function loadAccounts() {{
+  const response = await fetch("/api/evony-accounts");
+  if (!response.ok) return;
+  const accounts = await response.json();
+  const list = document.getElementById("accounts");
+  list.replaceChildren();
+  for (const account of accounts) {{
+    const item = document.createElement("li");
+    const label = document.createElement("strong");
+    label.textContent = account.label;
+    item.append(label, document.createTextNode(" — " + account.username_masked));
+    list.append(item);
+  }}
+}}
+async function loadBotStatus() {{
+  const response = await fetch("/api/bot/status");
+  if (!response.ok) return;
+  const status = await response.json();
+  const line = document.getElementById("bot-status");
+  line.textContent = status.running ? "Running (PID " + status.pid + ")" : "Stopped";
+  line.className = "status " + (status.running ? "running" : "stopped");
+  document.getElementById("bot-start").disabled = status.running;
+  document.getElementById("bot-stop").disabled = !status.running;
+  document.getElementById("bot-log").textContent = status.last_log.join("\\n") || "No log output.";
+}}
+async function controlBot(action) {{
+  const response = await fetch("/api/bot/" + action, {{method: "POST"}});
+  if (response.ok) await loadBotStatus();
+}}
+async function loadGenerals() {{
+  const [rosterResponse, recommendationResponse] = await Promise.all([
+    fetch("/api/generals"),
+    fetch("/api/generals/recommendations")
+  ]);
+  if (!rosterResponse.ok || !recommendationResponse.ok) return;
+  const roster = await rosterResponse.json();
+  const recommendations = await recommendationResponse.json();
+  const ownedRoster = roster.filter(general => general.owned);
+  const table = document.getElementById("generals-table");
+  const tableBody = document.getElementById("generals");
+  tableBody.replaceChildren();
+  table.hidden = ownedRoster.length === 0;
+  document.getElementById("roster-empty").hidden = ownedRoster.length > 0;
+  for (const general of ownedRoster) {{
+    const row = document.createElement("tr");
+    for (const value of [general.name, general.gen_type, general.level ?? "—", general.stars ?? "—", general.role || "—"]) {{
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      row.append(cell);
+    }}
+    const actions = document.createElement("td");
+    actions.className = "row-actions";
+    const editButton = document.createElement("button");
+    editButton.type = "button";
+    editButton.className = "secondary";
+    editButton.textContent = "Edit";
+    editButton.addEventListener("click", () => editGeneral(general));
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "danger";
+    deleteButton.textContent = "Delete";
+    deleteButton.addEventListener("click", () => deleteGeneral(general.id));
+    actions.append(editButton, deleteButton);
+    row.append(actions);
+    tableBody.append(row);
+  }}
+  for (const [group, target] of [["wall", "wall"], ["debuff_mayor", "debuff-mayor"]]) {{
+    const recommendationList = document.getElementById(target);
+    recommendationList.replaceChildren();
+    for (const general of recommendations[group]) {{
+      const item = document.createElement("li");
+      const badge = document.createElement("span");
+      badge.className = "badge " + general.status;
+      badge.textContent = general.status === "owned" ? "✓ owned" : "needed";
+      item.append(document.createTextNode(general.name), badge);
+      recommendationList.append(item);
+    }}
+  }}
+  const extras = document.getElementById("extras");
+  extras.replaceChildren();
+  for (const general of recommendations.extras) {{
+    const item = document.createElement("li");
+    item.textContent = general.name;
+    extras.append(item);
+  }}
+  if (recommendations.extras.length === 0) {{
+    const item = document.createElement("li");
+    item.className = "status";
+    item.textContent = "None";
+    extras.append(item);
+  }}
+}}
+function editGeneral(general) {{
+  const form = document.getElementById("general-form");
+  form.elements.name.value = general.name;
+  form.elements.gen_type.value = general.gen_type;
+  form.elements.level.value = general.level ?? "";
+  form.elements.stars.value = general.stars ?? "";
+  form.elements.role.value = general.role || "";
+  form.elements.owned.checked = general.owned;
+  form.elements.name.focus();
+}}
+async function deleteGeneral(id) {{
+  const response = await fetch("/api/generals/" + id, {{method: "DELETE"}});
+  if (response.ok) await loadGenerals();
+  else document.getElementById("general-message").textContent = "Delete failed";
+}}
+document.getElementById("account").addEventListener("submit", async event => {{
+  event.preventDefault();
+  const body = Object.fromEntries(new FormData(event.currentTarget));
+  const response = await fetch("/api/evony-accounts", {{
+    method: "POST",
+    headers: {{"Content-Type": "application/json"}},
+    body: JSON.stringify(body)
+  }});
+  const result = await response.json();
+  const message = document.getElementById("message");
+  if (response.ok) {{
+    event.currentTarget.reset();
+    message.textContent = "";
+    loadAccounts();
+  }} else message.textContent = result.detail || "Request failed";
+}});
+document.getElementById("general-form").addEventListener("submit", async event => {{
+  event.preventDefault();
+  const form = event.currentTarget;
+  const body = {{
+    name: form.elements.name.value,
+    gen_type: form.elements.gen_type.value,
+    level: form.elements.level.value ? Number(form.elements.level.value) : null,
+    stars: form.elements.stars.value ? Number(form.elements.stars.value) : null,
+    role: form.elements.role.value || null,
+    owned: form.elements.owned.checked
+  }};
+  const response = await fetch("/api/generals", {{
+    method: "POST",
+    headers: {{"Content-Type": "application/json"}},
+    body: JSON.stringify(body)
+  }});
+  const result = await response.json();
+  const message = document.getElementById("general-message");
+  if (response.ok) {{
+    form.reset();
+    form.elements.owned.checked = true;
+    message.textContent = "";
+    await loadGenerals();
+  }} else message.textContent = typeof result.detail === "string" ? result.detail : "Invalid general";
+}});
+document.getElementById("logout").addEventListener("click", async () => {{
+  await fetch("/api/logout", {{method: "POST"}});
+  location.reload();
+}});
+document.getElementById("bot-start").addEventListener("click", () => controlBot("start"));
+document.getElementById("bot-stop").addEventListener("click", () => controlBot("stop"));
+loadAccounts();
+loadBotStatus();
+loadGenerals();
+</script>
+</body>
+</html>
+"""
+
+MANAGER_PAGE = (
+    """
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Murder Bot</title>
+"""
+    + SHARED_CSS
+    + """
+<style>
+.manager-head a { color: #58a6ff; text-decoration: none; }
+.status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: .75rem; margin: 1rem 0; }
+.metric { padding: 1rem; background: #161b22; border: 1px solid #30363d; border-radius: 10px; }
+.metric span { display: block; color: #8b949e; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; }
+.metric strong { display: block; margin-top: .35rem; font-size: 1.15rem; overflow-wrap: anywhere; }
+.metric strong.good { color: #3fb950; }
+.metric strong.warn { color: #d29922; }
+.metric strong.bad { color: #ff7b72; }
+.config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; }
+.config-group { margin: 0; padding: 1rem; border: 1px solid #30363d; border-radius: 8px; }
+.config-group legend { padding: 0 .35rem; font-weight: 700; }
+.config-group label + label { margin-top: .75rem; }
+.manager-note { color: #b1bac4; font-size: .9rem; line-height: 1.5; }
+#manager-log { height: 18rem; min-height: 18rem; margin-bottom: 0; }
+.toast { position: fixed; right: 1rem; bottom: 1rem; z-index: 10; max-width: min(360px, calc(100vw - 2rem)); padding: .8rem 1rem; border-radius: 8px; color: white; background: #238636; box-shadow: 0 8px 28px #0009; }
+.toast.error { min-height: 0; background: #b62324; }
+button:disabled { cursor: not-allowed; opacity: .5; }
+@media (max-width: 560px) {
+  main { width: min(94vw, 1100px); padding: 1.25rem 0; }
+  .manager-head { align-items: flex-start; }
+  .controls { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+<main>
+<header class="manager-head">
+  <div><h1>Murder Bot</h1><a href="/">← Dashboard</a></div>
+</header>
+
+<section class="status-grid" aria-label="Live bot status">
+  <div class="metric"><span>State</span><strong id="manager-state">Loading…</strong></div>
+  <div class="metric"><span>Rallies joined</span><strong id="manager-rallies">—</strong></div>
+  <div class="metric"><span>Errors</span><strong id="manager-errors">—</strong></div>
+  <div class="metric"><span>Last rally</span><strong id="manager-last-rally">—</strong></div>
+  <div class="metric"><span>Last report scan</span><strong id="manager-last-report">—</strong></div>
+  <div class="metric"><span>PID</span><strong id="manager-pid">—</strong></div>
+</section>
+
+<div class="controls">
+  <button id="manager-start">Start bot</button>
+  <button id="manager-stop" class="danger">Stop bot</button>
+</div>
+
+<section class="card viewer">
+  <img src="/live.mjpeg" alt="Live emulator screen">
+</section>
+
+<section class="card" style="margin-top:1rem">
+<h2>Bot configuration</h2>
+<form id="manager-config">
+<div class="config-grid">
+  <fieldset class="config-group">
+    <legend>Rallies</legend>
+    <label class="checkbox"><input type="checkbox" data-path="rally.enabled"> Join rallies</label>
+    <label>Interval (seconds)<input type="number" min="10" max="3600" data-path="rally.interval_sec" required></label>
+    <label>Maximum marches<input type="number" min="1" max="6" data-path="rally.max_marches" required></label>
+  </fieldset>
+  <fieldset class="config-group">
+    <legend>Stamina & reports</legend>
+    <label class="checkbox"><input type="checkbox" data-path="stamina.topup_enabled"> Top up stamina</label>
+    <label>Stamina threshold<input type="number" min="0" data-path="stamina.threshold" required></label>
+    <label class="checkbox"><input type="checkbox" data-path="reports.scan_enabled"> Scan reports</label>
+    <label>Report interval (seconds)<input type="number" min="10" max="3600" data-path="reports.interval_sec" required></label>
+  </fieldset>
+  <fieldset class="config-group">
+    <legend>Recovery & dashboard</legend>
+    <label class="checkbox"><input type="checkbox" data-path="kickout.reclaim_on_disconnect"> Reclaim after disconnect</label>
+    <label>Kickout wait (seconds)<input type="number" min="0" data-path="kickout.kickout_wait_sec" required></label>
+    <label class="checkbox"><input type="checkbox" data-path="dashboard.deploy_enabled"> Deploy dashboard</label>
+  </fieldset>
+  <fieldset class="config-group">
+    <legend>Advanced</legend>
+    <label class="checkbox"><input type="checkbox" data-path="advanced.auto_bubble"> Auto Bubble</label>
+    <label class="checkbox"><input type="checkbox" data-path="advanced.auto_reinforce"> Auto Reinforce</label>
+    <label class="checkbox"><input type="checkbox" data-path="advanced.auto_help_alliance"> Auto Help Alliance</label>
+  </fieldset>
+</div>
+<p class="manager-note">Safety is locked on: the bot never taps Quit and remains gem/resource-safe. Auto Bubble can spend owned truce items.</p>
+<button>Save configuration</button>
+</form>
+</section>
+
+<section class="card" style="margin-top:1rem">
+  <h2>Live logs</h2>
+  <pre id="manager-log" aria-live="polite">Loading logs…</pre>
+</section>
+</main>
+<div id="manager-toast" class="toast" role="status" hidden></div>
+<script>
+let loadedConfig;
+const configForm = document.getElementById("manager-config");
+const configInputs = [...configForm.querySelectorAll("[data-path]")];
+
+function atPath(object, path) {
+  return path.split(".").reduce((value, key) => value[key], object);
+}
+
+function putPath(object, path, value) {
+  const [group, key] = path.split(".");
+  (object[group] ||= {})[key] = value;
+}
+
+function toast(message, error = false) {
+  const element = document.getElementById("manager-toast");
+  element.textContent = message;
+  element.className = "toast" + (error ? " error" : "");
+  element.hidden = false;
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => element.hidden = true, 3500);
+}
+
+async function loadConfig() {
+  const response = await fetch("/api/bot/config");
+  if (!response.ok) return toast("Could not load configuration", true);
+  loadedConfig = await response.json();
+  for (const input of configInputs) {
+    const value = atPath(loadedConfig, input.dataset.path);
+    if (input.type === "checkbox") input.checked = value;
+    else input.value = value;
+  }
+}
+
+configForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  if (!loadedConfig) return toast("Configuration is still loading", true);
+  const changes = {};
+  for (const input of configInputs) {
+    const value = input.type === "checkbox" ? input.checked : Number(input.value);
+    if (value !== atPath(loadedConfig, input.dataset.path)) {
+      putPath(changes, input.dataset.path, value);
+    }
+  }
+  if (!Object.keys(changes).length) return toast("No changes to save");
+  const response = await fetch("/api/bot/config", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(changes)
+  });
+  const result = await response.json();
+  if (!response.ok) return toast(
+    typeof result.detail === "string" ? result.detail : "Invalid configuration",
+    true
+  );
+  loadedConfig = result;
+  toast("Configuration saved");
+});
+
+async function loadStatus() {
+  const response = await fetch("/api/bot/status");
+  if (!response.ok) return;
+  const status = await response.json();
+  const state = status.alive ? status.state : "offline";
+  const stateElement = document.getElementById("manager-state");
+  stateElement.textContent = state;
+  stateElement.className = state === "running"
+    ? "good"
+    : ["waiting", "kicked-out", "reclaiming"].includes(state) ? "warn" : "bad";
+  document.getElementById("manager-rallies").textContent = status.joined_total ?? 0;
+  document.getElementById("manager-errors").textContent = status.errors ?? 0;
+  document.getElementById("manager-last-rally").textContent = status.last_rally || "Never";
+  document.getElementById("manager-last-report").textContent = status.reports_last || "Never";
+  document.getElementById("manager-pid").textContent = status.pid ?? "—";
+  document.getElementById("manager-start").disabled = status.alive;
+  document.getElementById("manager-stop").disabled = !status.alive;
+}
+
+async function controlBot(action) {
+  const response = await fetch("/api/bot/" + action, {method: "POST"});
+  if (!response.ok) return toast("Could not " + action + " bot", true);
+  toast(action === "start" ? "Bot started" : "Bot stopped");
+  await loadStatus();
+}
+
+async function loadLogs() {
+  const response = await fetch("/api/bot/logs?n=120");
+  if (!response.ok) return;
+  const result = await response.json();
+  const log = document.getElementById("manager-log");
+  log.textContent = result.lines.join("\\n") || "No log output.";
+  log.scrollTop = log.scrollHeight;
+}
+
+document.getElementById("manager-start").addEventListener("click", () => controlBot("start"));
+document.getElementById("manager-stop").addEventListener("click", () => controlBot("stop"));
+loadConfig();
+loadStatus();
+loadLogs();
+setInterval(loadStatus, 3000);
+setInterval(loadLogs, 5000);
+</script>
+</body>
+</html>
+"""
+)
+
+
+@app.get("/manager", response_class=HTMLResponse)
+def manager(_user_id: int = Depends(current_user)):
+    return MANAGER_PAGE
+
+
+@app.get("/", response_class=HTMLResponse)
+def index(request: Request):
+    user_id = session_user_id(request)
+    if user_id is not None:
+        with database() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1 FROM app_users WHERE id = %s", (user_id,))
+                if cursor.fetchone() is not None:
+                    return RedirectResponse("/home", status_code=303)
+    return AUTH_PAGE
+
+
+# --- Murder Bot feature routers (self-contained modules) ---
+from reports_view import router as reports_router  # noqa: E402
+from generals_view import build_router as build_generals_router  # noqa: E402
+from counter_view import build_router as build_counter_router  # noqa: E402
+from map_view import build_router as build_map_router  # noqa: E402
+from billing_view import build_router as build_billing_router  # noqa: E402
+
+from intel_view import build_router as build_intel_router  # noqa: E402
+from attack_view import build_router as build_attack_router  # noqa: E402
+from brain_view import build_router as build_brain_router  # noqa: E402
+from settings_view import build_router as build_settings_router  # noqa: E402
+
+app.include_router(reports_router)                                  # GET /reports, /api/reports[/{rid}]
+app.include_router(build_generals_router(current_user, database))   # GET /generals-gallery, portraits
+app.include_router(build_counter_router(current_user, database))    # GET /counter — AI counter engine
+app.include_router(build_map_router(current_user, database))        # GET /map — vision-DB world map
+app.include_router(build_billing_router(current_user, database))    # GET /billing — subscription tiers
+app.include_router(build_intel_router(current_user, database))      # GET /intel — enemy intel on everyone
+app.include_router(build_attack_router(current_user, database))     # GET /attack — favorable-trade planner (advisory)
+app.include_router(build_brain_router(current_user, database))      # GET /brain — self-evolving knowledge
+app.include_router(build_settings_router(current_user, database, fernet))  # GET /settings — accounts + tokens
+from hub_view import build_router as build_hub_router  # noqa: E402
+app.include_router(build_hub_router(current_user, database))        # GET /home — the nav hub
+
+
+@app.get("/healthz")
+def healthz():
+    """Unauthenticated liveness/readiness probe for load balancers + uptime monitoring."""
+    db_ok = True
+    try:
+        with database() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+    except Exception:
+        db_ok = False
+    bot_ok = False
+    try:
+        pid = int(BOT_PIDFILE.read_text().strip())
+        os.kill(pid, 0)
+        bot_ok = True
+    except Exception:
+        pass
+    return {"status": "ok" if db_ok else "degraded", "db": "ok" if db_ok else "down",
+            "bot": "running" if bot_ok else "stopped"}

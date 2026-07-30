@@ -1,4 +1,9 @@
-DEVICE = "127.0.0.1:5555"
+import os
+
+# ADB target — env-driven so the same code runs against local BlueStacks (default)
+# or a Redroid container on a Hetzner VM (ADB_TARGET=redroid:5555).
+ADB_TARGET = os.environ.get("ADB_TARGET", "127.0.0.1:5555")
+DEVICE = ADB_TARGET
 
 TARGET_OWN = 1_000_000_000
 TRAIN_QTY = 269228

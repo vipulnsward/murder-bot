@@ -1,0 +1,8 @@
+fastapi==0.139.2
+uvicorn[standard]==0.51.0
+argon2-cffi==25.1.0
+cryptography==49.0.0
+itsdangerous==2.2.0
+python-multipart==0.0.32
+opencv-python==5.0.0.93
+psycopg2-binary==2.9.12

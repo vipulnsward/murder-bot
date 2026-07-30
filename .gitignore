@@ -21,3 +21,14 @@ data/pages/
 data/generals.raw.jsonl
 data/live_frames/
 game_brain/live/
+
+# --- secrets: never commit (added for Render/GitHub deploy safety) ---
+.env
+*.env
+deploy/.env
+neo_app/.evony_account.enc
+neo_app/.enc_key
+neo_app/.secret
+*.enc
+.enc_key
+.secret

@@ -1,0 +1,42 @@
+# Murder Bot — FastAPI manager (web UI + live MJPEG + config + roster).
+# Multi-arch base; builds natively on arm64 (Hetzner CAX / Ampere).
+#
+# Build context = repo root:
+#   docker build -f deploy/Dockerfile.manager -t murderbot-manager ..
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    DEBIAN_FRONTEND=noninteractive
+
+# adb -> capture_jpeg() shells `adb ... exec-out screencap` for the live view.
+# libgl1/libglib2.0-0 -> opencv (cv2) shared libs.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        adb \
+        libgl1 \
+        libglib2.0-0 \
+        libgomp1 \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app/neo_app
+
+COPY neo_app/requirements.txt /app/neo_app/requirements.txt
+RUN pip install -r /app/neo_app/requirements.txt
+
+# Copy only the app module — never bake the .secret / .enc_key files into the
+# image. Secrets are injected via NEO_SECRET / EVONY_ENC_KEY env vars.
+# the manager app + all feature-router modules (reports/generals/counter/map/billing views)
+COPY neo_app/ /app/neo_app/
+# root deps the views import (counter_view -> counter_ai; counter_ai reads the brain KB)
+COPY counter_ai.py config.py /app/
+COPY game_brain/pvp_brain.md game_brain/knowledge_distilled.md /app/game_brain/
+
+COPY deploy/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENV ADB_TARGET=redroid:5555
+EXPOSE 8800
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8800"]

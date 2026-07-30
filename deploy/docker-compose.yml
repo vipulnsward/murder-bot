@@ -1,0 +1,139 @@
+# Murder Bot — Hetzner CAX (arm64) deploy stack.
+#
+#   redroid          Android-in-Docker (arm64 native), hosts the Evony app + adbd
+#   postgres         app + roster database (db: murderbot)
+#   murderbot-bot    automation worker (run_bot.py, talks adb -> redroid:5555)
+#   murderbot-manager FastAPI web UI + live MJPEG (uvicorn :8800)
+#   caddy            reverse proxy + automatic HTTPS for murderbot.gg
+#
+# Values come from deploy/.env (see .env.example). All ${VAR:-default} so
+# `docker compose config` still parses with an empty env.
+name: murderbot
+
+services:
+  redroid:
+    # Multi-arch tag: pulls the arm64 image on Ampere — NO x86 translation.
+    image: redroid/redroid:11.0.0-latest
+    privileged: true                     # required: binder + Android init
+    restart: always
+    command:
+      - androidboot.redroid_width=1080
+      - androidboot.redroid_height=1920
+      - androidboot.redroid_dpi=480
+      # Software GL (SwiftShader). No GPU passthrough on CAX -> this is the
+      # honest, working default. Perf is modest; see README "Risks".
+      - androidboot.redroid_gpu_mode=guest
+    volumes:
+      - redroid-data:/data
+    healthcheck:
+      # Runs INSIDE the Android container, so no adb needed.
+      test: ["CMD", "sh", "-c", "getprop sys.boot_completed | grep -q 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 40
+      start_period: 180s
+    networks: [murdernet]
+
+  postgres:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-murderbot}
+      POSTGRES_USER: ${POSTGRES_USER:-murderbot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme-murderbot}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-murderbot} -d ${POSTGRES_DB:-murderbot}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [murdernet]
+
+  murderbot-bot:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.bot
+    restart: always
+    environment:
+      ADB_TARGET: ${ADB_TARGET:-redroid:5555}
+      DB_DSN: host=postgres dbname=${POSTGRES_DB:-murderbot} user=${POSTGRES_USER:-murderbot} password=${POSTGRES_PASSWORD:-changeme-murderbot}
+      BOT_CONFIG_PATH: /state/bot_config.json
+      BOT_STATUS_PATH: /state/bot_status.json
+      BOT_LOG_PATH: /state/bot.log
+      EVONY_NOTIFY_MAC: "0"
+    command: ["python", "run_bot.py", "--device", "${ADB_TARGET:-redroid:5555}"]
+    volumes:
+      - bot-state:/state
+    depends_on:
+      redroid:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "adb connect ${ADB_TARGET:-redroid:5555} >/dev/null 2>&1; adb -s ${ADB_TARGET:-redroid:5555} get-state 2>/dev/null | grep -q device"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 240s
+    networks: [murdernet]
+
+  murderbot-manager:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.manager
+    restart: always
+    environment:
+      ADB_TARGET: ${ADB_TARGET:-redroid:5555}
+      DB_DSN: host=postgres dbname=${POSTGRES_DB:-murderbot} user=${POSTGRES_USER:-murderbot} password=${POSTGRES_PASSWORD:-changeme-murderbot}
+      # Persisted secrets — MUST be set in deploy/.env (see .env.example).
+      NEO_SECRET: ${NEO_SECRET:-}
+      EVONY_ENC_KEY: ${EVONY_ENC_KEY:-}
+      BOT_CONFIG_PATH: /state/bot_config.json
+      BOT_STATUS_PATH: /state/bot_status.json
+      BOT_LOG_PATH: /state/bot.log
+      BOT_PIDFILE: /state/bot.pid
+      # the manager serves the web UI without the emulator (live view degrades gracefully),
+      # so it starts immediately and does NOT wait for or depend on Redroid.
+      WAIT_FOR_BOOT: "0"
+    volumes:
+      - bot-state:/state
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8800/healthz').read()"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks: [murdernet]
+
+  caddy:
+    image: caddy:2
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:-murderbot.gg}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      murderbot-manager:
+        condition: service_healthy
+    networks: [murdernet]
+
+networks:
+  murdernet:
+
+volumes:
+  redroid-data:
+  pg-data:
+  bot-state:
+  caddy-data:
+  caddy-config:

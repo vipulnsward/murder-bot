@@ -1,0 +1,43 @@
+# Murder Bot — automation worker.
+# python:3.11-slim is multi-arch: this image builds NATIVELY on arm64
+# (Hetzner CAX / Ampere Altra) with no x86 emulation.
+#
+# Build context = repo root:
+#   docker build -f deploy/Dockerfile.bot -t murderbot-bot ..
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    DEBIAN_FRONTEND=noninteractive
+
+# adb  -> talks to Redroid over TCP (adb connect redroid:5555)
+# tesseract-ocr -> pytesseract backend
+# libgl1/libglib2.0-0/libgomp1 -> shared libs opencv + onnxruntime load at runtime
+# No GApps / Play Services needed: Evony logs in with email + password.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        adb \
+        tesseract-ocr \
+        libgl1 \
+        libglib2.0-0 \
+        libgomp1 \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY deploy/requirements.bot.txt /app/deploy/requirements.bot.txt
+RUN pip install -r /app/deploy/requirements.bot.txt
+
+# App code (respect .dockerignore at the repo root).
+COPY . /app
+
+COPY deploy/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Overridden by compose; sane default so the image is runnable standalone.
+ENV ADB_TARGET=redroid:5555
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+# --device is passed explicitly by compose (${ADB_TARGET}); this default keeps
+# the image runnable on its own.
+CMD ["python", "run_bot.py", "--device", "redroid:5555"]

@@ -1,0 +1,88 @@
+#cloud-config
+# Murder Bot — fresh Ubuntu 24.04 (Hetzner CAX / arm64) bootstrap.
+# Paste into Hetzner Cloud "Cloud config" when creating the server, or:
+#   hcloud server create --image ubuntu-24.04 --type cax21 \
+#     --user-data-from-file deploy/cloud-init.yaml ...
+#
+# What it does: installs Docker, loads the Android `binder` kernel module that
+# Redroid needs, prepares /opt/murderbot, and generates deploy/.env with fresh
+# random secrets. It brings the stack up automatically IF the code is already at
+# /opt/murderbot; otherwise upload the repo there and run the compose command
+# printed in the README.
+
+package_update: true
+package_upgrade: false
+
+packages:
+  - ca-certificates
+  - curl
+  - git
+  - python3
+
+write_files:
+  # Ubuntu 24.04's mainline kernel has binderfs built in; we still need the
+  # binder devices (binder,hwbinder,vndbinder) created for Redroid. These two
+  # files make that persist across reboots.
+  - path: /etc/modules-load.d/binder.conf
+    content: |
+      binder_linux
+  - path: /etc/modprobe.d/binder.conf
+    content: |
+      options binder_linux devices=binder,hwbinder,vndbinder
+
+  - path: /opt/murderbot/.keep
+    content: ""
+
+  # One-shot bootstrap script (idempotent).
+  - path: /usr/local/sbin/murderbot-bootstrap.sh
+    permissions: "0755"
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      APP_DIR=/opt/murderbot
+      ENV_FILE="${APP_DIR}/deploy/.env"
+
+      # --- Docker (official convenience script installs docker-ce + compose v2) ---
+      if ! command -v docker >/dev/null 2>&1; then
+        curl -fsSL https://get.docker.com | sh
+      fi
+      systemctl enable --now docker
+
+      # --- Android binder module (Redroid dependency) ---
+      # binderfs is built into the 24.04 kernel; load the device nodes.
+      modprobe binder_linux devices=binder,hwbinder,vndbinder 2>/dev/null || true
+      if [ ! -e /dev/binder ] && [ ! -d /dev/binderfs ]; then
+        mkdir -p /dev/binderfs
+        mount -t binder binder /dev/binderfs 2>/dev/null || true
+      fi
+
+      # --- Generate secrets into deploy/.env (only once) ---
+      if [ -d "${APP_DIR}/deploy" ] && [ ! -f "${ENV_FILE}" ]; then
+        PG_PW=$(python3 -c "import secrets;print(secrets.token_urlsafe(24))")
+        NEO=$(python3 -c "import secrets;print(secrets.token_urlsafe(48))")
+        ENC=$(python3 -c "import base64,os;print(base64.urlsafe_b64encode(os.urandom(32)).decode())")
+        cat > "${ENV_FILE}" <<EOF
+      DOMAIN=murderbot.gg
+      ADB_TARGET=redroid:5555
+      POSTGRES_DB=murderbot
+      POSTGRES_USER=murderbot
+      POSTGRES_PASSWORD=${PG_PW}
+      NEO_SECRET=${NEO}
+      EVONY_ENC_KEY=${ENC}
+      EOF
+        chmod 600 "${ENV_FILE}"
+      fi
+
+      # --- Bring the stack up if the code is present ---
+      if [ -f "${APP_DIR}/deploy/docker-compose.yml" ]; then
+        cd "${APP_DIR}/deploy"
+        docker compose up -d --build
+      else
+        echo "murderbot: code not found at ${APP_DIR}; upload the repo and run:"
+        echo "  cd ${APP_DIR}/deploy && docker compose up -d --build"
+      fi
+
+runcmd:
+  - [ bash, /usr/local/sbin/murderbot-bootstrap.sh ]
+  # daily 04:00 DB backup (via the postgres container so pg_dump matches), 14-day retention
+  - [ bash, -c, "( crontab -l 2>/dev/null; echo '0 4 * * * COMPOSE_FILE=/opt/murderbot/deploy/docker-compose.yml BACKUP_DIR=/var/backups/murderbot KEEP=14 bash /opt/murderbot/deploy/db_backup.sh >> /var/log/murderbot-backup.log 2>&1' ) | crontab -" ]

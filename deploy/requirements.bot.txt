@@ -1,0 +1,17 @@
+# Linux/arm64-safe dependency subset for the Murder Bot worker container.
+#
+# IMPORTANT: the repo's top-level requirements.txt pins mlx==0.32.0 and
+# mlx-vlm==0.6.6. Those are Apple-Silicon (Metal) only and CANNOT install on
+# Linux/arm64. They are intentionally omitted here, which means the local
+# vision-LLM fallback (`run_bot.py --llm-fallback`) is unavailable on the VM.
+# The core CV + OCR automation loop does not need them. If you want an LLM
+# fallback on the server, swap it for a remote API call — do not add mlx here.
+#
+# opencv-python is swapped for the -headless build (no X/GL libs, server-correct).
+numpy==2.5.1
+pillow==12.3.0
+opencv-python-headless==5.0.0.93
+rapidocr-onnxruntime==1.2.3
+onnxruntime==1.27.0
+pytesseract
+psycopg2-binary==2.9.12

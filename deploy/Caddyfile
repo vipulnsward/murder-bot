@@ -1,0 +1,24 @@
+# Auto-HTTPS reverse proxy for the Murder Bot manager.
+# {$DOMAIN} comes from the DOMAIN env var (compose passes it; default murderbot.gg).
+# Caddy provisions a Let's Encrypt cert automatically once murderbot.gg's DNS
+# A/AAAA record points at this VM and ports 80/443 are reachable.
+{$DOMAIN:murderbot.gg} {
+	encode zstd gzip
+
+	# Security headers — hardened for public internet. CSP allows inline style/script
+	# (the manager pages ship inline CSS/JS) + the /live.mjpeg image stream.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Frame-Options "DENY"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'"
+		-Server
+	}
+
+	# flush_interval -1 disables response buffering so the /live.mjpeg
+	# multipart stream reaches the browser frame-by-frame.
+	reverse_proxy murderbot-manager:8800 {
+		flush_interval -1
+	}
+}

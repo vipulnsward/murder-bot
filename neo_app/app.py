@@ -898,6 +898,14 @@ button{padding:12px;border-radius:10px;border:0;background:var(--red);color:#fff
 .card h2{font-size:17px;margin-bottom:12px}
 .error{color:var(--red2);min-height:20px}
 footer{padding:32px 0 60px;color:var(--dim);font-size:13px}
+.demo{margin-top:4px}
+.drow{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.drow label{flex:1;min-width:130px}
+.drow input,.drow select{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:15px}
+.drow button{white-space:nowrap;padding:12px 22px;border:0;border-radius:10px;background:var(--red);color:#fff;font-weight:700;font-size:15px;cursor:pointer}
+.dout{margin-top:16px;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--mut);font-size:14.5px;min-height:48px}
+.dout .act{font-size:20px;font-weight:800;color:var(--red2);text-transform:uppercase;letter-spacing:.02em}
+.dout .conf{color:var(--gold);font-weight:700}
 </style>
 </head>
 <body>
@@ -918,6 +926,20 @@ footer{padding:32px 0 60px;color:var(--dim);font-size:13px}
     <div class="card"><span class="ic">&#9876;&#65039;</span><h3>Full automation</h3><p>Joins rallies every minute, tops stamina, farms, scans battle reports, auto-reclaims after a kickout. Runs 24/7. The parity you expect.</p></div>
     <div class="card"><span class="ic">&#129504;</span><h3>AI PvP brain</h3><p>Paste an incoming attack or an enemy &mdash; a real battle simulator + learned meta says <b>defend / rally / ghost / bubble</b> and the exact lead. Easy Bot has nothing like it.</p></div>
     <div class="card"><span class="ic">&#128225;</span><h3>Enemy intel + attack planner</h3><p>A live database on every player &mdash; troops, buffs, generals, W/L &mdash; and a planner that ranks favorable trades. Learns the meta nightly.</p></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <span class="eyebrow">Live demo &middot; no signup</span>
+  <h2>Watch the brain counter an attack</h2>
+  <p class="lede" style="margin-bottom:20px">Set an incoming rally, hit counter. This is the exact battle-sim AI that runs on your account &mdash; the thing Easy&nbsp;Bot can't do.</p>
+  <div class="card demo">
+    <div class="drow">
+      <label>Incoming power (M)<input id="d-power" type="number" value="60" min="1" max="5000"></label>
+      <label>Their lead<select id="d-lead"><option>SIEGE</option><option>GROUND</option><option>RANGED</option><option>MOUNTED</option></select></label>
+      <button id="d-go" type="button">Counter it &rarr;</button>
+    </div>
+    <div id="d-out" class="dout">Set an attack and hit <b>Counter&nbsp;it</b>.</div>
   </div>
 </div></section>
 
@@ -984,6 +1006,24 @@ async function authenticate(event, path) {
 }
 document.getElementById("login").addEventListener("submit", event => authenticate(event, "/api/login"));
 document.getElementById("signup").addEventListener("submit", event => authenticate(event, "/api/signup"));
+async function runDemo() {
+  const out = document.getElementById("d-out");
+  if (!out) return;
+  const power = document.getElementById("d-power").value || 60;
+  const lead = document.getElementById("d-lead").value || "SIEGE";
+  out.textContent = "Running the battle sim…";
+  try {
+    const r = await fetch("/api/demo-counter?power=" + encodeURIComponent(power) + "&lead=" + encodeURIComponent(lead));
+    const p = await r.json();
+    const conf = (p.confidence != null) ? Math.round(p.confidence * 100) + "% confidence" : "";
+    const lt = p.lead_type ? " · counter-lead " + p.lead_type : "";
+    out.innerHTML = '<div class="act">' + (p.action || "—") + lt + '</div>' +
+      '<div style="margin-top:8px">' + (p.reasoning || "") + '</div>' +
+      '<div style="margin-top:8px" class="conf">' + conf + '</div>';
+  } catch (e) { out.textContent = "Brain unavailable, try again in a moment."; }
+}
+const dgo = document.getElementById("d-go");
+if (dgo) { dgo.addEventListener("click", runDemo); runDemo(); }
 </script>
 </body>
 </html>
@@ -1471,6 +1511,51 @@ def sitemap_xml():
     body = "".join(f"<url><loc>https://murderbot.gg{u}</loc><changefreq>weekly</changefreq></url>" for u in urls)
     xml = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{body}</urlset>'
     return Response(content=xml, media_type="application/xml")
+
+
+@app.get("/api/demo-counter")
+def demo_counter(request: Request, power: float = 60, lead: str = "SIEGE",
+                 kind: str = "auto", mode: str = "open_map"):
+    """PUBLIC, no-auth AI counter demo for the landing page (the sales wedge).
+    Uses the doctrine baked into the manager image; rate-limited per IP."""
+    _rate_limit(request, "demo", 40, 60)
+    lead = (lead or "SIEGE").upper()
+    if lead not in ("SIEGE", "GROUND", "RANGED", "MOUNTED"):
+        lead = "SIEGE"
+    try:
+        power = max(1.0, min(float(power), 5000.0))
+    except (TypeError, ValueError):
+        power = 60.0
+    # A manageable hit (< ~120M) is a solo you counter-lead; bigger is a
+    # coordinated rally you bubble to deny the kill. Lets the demo show BOTH.
+    if kind == "auto":
+        kind = "rally" if power >= 120 else "solo"
+    elif kind not in ("rally", "solo", "scout"):
+        kind = "solo"
+    try:
+        import sys as _sys
+        import os as _os
+        _root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+        if _root not in _sys.path:
+            _sys.path.insert(0, _root)
+        import counter_ai  # noqa: E402
+        plan = counter_ai.decide({
+            "mode": mode,
+            "incoming": {"kind": kind, "lead_type": lead, "total_millions": power},
+        })
+        return {
+            "action": plan.get("action"),
+            "lead_type": plan.get("lead_type"),
+            "reasoning": plan.get("reasoning"),
+            "confidence": plan.get("confidence"),
+            "expected_loss_pct": plan.get("expected_loss_pct"),
+            "sim_used": plan.get("sim_used"),
+        }
+    except Exception as exc:  # noqa: BLE001
+        return JSONResponse(
+            {"action": "defend", "lead_type": lead,
+             "reasoning": f"Brain warming up ({exc}). Front your counter-lead, keep the anvil garrisoned.",
+             "confidence": 0.5}, status_code=200)
 
 
 # --- Murder Bot feature routers (self-contained modules) ---

@@ -25,6 +25,10 @@ DAEMONS = [
      "keep_live.py --device 127.0.0.1:5555"),
     ("keep_live_easybot", [PY, "keep_live.py", "--device", "emulator-5554", "--port", "8001"],
      "keep_live.py --device emulator-5554"),
+    # Pushes live telemetry (rally/gift/treasure/daemon health) to the deployed /mybot
+    # dashboard every 60s so the web live-view stays current.
+    ("local_sync", [PY, "local_sync.py", "--log", "/tmp/murderbot/rally_night.log", "--interval", "60"],
+     "local_sync.py"),
 ]
 
 

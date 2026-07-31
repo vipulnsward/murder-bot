@@ -1004,7 +1004,7 @@ footer{border-top:1px solid rgba(230,195,92,.14);color:var(--dim)}
   <p class="lede">Everything Easy Bot does &mdash; auto-rally, farm, reports &mdash; <b>cheaper</b>, plus a real battle-sim AI that tells you exactly how to counter every attacker. Automate your account <em>and</em> out-think your enemies.</p>
   <div class="cta">
     <a class="btn p" href="#start">Start free &rarr;</a>
-    <a class="btn s" href="/counter">See the brain counter an attack</a>
+    <a class="btn s" href="#demo">See the brain counter an attack</a>
   </div>
   <p style="margin-top:12px;font-size:.9rem;opacity:.72">Free during beta &middot; no credit card &middot; cancel anytime</p>
 </div></header>
@@ -1019,7 +1019,7 @@ footer{border-top:1px solid rgba(230,195,92,.14);color:var(--dim)}
   </div>
 </div></section>
 
-<section><div class="wrap">
+<section id="demo"><div class="wrap">
   <span class="eyebrow">Live demo &middot; no signup</span>
   <h2>Watch the brain counter an attack</h2>
   <p class="lede" style="margin-bottom:20px">Set an incoming rally, hit counter. This is the exact battle-sim AI that runs on your account &mdash; the thing Easy&nbsp;Bot can't do.</p>

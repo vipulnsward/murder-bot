@@ -1612,6 +1612,19 @@ def sitemap_xml():
     return Response(content=xml, media_type="application/xml")
 
 
+@app.get("/llms.txt", response_class=PlainTextResponse)
+def llms_txt_route():
+    """AI-crawler manifest so LLM answer engines can find + cite the guide content."""
+    import seo_extras  # noqa: E402
+    return seo_extras.llms_txt()
+
+
+@app.get("/7f3c9a1e2b4d6f8091a3c5e7b9d2f406.txt", response_class=PlainTextResponse)
+def indexnow_key_route():
+    """IndexNow ownership key so Bing/Yandex accept our URL submissions."""
+    return "7f3c9a1e2b4d6f8091a3c5e7b9d2f406"
+
+
 @app.get("/api/demo-counter")
 def demo_counter(request: Request, power: float = 60, lead: str = "SIEGE",
                  kind: str = "auto", mode: str = "open_map"):

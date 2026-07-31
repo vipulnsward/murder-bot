@@ -21,6 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static" / "guides"
 DB_PATH = BASE_DIR.parent / "game_brain" / "game_kb.db"
 SITE = "https://murderbot.vipulnsward.com"
+SITEMAP_FALLBACK_LASTMOD = "2026-07-21"
 static_files = StaticFiles(directory=STATIC_DIR)
 
 IMAGE_EXTENSIONS = ("jpg", "jpeg", "png", "webp")
@@ -85,6 +86,8 @@ input,select{min-width:0;width:100%;padding:.72rem .8rem;border:1px solid #59411
 .stat{padding:.85rem;border-radius:10px;background:#0d0906;border:1px solid #3c2c18}.stat small{display:block;
  color:var(--mut);text-transform:uppercase;letter-spacing:.1em}.stat strong{display:block;margin-top:.3rem}
 .clean{padding-left:1.15rem}.source{margin-top:2rem;color:var(--mut);font-size:.85rem}
+.quick-answer{margin-bottom:1rem;border-color:#9f7430;background:linear-gradient(135deg,rgba(62,42,16,.96),rgba(25,17,9,.94))}
+.quick-answer h2{margin:0 0 .55rem}.quick-answer p{margin:0;color:var(--ink);font-size:1.05rem;line-height:1.7}
 .empty{display:none}.no-results{display:none;color:var(--mut);padding:1rem 0}.no-results.show{display:block}
 footer{padding:2rem 0;border-top:1px solid var(--line);color:var(--mut);font-size:.85rem}
 @media(min-width:760px){.hero-grid{grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr);align-items:center}
@@ -247,7 +250,9 @@ def render_markdown(markdown) -> str:
 
 
 def json_script(data) -> str:
-    return json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+    return (json.dumps(data, ensure_ascii=False, separators=(",", ":"))
+            .replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+            .replace("\u2028", "\\u2028").replace("\u2029", "\\u2029"))
 
 
 def meta_description(value, fallback) -> str:
@@ -265,7 +270,8 @@ def iso_date(value) -> str | None:
 def page(title, description, canonical, body, *, image=None, schema=None) -> str:
     absolute_image = f"{SITE}{image}" if image and image.startswith("/") else image
     og_image = f'<meta property="og:image" content="{esc(absolute_image)}">' if absolute_image else ""
-    ld = f'<script type="application/ld+json">{json_script(schema)}</script>' if schema else ""
+    schemas = schema if isinstance(schema, list) else [schema] if schema else []
+    ld = "".join(f'<script type="application/ld+json">{json_script(item)}</script>' for item in schemas)
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(title)}</title><meta name="description" content="{esc(description)}">
@@ -295,6 +301,60 @@ def best_rating(ratings) -> dict | None:
         key=lambda item: (TIER_SCORE.get(str(item.get("tier") or "").upper(), 0), -(item.get("rank") or 999)),
         default=None,
     )
+
+
+def breadcrumb_schema(section: str, label: str, canonical: str) -> dict:
+    return {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "Home", "item": SITE},
+            {"@type": "ListItem", "position": 2, "name": section, "item": f"{SITE}/{section.casefold()}"},
+            {"@type": "ListItem", "position": 3, "name": label, "item": canonical},
+        ],
+    }
+
+
+def general_answers(general, ratings, recommendations) -> tuple[str, dict]:
+    name = str(general["name"])
+    gtype = str(general.get("gtype") or "other")
+    quality = str(general.get("quality") or "quality not recorded")
+    rating = best_rating(ratings)
+    tier_text = f"Tier {rating['tier']}" if rating and rating.get("tier") else "no recorded tier rating"
+    role_text = str((rating or {}).get("role") or "").replace("_", " ").title()
+    rank_text = f" (rank {rating['rank']})" if rating and rating.get("rank") is not None else ""
+    first = f"{name} is a {quality} {gtype} general with {tier_text}"
+    first += f" for {role_text}{rank_text}." if role_text else "."
+    best_use = general.get("best_use")
+    second = (f"The recorded best use for {name} is {best_use}." if best_use
+              else f"The knowledge base does not record a best use for {name}.")
+    counter_names = [str(item["general"]) for item in recommendations]
+    third = (f"The top rated counter generals are {', '.join(counter_names)}."
+             if counter_names else f"No rated counter generals are recorded for {name}'s {gtype} type.")
+
+    counter_answer = (f"The top rated counters for {name} are {', '.join(counter_names)}."
+                      if counter_names else f"No rated counter generals are recorded for {name}'s {gtype} type.")
+    pvp_ratings = [item for item in ratings if str(item.get("role") or "").endswith(("_attack", "_defense"))]
+    pvp_rating = best_rating(pvp_ratings)
+    if pvp_rating:
+        pvp_role = str(pvp_rating.get("role") or "").replace("_", " ").title()
+        pvp_rank = f" (rank {pvp_rating['rank']})" if pvp_rating.get("rank") is not None else ""
+        pvp_answer = f"{name} is rated Tier {pvp_rating.get('tier') or 'unranked'} for {pvp_role}{pvp_rank}."
+        if best_use:
+            pvp_answer += f" Its recorded best use is {best_use}."
+    else:
+        pvp_answer = f"The current data has no PvP attack or defense tier rating recorded for {name}."
+    questions = [
+        {"@type": "Question", "name": f"Who counters {name} in Evony?",
+         "acceptedAnswer": {"@type": "Answer", "text": counter_answer}},
+        {"@type": "Question", "name": f"What troop type is {name}?",
+         "acceptedAnswer": {"@type": "Answer", "text": f"{name} is classified as a {gtype} general."}},
+        {"@type": "Question", "name": f"Is {name} good for PvP?",
+         "acceptedAnswer": {"@type": "Answer", "text": pvp_answer}},
+    ]
+    return " ".join((first, second, third)), {
+        "@context": "https://schema.org", "@type": "FAQPage", "mainEntity": questions,
+    }
 
 
 def guide_card(guide) -> str:
@@ -338,17 +398,27 @@ def render_value_list(values) -> str:
     return f'<ul class="clean">{"".join(items)}</ul>'
 
 
-def sitemap_paths() -> list[str]:
+def sitemap_entries() -> list[tuple[str, str]]:
     kb = kb_data()
     try:
-        return [
-            "/guides",
-            "/generals",
-            *(f"/guides/{guide_slug(guide)}" for guide in kb.guides()),
-            *(f"/generals/{slugify(general['name'])}" for general in kb.list_generals()),
-        ]
+        guides = kb.guides()
+        generals = kb.list_generals()
     finally:
         kb.close()
+    guide_dates = [iso_date(guide.get("updated_at")) for guide in guides]
+    general_dates = [iso_date(general.get("updated_at")) for general in generals]
+    return [
+        ("/guides", max(filter(None, guide_dates), default=SITEMAP_FALLBACK_LASTMOD)),
+        ("/generals", max(filter(None, general_dates), default=SITEMAP_FALLBACK_LASTMOD)),
+        *((f"/guides/{guide_slug(guide)}", iso_date(guide.get("updated_at")) or SITEMAP_FALLBACK_LASTMOD)
+          for guide in guides),
+        *((f"/generals/{slugify(general['name'])}", iso_date(general.get("updated_at")) or SITEMAP_FALLBACK_LASTMOD)
+          for general in generals),
+    ]
+
+
+def sitemap_paths() -> list[str]:
+    return [path for path, _lastmod in sitemap_entries()]
 
 
 def build_router() -> APIRouter:
@@ -367,15 +437,20 @@ def build_router() -> APIRouter:
         for category in sorted(grouped):
             cards = "".join(guide_card(guide) for guide in grouped[category])
             sections.append(
-                f'<section><div class="section-head"><h2>{esc(category.title())}</h2>'
+                f'<section id="{esc(slugify(category))}"><div class="section-head"><h2>{esc(category.title())}</h2>'
                 f'<span class="count">{len(grouped[category])} guides</span></div><div class="grid">{cards}</div></section>'
             )
+        category_links = "".join(
+            f'<a class="badge" href="#{esc(slugify(category))}">{esc(category.title())}</a>'
+            for category in sorted(grouped)
+        )
         body = f"""<header class="hero"><p class="eyebrow">192 field-tested references</p>
 <h1>Evony Guides for Smarter Builds and Better Battles</h1>
 <p class="lede">Research-backed guides for generals, PvP, monsters, city growth, events, and every decision that compounds.</p></header>
+<nav class="badges" aria-label="Guide categories">{category_links}</nav>
 {"".join(sections)}"""
         return HTMLResponse(page(
-            "Evony Guides: Generals, PvP, Monsters & City Building",
+            "Best Evony Guides for PvP, Generals & City Growth",
             "Browse 192 Evony guides covering the best generals, PvP counters, monsters, events, buffs, and efficient city growth.",
             f"{SITE}/guides",
             body,
@@ -396,6 +471,7 @@ def build_router() -> APIRouter:
         finally:
             kb.close()
         title = str(guide.get("title") or "Evony Guide")
+        search_title = re.split(r"\s*\|\s*Evony:", title, maxsplit=1)[0].strip()
         description = meta_description(guide.get("summary"), f"Practical strategy for {title}.")
         canonical = f"{SITE}/guides/{slug}"
         image = image_for(guide.get("url"), guide.get("content"))
@@ -423,7 +499,10 @@ def build_router() -> APIRouter:
 <div class="stat"><small>Updated</small><strong>{esc(iso_date(guide.get('updated_at')) or 'Current')}</strong></div>
 </div></div></aside></div><section><div class="section-head"><h2>Related Evony Guides</h2></div>
 <div class="grid">{related_html}</div></section>"""
-        return HTMLResponse(page(f"{title} — Evony Guide", description, canonical, body, image=image, schema=schema))
+        return HTMLResponse(page(
+            f"{search_title} | Evony Guide", description, canonical, body, image=image,
+            schema=[schema, breadcrumb_schema("Guides", title, canonical)],
+        ))
 
     @router.get("/generals", response_class=HTMLResponse)
     def generals_index():
@@ -466,19 +545,17 @@ document.querySelector("#no-results").classList.toggle("show",!shown);}} control
     def general_detail(slug: str):
         kb = kb_data()
         try:
-            general = next((item for item in kb.list_generals() if slugify(item.get("name")) == slug), None)
+            all_generals = kb.list_generals()
+            general = next((item for item in all_generals if slugify(item.get("name")) == slug), None)
             if not general:
                 raise HTTPException(status_code=404, detail="General not found")
             ratings = kb.ratings(general=general["name"])
             counters = recommend_counters(general.get("gtype"), kb=kb)
+            related = [guide for guide in kb.guides() if guide.get("url") == general.get("source_url")][:3]
         finally:
             kb.close()
         name = str(general["name"])
         gtype = str(general.get("gtype") or "other")
-        description = meta_description(
-            general.get("best_use") or general.get("skill"),
-            f"{name} Evony general guide with skills, specialties, tier ratings, best uses, and counters.",
-        )
         canonical = f"{SITE}/generals/{slug}"
         image = general_image(name, general.get("source_url"))
         rating_html = "".join(
@@ -487,13 +564,32 @@ document.querySelector("#no-results").classList.toggle("show",!shown);}} control
             f' · rank {esc(r.get("rank") or "—")}<br><span class="count">{esc(r.get("context") or "")}</span></li>'
             for r in ratings
         ) or '<li class="count">No tier rating available.</li>'
-        recommendations = counters.get("recommendations") or []
+        valid_names = {item["name"] for item in all_generals}
+        recommendations = [
+            item for item in counters.get("recommendations") or [] if item.get("general") in valid_names
+        ]
+        counter_names = [str(item["general"]) for item in recommendations]
+        rating = best_rating(ratings)
+        tier = f"Tier {rating['tier']} " if rating and rating.get("tier") else ""
+        if counter_names:
+            description = meta_description(
+                f"How to counter {name} in Evony: use {', '.join(counter_names[:3])}. "
+                f"{name} is a {tier}{gtype} general best used for {general.get('best_use') or 'an unrecorded role'}.",
+                f"{name} Evony counter and general guide.",
+            )
+        else:
+            description = meta_description(
+                f"{name} is a {tier}{gtype} Evony general. "
+                f"Recorded best use: {general.get('best_use') or 'not available'}.",
+                f"{name} Evony general guide.",
+            )
         counter_html = "".join(
             f'<li><a href="/generals/{esc(slugify(pick.get("general")))}"><strong>{esc(pick.get("general"))}</strong></a> '
             f'<span class="badge {esc(str(pick.get("tier") or "").casefold())}">{esc(pick.get("tier") or "—")}</span>'
             f'<br>{esc(pick.get("why"))}</li>' for pick in recommendations
         ) or '<li class="count">No rated counter recommendations are available for this role.</li>'
-        schema = {
+        quick_answer, faq_schema = general_answers(general, ratings, recommendations)
+        person_schema = {
             "@context": "https://schema.org",
             "@type": "Person",
             "name": name,
@@ -501,7 +597,12 @@ document.querySelector("#no-results").classList.toggle("show",!shown);}} control
             "url": canonical,
             "image": f"{SITE}{image}" if image.startswith("/") else image,
         }
-        body = f"""<header class="hero hero-grid"><div><p class="eyebrow">Evony {esc(gtype)} general guide</p><h1>{esc(name)}</h1>
+        related_html = "".join(guide_card(guide) for guide in related)
+        related_section = (f'<section><div class="section-head"><h2>Related Evony Guide</h2></div>'
+                           f'<div class="grid">{related_html}</div></section>') if related_html else ""
+        body = f"""<section class="quick-answer panel" aria-labelledby="quick-answer"><h2 id="quick-answer">Quick answer</h2>
+<p>{esc(quick_answer)}</p></section>
+<header class="hero hero-grid"><div><p class="eyebrow">Evony {esc(gtype)} general guide</p><h1>{esc(name)}</h1>
 <p class="lede">{esc(description)}</p><div class="badges"><span class="badge">{esc(gtype)}</span>
 <span class="badge">{esc(general.get('quality') or 'Unknown quality')}</span>
 {'<span class="badge">Debuff general</span>' if general.get('is_debuff') else ''}</div></div>
@@ -515,8 +616,11 @@ document.querySelector("#no-results").classList.toggle("show",!shown);}} control
 <aside><section class="panel"><h2>Tier Ratings</h2><ul class="clean">{rating_html}</ul></section>
 <section class="panel"><h2>Best Counters</h2><p class="count">Recommended against a {esc(gtype)} lead.</p>
 <ol class="clean">{counter_html}</ol></section></aside></div>
-<p class="source">Research source: <a href="{esc(safe_url(general.get('source_url')) or '#')}" rel="nofollow noopener">Evony Guide Wiki</a></p>"""
-        return HTMLResponse(page(f"{name} Evony General Guide: Skills, Tiers & Counters", description, canonical, body, image=image, schema=schema))
+{related_section}<p class="source">Research source: <a href="{esc(safe_url(general.get('source_url')) or '#')}" rel="nofollow noopener">Evony Guide Wiki</a></p>"""
+        return HTMLResponse(page(
+            f"{name} Counter: Best Counters, Tier & Build | Evony", description, canonical, body, image=image,
+            schema=[person_schema, faq_schema, breadcrumb_schema("Generals", name, canonical)],
+        ))
 
     return router
 

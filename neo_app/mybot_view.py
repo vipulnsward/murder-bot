@@ -242,9 +242,115 @@ def render_page(report: dict | None) -> str:
 <a href="/">&larr; Dashboard</a></header>{content}</main></body></html>"""
 
 
+def _total_troops(report: dict) -> int:
+    try:
+        return sum(int(t.get("own") or 0) for t in report.get("roster", []))
+    except Exception:
+        return 0
+
+
+def render_demo(report: dict | None) -> str:
+    """PUBLIC, anonymized live-demo landing page: proof the bot runs 24/7, plus a free-trial
+    CTA. Deliberately shows NO monarch name and NO per-unit roster (publicly naming a botted
+    account is a ban risk) — only aggregate activity that proves the automation is alive."""
+    if report is None:
+        rally = {"total_joined": 0, "cycles": 0, "last_ts": None}
+        claims: dict = {}
+        daemons: list = []
+        activity: list = []
+        status = {"running": False, "uptime": None}
+        troops = 0
+    else:
+        rally = report.get("rally", {})
+        claims = report.get("claims") or {}
+        daemons = report.get("daemons") or []
+        activity = report.get("activity") or []
+        status = report.get("status", {})
+        troops = _total_troops(report)
+
+    up = sum(1 for d in daemons if d.get("running"))
+    total_d = len(daemons) or 6
+    gifts = int(claims.get("gift_open_alls", 0)) + int(claims.get("gift_claims", 0))
+    treasure = int(claims.get("treasure_open_alls", 0)) + int(claims.get("treasure_opens", 0))
+    live = bool(status.get("running"))
+    live_badge = ('<span class="live"><span class="dot"></span>LIVE NOW</span>' if live
+                  else '<span class="live off"><span class="dot"></span>STARTING…</span>')
+
+    def tile(label, value):
+        return (f'<div class="tile"><b>{_display(value)}</b>'
+                f'<span>{html.escape(label)}</span></div>')
+
+    tiles = "".join([
+        tile("Rallies joined", rally.get("total_joined", 0)),
+        tile("Loop cycles", rally.get("cycles", 0)),
+        tile("Alliance gifts claimed", gifts),
+        tile("Treasure chests opened", treasure),
+        tile("Troops under management", troops),
+        tile("Daemons online", f"{up}/{total_d}"),
+    ])
+    feed = "".join(
+        f'<li><span class="ts">{html.escape(str(e.get("ts") or ""))}</span>'
+        f'{html.escape(str(e.get("text", "")))}</li>'
+        for e in activity
+    ) or '<li class="empty">warming up…</li>'
+
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="30">
+<meta name="description" content="Watch Murder Bot run a live Evony account 24/7 — joining rallies, claiming alliance gifts and treasure, mapping the game. Start a free trial.">
+<title>Murder Bot — a live Evony bot, running right now</title>{SHARED_CSS}
+<style>
+.hero{{text-align:center;padding:2.4rem 0 1rem}}
+.hero h1{{font-size:clamp(2rem,6vw,3.4rem);margin:.4rem 0;text-wrap:balance}}
+.hero p.sub{{color:var(--mut);font-size:1.05rem;max-width:44ch;margin:.4rem auto 1.2rem}}
+.live{{display:inline-flex;align-items:center;gap:.5rem;font-weight:800;letter-spacing:.08em;
+  color:#7be07b;background:rgba(70,200,90,.12);border:1px solid rgba(70,200,90,.4);
+  padding:.35rem .85rem;border-radius:999px;font-size:.85rem}}
+.live.off{{color:#e6c35c;background:rgba(230,195,92,.12);border-color:rgba(230,195,92,.4)}}
+.live .dot{{width:.6rem;height:.6rem;border-radius:50%;background:currentColor;
+  box-shadow:0 0 0 0 currentColor;animation:pulse 1.6s infinite}}
+@keyframes pulse{{0%{{box-shadow:0 0 0 0 rgba(123,224,123,.6)}}70%{{box-shadow:0 0 0 .7rem rgba(123,224,123,0)}}100%{{box-shadow:0 0 0 0 rgba(123,224,123,0)}}}}
+@media (prefers-reduced-motion:reduce){{.live .dot{{animation:none}}}}
+.tiles{{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin:1.6rem 0}}
+.tile{{border:1px solid var(--line);border-radius:14px;padding:1.2rem 1rem;text-align:center;
+  background:linear-gradient(180deg,rgba(42,33,18,.6),rgba(16,12,7,.9))}}
+.tile b{{display:block;font-family:Georgia,serif;color:var(--gold2);font-size:1.7rem;
+  font-variant-numeric:tabular-nums;line-height:1.1}}
+.tile span{{color:var(--mut);font-size:.76rem;text-transform:uppercase;letter-spacing:.05em}}
+.cta{{text-align:center;margin:2rem 0 1rem}}
+.cta a.btn{{display:inline-block;background:linear-gradient(180deg,#f7dd8f,#e6c35c);color:#2a1f08;
+  font-weight:800;padding:.9rem 1.8rem;border-radius:12px;font-size:1.05rem;box-shadow:0 6px 22px rgba(230,195,92,.25)}}
+.cta p{{color:var(--mut);font-size:.85rem;margin-top:.7rem}}
+.feed{{list-style:none;margin:0;padding:.4rem .2rem}}
+.feed li{{padding:.55rem .8rem;border-bottom:1px solid var(--line);font-size:.9rem}}
+.feed li:last-child{{border-bottom:0}}.feed .ts{{color:var(--gold);margin-right:.6rem;font-variant-numeric:tabular-nums}}
+</style></head>
+<body><main>
+<section class="hero">
+  {live_badge}
+  <h1>A real Evony bot, running right now.</h1>
+  <p class="sub">Murder Bot plays a live alliance account 24/7 — joining every rally, claiming
+  alliance gifts &amp; treasure, and mapping the game. Gem-safe: it never spends a gem.</p>
+</section>
+<div class="tiles">{tiles}</div>
+<div class="cta"><a class="btn" href="/">Start your free trial &rarr;</a>
+<p>No credit card. Runs for your alliance while you sleep.</p></div>
+<h2>Live activity</h2>
+<div class="table-wrap"><ul class="feed">{feed}</ul></div>
+<p class="muted" style="text-align:center;margin-top:1.4rem">Auto-refreshes every 30s &middot;
+<a href="/">Murder Bot</a></p>
+</main></body></html>"""
+
+
 def build_router(current_user, database) -> APIRouter:
     """Return the local-bot router wired to the host app's auth dependency."""
     router = APIRouter(tags=["mybot"])
+
+    @router.get("/demo", response_class=HTMLResponse)
+    def demo_page():
+        """Public (no-auth), anonymized live proof-it-works page for user acquisition."""
+        return HTMLResponse(render_demo(latest_report()))
 
     @router.post("/api/mybot/report")
     def report_bot(

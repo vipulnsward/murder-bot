@@ -30,8 +30,14 @@ def main():
         stamp = time.strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{stamp}] === research pass {n}: ingest guides (--web) ===", flush=True)
         print(_run(["knowledge_ingest.py", "--web"]), flush=True)
-        print(f"[{stamp}] === research pass {n}: ingest YouTube (best generals) ===", flush=True)
-        print(_run(["knowledge_ingest.py", "--youtube", "evony best general 2025", "-n", "3"]), flush=True)
+        print(f"[{stamp}] === research pass {n}: ingest YouTube (comprehensive sweep) ===", flush=True)
+        for topic in ("evony best ground general", "evony best mounted general",
+                      "evony best ranged general", "evony best siege general",
+                      "evony pvp counter guide", "evony rally trap strategy",
+                      "evony svs battlefield strategy", "evony monster boss hunting",
+                      "evony general skill book pairing", "evony k40 keep whale strategy"):
+            print(f"[{stamp}] youtube: {topic}", flush=True)
+            print(_run(["knowledge_ingest.py", "--youtube", topic, "-n", "2"]), flush=True)
         chans = [c.strip() for c in os.environ.get("DISCORD_CHANNELS", "").split(",") if c.strip()]
         if os.environ.get("DISCORD_BOT_TOKEN") and chans:
             print(f"[{stamp}] === research pass {n}: ingest Discord ({len(chans)} channels) ===", flush=True)

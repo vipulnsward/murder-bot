@@ -249,6 +249,54 @@ def _total_troops(report: dict) -> int:
         return 0
 
 
+DEMO_COUNTER_WIDGET = """
+<style>
+.counter-demo{margin:2.2rem 0}
+.cbox{border:1px solid var(--line);border-radius:14px;padding:1.2rem;background:linear-gradient(180deg,rgba(42,33,18,.6),rgba(16,12,7,.9))}
+.crow{display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end}
+.crow label{display:flex;flex-direction:column;gap:.35rem;font-size:.76rem;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
+.crow input,.crow select{padding:.55rem .6rem;background:#0d0a06;color:var(--ink);border:1px solid var(--line);border-radius:8px;font-size:.95rem;min-width:8.5rem}
+.crow button{padding:.62rem 1.3rem;background:linear-gradient(180deg,#f7dd8f,#e6c35c);color:#2a1f08;border:0;border-radius:9px;font-weight:800;cursor:pointer;font-size:.98rem}
+.cout{margin-top:1rem;padding:1rem 1.1rem;border:1px solid var(--line);border-radius:10px;background:#0d0a06;font-size:.92rem;line-height:1.55}
+.cout .act{font-size:1.25rem;font-weight:800;color:var(--gold2);text-wrap:balance}
+.cout .conf{color:var(--mut);font-size:.82rem;margin-top:.35rem}
+</style>
+<section class="counter-demo">
+  <h2>Watch the AI counter a live attack</h2>
+  <p class="muted">Set an incoming rally, hit counter &mdash; the exact battle-sim brain that runs on every account. No signup.</p>
+  <div class="cbox">
+    <div class="crow">
+      <label>Incoming power (M)<input id="cd-power" type="number" value="60" min="1" max="5000"></label>
+      <label>Their lead<select id="cd-lead"><option>SIEGE</option><option>GROUND</option><option>RANGED</option><option>MOUNTED</option></select></label>
+      <button id="cd-go" type="button">Counter it &rarr;</button>
+    </div>
+    <div id="cd-out" class="cout">Set an attack and hit <b>Counter it</b>.</div>
+  </div>
+</section>
+<script>
+async function mbRunCounter(){
+  var out=document.getElementById("cd-out"); if(!out) return;
+  var power=document.getElementById("cd-power").value||60;
+  var lead=document.getElementById("cd-lead").value||"SIEGE";
+  out.textContent="Running the battle sim…";
+  try{
+    var r=await fetch("/api/demo-counter?power="+encodeURIComponent(power)+"&lead="+encodeURIComponent(lead));
+    var p=await r.json();
+    var conf=(p.confidence!=null)?Math.round(p.confidence*100)+"% confidence":"";
+    var lt=p.lead_type?" · counter-lead "+p.lead_type:"";
+    var gens="";
+    if(p.counter_generals&&p.counter_generals.length){
+      gens='<div style="margin-top:10px"><div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;opacity:.7">Field these generals</div>'+
+        p.counter_generals.slice(0,3).map(function(g){return '<div style="margin-top:4px"><b>'+((g.general||"")+"").replace(/[<>&]/g,"")+'</b><span style="opacity:.7"> — '+((g.counter_type||"")+"")+(g.tier?' · Tier '+g.tier:"")+'</span></div>';}).join("")+'</div>';
+    }
+    out.innerHTML='<div class="act">'+((p.action||"—")+"").replace(/[<>]/g,"")+lt+'</div><div style="margin-top:8px">'+((p.reasoning||"")+"").replace(/[<>]/g,"")+'</div><div class="conf">'+conf+'</div>'+gens;
+  }catch(e){out.textContent="Brain unavailable, try again in a moment.";}
+}
+(function(){var b=document.getElementById("cd-go"); if(b){b.addEventListener("click",mbRunCounter); mbRunCounter();}})();
+</script>
+"""
+
+
 def render_demo(report: dict | None) -> str:
     """PUBLIC, anonymized live-demo landing page: proof the bot runs 24/7, plus a free-trial
     CTA. Deliberately shows NO monarch name and NO per-unit roster (publicly naming a botted
@@ -301,8 +349,8 @@ def render_demo(report: dict | None) -> str:
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="refresh" content="30">
-<meta name="description" content="Watch Murder Bot run a live Evony account 24/7 — joining rallies, claiming alliance gifts and treasure, mapping the game. Start a free trial.">
+<meta http-equiv="refresh" content="60">
+<meta name="description" content="Watch Murder Bot run a live Evony account 24/7 — joining rallies, claiming alliance gifts and treasure, and countering attacks with a battle-sim AI. Try the counter engine free.">
 <title>Murder Bot — a live Evony bot, running right now</title>{SHARED_CSS}
 <style>
 .hero{{text-align:center;padding:2.4rem 0 1rem}}
@@ -338,11 +386,12 @@ def render_demo(report: dict | None) -> str:
   alliance gifts &amp; treasure, and mapping the game. Gem-safe: it never spends a gem.</p>
 </section>
 <div class="tiles">{tiles}</div>
+{DEMO_COUNTER_WIDGET}
 <div class="cta"><a class="btn" href="/">Start your free trial &rarr;</a>
 <p>No credit card. Runs for your alliance while you sleep.</p></div>
 <h2>Live activity</h2>
 <div class="table-wrap"><ul class="feed">{feed}</ul></div>
-<p class="muted" style="text-align:center;margin-top:1.4rem">Auto-refreshes every 30s &middot;
+<p class="muted" style="text-align:center;margin-top:1.4rem">Auto-refreshes every 60s &middot;
 <a href="/">Murder Bot</a></p>
 </main></body></html>"""
 

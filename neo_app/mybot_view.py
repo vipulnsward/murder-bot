@@ -334,6 +334,47 @@ async function mbRunCounter(){
 """
 
 
+def demo_stats(report: dict | None) -> dict:
+    """Aggregate live stats for the public /demo tiles (polled for real-time updates)."""
+    if report is None:
+        return {"rallies": 0, "cycles": 0, "gifts": 0, "treasure": 0, "troops": 0,
+                "daemons_up": 0, "daemons_total": 6, "live": False}
+    rally = report.get("rally", {})
+    claims = report.get("claims") or {}
+    daemons = report.get("daemons") or []
+    up = sum(1 for d in daemons if d.get("running"))
+    rally_up = any(d.get("name") == "rally" and d.get("running") for d in daemons)
+    return {
+        "rallies": rally.get("total_joined", 0),
+        "cycles": rally.get("cycles", 0),
+        "gifts": int(claims.get("gift_open_alls", 0)) + int(claims.get("gift_claims", 0)),
+        "treasure": int(claims.get("treasure_open_alls", 0)) + int(claims.get("treasure_opens", 0)),
+        "troops": _total_troops(report),
+        "daemons_up": up, "daemons_total": len(daemons) or 6,
+        "live": bool(rally_up or (report.get("status") or {}).get("running")),
+    }
+
+
+DEMO_STATS_POLL = """
+<script>
+(function(){
+  function setk(k,v,num){var el=document.querySelector('[data-k="'+k+'"]');if(el)el.textContent=num?Number(v).toLocaleString():v;}
+  async function mbStats(){
+    try{
+      var r=await fetch("/api/demo-stats"); var s=await r.json();
+      setk("rallies",s.rallies,true); setk("cycles",s.cycles,true);
+      setk("gifts",s.gifts,true); setk("treasure",s.treasure,true);
+      setk("troops",s.troops,true); setk("daemons",s.daemons_up+"/"+s.daemons_total,false);
+      var lb=document.getElementById("livebadge");
+      if(lb){lb.className=s.live?"live":"live off"; lb.innerHTML='<span class="dot"></span>'+(s.live?"LIVE NOW":"STARTING…");}
+    }catch(e){}
+  }
+  setInterval(mbStats,15000);
+})();
+</script>
+"""
+
+
 def render_demo(report: dict | None) -> str:
     """PUBLIC, anonymized live-demo landing page: proof the bot runs 24/7, plus a free-trial
     CTA. Deliberately shows NO monarch name and NO per-unit roster (publicly naming a botted
@@ -362,20 +403,20 @@ def render_demo(report: dict | None) -> str:
     # gate the badge on; the rally daemon being up is the honest, stable signal.
     rally_up = any(d.get("name") == "rally" and d.get("running") for d in daemons)
     live = rally_up or bool(status.get("running"))
-    live_badge = ('<span class="live"><span class="dot"></span>LIVE NOW</span>' if live
-                  else '<span class="live off"><span class="dot"></span>STARTING…</span>')
+    live_badge = ('<span class="live" id="livebadge"><span class="dot"></span>LIVE NOW</span>' if live
+                  else '<span class="live off" id="livebadge"><span class="dot"></span>STARTING…</span>')
 
-    def tile(label, value):
-        return (f'<div class="tile"><b>{_display(value)}</b>'
+    def tile(label, value, key):
+        return (f'<div class="tile"><b data-k="{key}">{_display(value)}</b>'
                 f'<span>{html.escape(label)}</span></div>')
 
     tiles = "".join([
-        tile("Rallies joined", rally.get("total_joined", 0)),
-        tile("Loop cycles", rally.get("cycles", 0)),
-        tile("Alliance gifts claimed", gifts),
-        tile("Treasure chests opened", treasure),
-        tile("Troops under management", troops),
-        tile("Daemons online", f"{up}/{total_d}"),
+        tile("Rallies joined", rally.get("total_joined", 0), "rallies"),
+        tile("Loop cycles", rally.get("cycles", 0), "cycles"),
+        tile("Alliance gifts claimed", gifts, "gifts"),
+        tile("Treasure chests opened", treasure, "treasure"),
+        tile("Troops under management", troops, "troops"),
+        tile("Daemons online", f"{up}/{total_d}", "daemons"),
     ])
     feed = "".join(
         f'<li><span class="ts">{html.escape(str(e.get("ts") or ""))}</span>'
@@ -386,7 +427,6 @@ def render_demo(report: dict | None) -> str:
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="refresh" content="60">
 <meta name="description" content="Watch Murder Bot run a live Evony account 24/7 — joining rallies, claiming alliance gifts and treasure, and countering attacks with a battle-sim AI. Try the counter engine free.">
 <title>Murder Bot — a live Evony bot, running right now</title>{SHARED_CSS}
 <style>
@@ -428,8 +468,9 @@ def render_demo(report: dict | None) -> str:
 <p>No credit card. Runs for your alliance while you sleep.</p></div>
 <h2>Live activity</h2>
 <div class="table-wrap"><ul class="feed">{feed}</ul></div>
-<p class="muted" style="text-align:center;margin-top:1.4rem">Auto-refreshes every 60s &middot;
+<p class="muted" style="text-align:center;margin-top:1.4rem">Updates live every 15s &middot;
 <a href="/">Murder Bot</a></p>
+{DEMO_STATS_POLL}
 </main></body></html>"""
 
 
@@ -441,6 +482,11 @@ def build_router(current_user, database) -> APIRouter:
     def demo_page():
         """Public (no-auth), anonymized live proof-it-works page for user acquisition."""
         return HTMLResponse(render_demo(latest_report()))
+
+    @router.get("/api/demo-stats")
+    def demo_stats_api():
+        """Public aggregate stats the /demo tiles poll for real-time updates (anonymized)."""
+        return JSONResponse(demo_stats(latest_report()))
 
     @router.post("/api/mybot/report")
     def report_bot(

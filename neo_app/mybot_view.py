@@ -69,6 +69,28 @@ class Rally(BaseModel):
 class Status(BaseModel):
     running: bool
     screen: str | None = None
+    stamina: str | None = None
+    uptime: str | None = None
+
+
+class Claims(BaseModel):
+    """Free resources auto-claimed by the bot (Alliance Gifts + Alliance Treasure)."""
+
+    gift_open_alls: int = 0
+    gift_claims: int = 0
+    treasure_open_alls: int = 0
+    treasure_opens: int = 0
+    last_claim_ts: str | None = None
+
+
+class Daemon(BaseModel):
+    name: str = Field(max_length=40)
+    running: bool
+
+
+class Event(BaseModel):
+    ts: str | None = None
+    text: str = Field(max_length=240)
 
 
 class BotReport(BaseModel):
@@ -76,6 +98,10 @@ class BotReport(BaseModel):
     roster: list[Troop]
     rally: Rally
     status: Status
+    # All optional so older sync clients keep validating (backward compatible).
+    claims: Claims | None = None
+    daemons: list[Daemon] = Field(default_factory=list)
+    activity: list[Event] = Field(default_factory=list)
 
 
 def _initialize(db_path: str | Path = DB_PATH) -> None:
@@ -132,6 +158,9 @@ def render_page(report: dict | None) -> str:
         content = '<p class="card empty">No local-bot report received yet.</p>'
     else:
         account, rally, status = report["account"], report["rally"], report["status"]
+        claims = report.get("claims") or {}
+        daemons = report.get("daemons") or []
+        activity = report.get("activity") or []
         rows = "".join(
             "<tr>"
             f'<td>{html.escape(troop["building"])}</td>'
@@ -142,6 +171,37 @@ def render_page(report: dict | None) -> str:
             for troop in report["roster"]
         ) or '<tr><td class="empty" colspan="4">No roster data.</td></tr>'
         running = status["running"]
+
+        gift_n = int(claims.get("gift_open_alls", 0)) + int(claims.get("gift_claims", 0))
+        tre_n = int(claims.get("treasure_open_alls", 0)) + int(claims.get("treasure_opens", 0))
+
+        daemon_html = "".join(
+            f'<div><span>{html.escape(str(d.get("name", "")))}</span>'
+            f'<b><span class="badge{"" if d.get("running") else " off"}">'
+            f'{"UP" if d.get("running") else "DOWN"}</span></b></div>'
+            for d in daemons
+        ) or '<div class="muted">No daemon status.</div>'
+
+        feed = "".join(
+            f'<li><span class="ts">{html.escape(str(e.get("ts") or ""))}</span>'
+            f'{html.escape(str(e.get("text", "")))}</li>'
+            for e in activity
+        ) or '<li class="empty">No recent activity.</li>'
+
+        claims_card = f"""
+  <section class="card"><h2>Free resources claimed</h2><div class="stats">
+    <div><span>Alliance gifts</span><b>{_display(gift_n)}</b></div>
+    <div><span>Treasure opens</span><b>{_display(tre_n)}</b></div>
+    <div><span>Last claim</span><b>{_display(claims.get("last_claim_ts"))}</b></div>
+  </div></section>""" if claims else ""
+
+        daemons_card = f"""
+  <section class="card"><h2>Daemons</h2><div class="stats">{daemon_html}</div></section>""" if daemons else ""
+
+        activity_section = f"""
+<h2>Recent activity</h2>
+<div class="table-wrap"><ul class="feed">{feed}</ul></div>""" if activity else ""
+
         content = f"""
 <div class="cards">
   <section class="card"><h2>Account</h2><div class="stats">
@@ -159,9 +219,11 @@ def render_page(report: dict | None) -> str:
   <section class="card"><h2>Live status</h2>
     <p><span class="badge{' off' if not running else ''}">{'RUNNING' if running else 'OFFLINE'}</span></p>
     <p class="muted">Screen: {_display(status["screen"])}</p>
+    <p class="muted">Stamina: {_display(status.get("stamina"))} &middot; Uptime: {_display(status.get("uptime"))}</p>
     <a href="{LOCAL_LIVE_URL}" target="_blank" rel="noopener">Open local live view &rarr;</a>
-  </section>
+  </section>{claims_card}{daemons_card}
 </div>
+{activity_section}
 <h2>Troop roster</h2>
 <div class="table-wrap"><table>
 <thead><tr><th>Building</th><th>Tier</th><th>Name</th><th>Owned</th></tr></thead>
@@ -170,8 +232,13 @@ def render_page(report: dict | None) -> str:
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>My Bot — Murder Bot</title>{SHARED_CSS}</head>
-<body><main><header><div><h1>My Bot</h1><p class="muted">Latest local Evony bot report.</p></div>
+<meta http-equiv="refresh" content="30">
+<title>My Bot — Murder Bot</title>{SHARED_CSS}
+<style>.feed{{list-style:none;margin:0;padding:.4rem .2rem}}
+.feed li{{padding:.55rem .8rem;border-bottom:1px solid var(--line);font-size:.9rem}}
+.feed li:last-child{{border-bottom:0}}.feed .ts{{color:var(--gold);margin-right:.6rem;font-variant-numeric:tabular-nums}}</style>
+</head>
+<body><main><header><div><h1>My Bot</h1><p class="muted">Live Evony bot telemetry &middot; auto-refreshes every 30s.</p></div>
 <a href="/">&larr; Dashboard</a></header>{content}</main></body></html>"""
 
 

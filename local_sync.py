@@ -7,6 +7,7 @@ import json
 import os
 import re
 import sqlite3
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -15,11 +16,18 @@ from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent
 VISION_DB = ROOT / "game_brain" / "vision.db"
-DEFAULT_LOG = Path(
-    "/private/tmp/claude-501/-Users-sward-work-scratch/"
-    "c2e71639-9f51-4ec5-b5ef-685684771afc/scratchpad/rally_night.log"
-)
+# The live rally daemon (and the watchdog) log here; overridable with --log.
+DEFAULT_LOG = Path("/tmp/murderbot/rally_night.log")
 DEVICE = "127.0.0.1:5555"
+
+# (display name, pgrep pattern) for the core bot daemons whose health we surface.
+DAEMON_PATTERNS = [
+    ("rally", "rally_night.py"),
+    ("map", "map_night.py"),
+    ("research", "research_night.py"),
+    ("live-view", "keep_live.py --device 127.0.0.1:5555"),
+    ("watchdog", "daemon_watchdog.py"),
+]
 
 
 def read_roster(db_path: Path = VISION_DB) -> list[dict]:
@@ -52,6 +60,72 @@ def read_rally(log_path: Path) -> dict:
     return {"total_joined": total_joined, "cycles": max_cycle, "last_ts": last_ts}
 
 
+def read_log_extras(log_path: Path) -> tuple[dict, list[dict], str | None]:
+    """From the rally log: free-claim tallies (Alliance Gift + Treasure), a recent activity
+    feed (most-recent-first), and the latest stamina reading. Tolerant of a missing log."""
+    claims = {"gift_open_alls": 0, "gift_claims": 0,
+              "treasure_open_alls": 0, "treasure_opens": 0, "last_claim_ts": None}
+    activity: list[dict] = []
+    stamina = None
+    if not log_path.is_file():
+        return claims, activity, stamina
+    lines = log_path.read_text(errors="replace").splitlines()
+    last_ts = None
+    for line in lines:
+        if m := re.search(r"\[([^]]+)]", line):
+            last_ts = m.group(1)
+        if g := re.search(
+            r"free-claim: gift\(open_all=(\w+), claims=(\d+)\) "
+            r"treasure\(open_all=(\w+), opens=(\d+)\)", line
+        ):
+            claims["gift_open_alls"] += g.group(1) == "True"
+            claims["gift_claims"] += int(g.group(2))
+            claims["treasure_open_alls"] += g.group(3) == "True"
+            claims["treasure_opens"] += int(g.group(4))
+            claims["last_claim_ts"] = last_ts
+        if s := re.search(r"stamina=(\S+)", line):
+            stamina = s.group(1)
+    feed: list[dict] = []
+    for line in lines[-80:]:
+        ts = m.group(1) if (m := re.search(r"\[([^]]+)]", line)) else None
+        text = None
+        if c := re.search(r"cycle=(\d+) (?:RETRY )?joined=(\S+) stamina=(\S+) total_joined=(\d+)", line):
+            text = (f"cycle {c.group(1)} — joined {c.group(2)}, "
+                    f"stamina {c.group(3)}, total {c.group(4)}")
+        elif "free-claim:" in line:
+            text = "claimed free rss — " + line.split("free-claim:", 1)[1].strip()
+        elif "[RELOAD]" in line and "fresh session" in line:
+            text = "fresh game reload"
+        if text:
+            feed.append({"ts": ts, "text": text[:240]})
+    activity = feed[-12:][::-1]
+    return claims, activity, stamina
+
+
+def _pgrep(pattern: str) -> str:
+    try:
+        return subprocess.run(["pgrep", "-f", pattern], capture_output=True, text=True).stdout.strip()
+    except Exception:
+        return ""
+
+
+def read_daemons() -> list[dict]:
+    return [{"name": name, "running": bool(_pgrep(pat))} for name, pat in DAEMON_PATTERNS]
+
+
+def read_uptime() -> str | None:
+    """Elapsed run time of the rally daemon (its ps etime), e.g. '01:23:45'."""
+    pids = _pgrep("rally_night.py")
+    if not pids:
+        return None
+    try:
+        out = subprocess.run(["ps", "-o", "etime=", "-p", pids.split()[0]],
+                             capture_output=True, text=True).stdout.strip()
+        return out or None
+    except Exception:
+        return None
+
+
 def read_account() -> tuple[dict, dict]:
     account = {"name": "NeoIsTlatoani", "level": None, "vip": None, "alliance": "NFG", "power": None}
     frame = None
@@ -72,11 +146,17 @@ def read_account() -> tuple[dict, dict]:
 
 def assemble_payload(log_path: Path) -> dict:
     account, status = read_account()
+    claims, activity, stamina = read_log_extras(log_path)
+    status["stamina"] = stamina
+    status["uptime"] = read_uptime()
     return {
         "account": account,
         "roster": read_roster(),
         "rally": read_rally(log_path),
         "status": status,
+        "claims": claims,
+        "daemons": read_daemons(),
+        "activity": activity,
     }
 
 

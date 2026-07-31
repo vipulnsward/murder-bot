@@ -272,7 +272,11 @@ def render_demo(report: dict | None) -> str:
     total_d = len(daemons) or 6
     gifts = int(claims.get("gift_open_alls", 0)) + int(claims.get("gift_claims", 0))
     treasure = int(claims.get("treasure_open_alls", 0)) + int(claims.get("treasure_opens", 0))
-    live = bool(status.get("running"))
+    # "Live" = the automation is running, i.e. the rally daemon is up. A single-frame grab
+    # (status.running) momentarily returns None during a game reload, so it's too flaky to
+    # gate the badge on; the rally daemon being up is the honest, stable signal.
+    rally_up = any(d.get("name") == "rally" and d.get("running") for d in daemons)
+    live = rally_up or bool(status.get("running"))
     live_badge = ('<span class="live"><span class="dot"></span>LIVE NOW</span>' if live
                   else '<span class="live off"><span class="dot"></span>STARTING…</span>')
 

@@ -13,14 +13,8 @@ Data sources
 
 Artwork
 -------
-Official Evony general portrait art is copyright Top Games Inc. Every fan-wiki
-source (evonyguidewiki.com, evony.fandom.com, evony-hq.com) is behind bot /
-pay walls or renders images client-side, so none give a reliable hot-link URL
-and redistributing the PNGs would be a licensing risk. Instead each card ships
-a self-hosted, generated SVG "portrait medallion" (type-coloured crest with the
-general's initials + star rating) — zero licensing risk, no broken hot-links,
-works offline. To use real art later, drop ``<slug>.png`` (or .jpg/.webp) into
-``static/generals/`` and the portrait route serves it automatically.
+Cards use self-hosted general portraits from ``static/guides/generals`` when
+available and fall back to the generated SVG portrait medallion.
 """
 
 from __future__ import annotations
@@ -32,8 +26,14 @@ from pathlib import Path
 from fastapi import APIRouter, Depends
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 
+from game_kb import GameKB
+
 BASE_DIR = Path(__file__).resolve().parent
 PORTRAIT_DIR = BASE_DIR / "static" / "generals"
+GUIDE_PORTRAIT_DIR = BASE_DIR / "static" / "guides" / "generals"
+PORTRAIT_EXTENSIONS = ("jpg", "jpeg", "webp")
+TIER_SCORE = {"S": 5, "A": 4, "B": 3, "C": 2, "D": 1}
+TROOP_TYPES = {"ground", "mounted", "ranged", "siege"}
 
 RECOMMENDED = {
     "wall": [
@@ -345,7 +345,15 @@ CATALOG = [
 
 
 def slugify(name: str) -> str:
-    return re.sub(r"[^a-z0-9]+", "-", (name or "").casefold()).strip("-") or "general"
+    value = str(name or "").casefold().replace("’", "")
+    return re.sub(r"[^a-z0-9]+", "-", value).strip("-")
+
+
+def portrait_url(slug: str) -> str:
+    for extension in PORTRAIT_EXTENSIONS:
+        if (GUIDE_PORTRAIT_DIR / f"{slug}.{extension}").is_file():
+            return f"/static/guides/generals/{slug}.{extension}"
+    return f"/generals-gallery/portrait/{slug}"
 
 
 CATALOG_BY_LOWER = {entry["name"].casefold(): entry for entry in CATALOG}
@@ -427,7 +435,9 @@ def _card(general: dict) -> dict:
         "debuffs": general.get("debuffs", []),
         "brain_note": general.get("brain_note", ""),
         "bio": general.get("bio", ""),
-        "portrait_url": f"/generals-gallery/portrait/{general['slug']}",
+        "quality": general["quality"],
+        "tier": general["tier"],
+        "portrait_url": portrait_url(general["slug"]),
     }
 
 
@@ -458,6 +468,31 @@ def build_gallery_data(database) -> dict:
             "showing catalog only."
         )
 
+    names = {entry["name"].casefold(): entry["name"] for entry in CATALOG}
+    names.update(
+        (lower, row["name"])
+        for lower, row in owned_rows.items()
+        if lower not in names
+    )
+    kb = GameKB()
+    try:
+        knowledge = {
+            lower: kb.get_general(name) or {} for lower, name in names.items()
+        }
+        ratings = {
+            lower: max(
+                kb.ratings(general=name),
+                key=lambda item: (
+                    TIER_SCORE.get(str(item.get("tier") or "").upper(), 0),
+                    -(item.get("rank") or 999),
+                ),
+                default={},
+            )
+            for lower, name in names.items()
+        }
+    finally:
+        kb.close()
+
     cards: list[dict] = []
     seen_lower: set[str] = set()
 
@@ -470,6 +505,9 @@ def build_gallery_data(database) -> dict:
         status = "owned" if owned else ("needed" if recommended else "catalog")
         slug = slugify(entry["name"])
         gen_type = db_row["gen_type"] if db_row and db_row.get("gen_type") else entry["gen_type"]
+        kb_general = knowledge[lower]
+        if kb_general.get("gtype") in TROOP_TYPES:
+            gen_type = kb_general["gtype"]
         SLUG_REGISTRY[slug] = (entry["name"], gen_type)
         merged = {
             **entry,
@@ -480,6 +518,8 @@ def build_gallery_data(database) -> dict:
             "level": db_row["level"] if db_row else None,
             "stars": db_row["stars"] if db_row else None,
             "role": (db_row["role"] if db_row and db_row.get("role") else entry.get("group")),
+            "quality": kb_general.get("quality") or "Unknown",
+            "tier": str(ratings[lower].get("tier") or "Unrated").upper(),
         }
         cards.append(_card(merged))
 
@@ -487,13 +527,19 @@ def build_gallery_data(database) -> dict:
         if lower in seen_lower or not row["owned"]:
             continue
         slug = slugify(row["name"])
-        SLUG_REGISTRY[slug] = (row["name"], row.get("gen_type") or "other")
+        kb_general = knowledge[lower]
+        gen_type = (
+            kb_general.get("gtype")
+            if kb_general.get("gtype") in TROOP_TYPES
+            else row.get("gen_type") or "other"
+        )
+        SLUG_REGISTRY[slug] = (row["name"], gen_type)
         cards.append(
             _card(
                 {
                     "name": row["name"],
                     "slug": slug,
-                    "gen_type": row.get("gen_type") or "other",
+                    "gen_type": gen_type,
                     "group": row.get("role"),
                     "tagline": "Your roster",
                     "buffs": [],
@@ -505,6 +551,8 @@ def build_gallery_data(database) -> dict:
                     "role": row["role"],
                     "owned": True,
                     "status": "owned",
+                    "quality": kb_general.get("quality") or "Unknown",
+                    "tier": str(ratings[lower].get("tier") or "Unrated").upper(),
                 }
             )
         )
@@ -564,9 +612,8 @@ def build_gallery_data(database) -> dict:
             "ownership": "Postgres murderbot.generals (per-user roster)",
             "skills": "evony-hq.com generals API (verified) + game_brain/pvp_brain.md §8/§9/§13",
             "artwork": (
-                "Self-hosted generated SVG medallions. Official portrait art is "
-                "copyright Top Games Inc.; drop <slug>.png into static/generals/ to "
-                "override with real art."
+                "Self-hosted general portraits where available, with generated "
+                "SVG medallions as fallbacks."
             ),
         },
     }
@@ -611,23 +658,28 @@ def _card_html(card: dict) -> str:
         else ""
     )
     bio = f'<p class="bio">{html.escape(card["bio"])}</p>' if card.get("bio") else ""
+    slug = html.escape(card["slug"], quote=True)
+    name = html.escape(card["name"])
+    tier = html.escape(card["tier"])
 
     return f"""
 <article class="gcard {status_class}">
   <div class="portrait">
-    <img src="{card['portrait_url']}" alt="{html.escape(card['name'])} portrait" loading="lazy" width="400" height="400">
+    <img src="{card['portrait_url']}" alt="{name} portrait" loading="lazy" width="400" height="400">
     <span class="status-badge {status_class}">{status_label}</span>
   </div>
   <div class="body">
     <header class="ghead">
-      <h3>{html.escape(card['name'])}</h3>
+      <h3><a href="/generals/{slug}">{name}</a></h3>
       <span class="type-pill" style="--pill:{card['type_color']}">{card['type_glyph']} {html.escape(card['type_label'])}</span>
     </header>
+    <div class="detail-badges"><span class="detail-badge">{html.escape(card['quality'])}</span><span class="detail-badge tier {tier.casefold()}">{tier}</span></div>
     {meta_line}
     {tagline}
     {chips}
     {brain}
     {bio}
+    <a class="detail-link" href="/generals/{slug}">View full guide &rarr;</a>
   </div>
 </article>"""
 
@@ -686,7 +738,12 @@ h1 {{ margin: 0; font-size: 1.7rem; }}
 .body {{ padding: .85rem .95rem 1.05rem; display: flex; flex-direction: column; gap: .5rem; }}
 .ghead {{ display: flex; align-items: center; justify-content: space-between; gap: .5rem; }}
 .ghead h3 {{ margin: 0; font-size: 1.05rem; line-height: 1.2; }}
+.ghead h3 a {{ color: #e6edf3; }}
 .type-pill {{ flex: none; padding: .15rem .5rem; font-size: .72rem; font-weight: 700; color: var(--pill); border: 1px solid var(--pill); border-radius: 999px; white-space: nowrap; }}
+.detail-badges {{ display: flex; flex-wrap: wrap; gap: .32rem; }}
+.detail-badge {{ padding: .16rem .5rem; color: #d2a8ff; background: #1c1633; border: 1px solid #3a2d63; border-radius: 999px; font-size: .7rem; font-weight: 800; text-transform: uppercase; }}
+.detail-badge.tier.s {{ color: #f2cc60; border-color: #9e6a03; }}
+.detail-badge.tier.a {{ color: #3fb950; border-color: #238636; }}
 .meta {{ margin: 0; color: #f2cc60; font-size: .82rem; letter-spacing: .02em; }}
 .tagline {{ margin: 0; color: #adbac7; font-size: .85rem; }}
 .chips {{ display: flex; flex-wrap: wrap; gap: .32rem; }}
@@ -695,6 +752,7 @@ h1 {{ margin: 0; font-size: 1.7rem; }}
 .chip.debuff {{ color: #ff7b72; background: #2a1615; border-color: #4a2321; }}
 .brain {{ margin: .1rem 0 0; padding: .5rem .6rem; font-size: .8rem; line-height: 1.4; color: #d2a8ff; background: #1c1633; border: 1px solid #3a2d63; border-radius: 8px; }}
 .bio {{ margin: 0; color: #6e7681; font-size: .78rem; font-style: italic; }}
+.detail-link {{ margin-top: auto; font-size: .82rem; font-weight: 700; }}
 footer {{ margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid #21262d; color: #6e7681; font-size: .8rem; line-height: 1.6; }}
 @media (max-width: 520px) {{
   main {{ padding: 1.25rem 0 3rem; }}

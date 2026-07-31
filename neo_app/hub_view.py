@@ -116,7 +116,7 @@ def _page(s, onboard_html=""):
              + pill("Tactics", s["tactics"])
              + pill("Enemies known", s["enemies"]))
     return f"""<!doctype html><html lang=en><head><meta charset=utf-8>
-<meta name=viewport content="width=device-width,initial-scale=1"><title>Easybot — command</title>
+<meta name=viewport content="width=device-width,initial-scale=1"><title>MurderBot — command</title>
 {SHARED_CSS}
 <style>
  :root{{--grn:#57c08a}}
@@ -154,7 +154,7 @@ def _page(s, onboard_html=""):
  .ostep .oarr{{margin-left:auto;color:var(--gold)}}
  @media(max-width:640px){{.grid{{grid-template-columns:1fr}}}}
 </style></head><body><main>
- <header><div class=logo><span class=mk>E</span> Easybot</div><a class=logout href="#" onclick="fetch('/api/logout',{{method:'POST'}}).then(()=>location.href='/')">Log out</a></header>
+ <header><div class=logo><span class=mk>M</span> MurderBot</div><a class=logout href="#" onclick="fetch('/api/logout',{{method:'POST'}}).then(()=>location.href='/')">Log out</a></header>
  <div class=sub>Your Evony command center — the PvP brain that never sleeps.</div>
  <div class=strip>{strip}</div>
  {onboard_html}

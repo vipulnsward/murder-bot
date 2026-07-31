@@ -1703,6 +1703,7 @@ from attack_view import build_router as build_attack_router  # noqa: E402
 from brain_view import build_router as build_brain_router  # noqa: E402
 from settings_view import build_router as build_settings_router  # noqa: E402
 from alliance_view import build_router as build_alliance_router  # noqa: E402
+from mybot_view import build_router as build_mybot_router  # noqa: E402
 from guides_view import build_router as build_guides_router, sitemap_paths, static_files as guide_static_files  # noqa: E402
 
 app.mount("/static/guides", guide_static_files, name="guide-images")
@@ -1719,6 +1720,7 @@ app.include_router(build_settings_router(current_user, database, fernet))  # GET
 from hub_view import build_router as build_hub_router  # noqa: E402
 app.include_router(build_hub_router(current_user, database))        # GET /home — the nav hub
 app.include_router(build_alliance_router(current_user, database))   # GET /alliance — alliance threat board
+app.include_router(build_mybot_router(current_user, database))      # GET /mybot — NeoIsTlatoani local-bot data
 
 
 @app.get("/healthz")

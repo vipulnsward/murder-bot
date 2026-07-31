@@ -145,6 +145,43 @@ def latest_report(db_path: str | Path = DB_PATH) -> dict | None:
     return json.loads(row[0]) if row else None
 
 
+def sync_roster_to_pg(database, roster: list[dict]) -> int:
+    """Upsert the reported roster into the Postgres ``troops`` table so the AI counter
+    engine (counter_view reads ``FROM troops``) makes ACCOUNT-AWARE calls — it needs to know
+    whether we actually hold the counter troop type, not assume zero. Self-healing (creates
+    the table if absent) and idempotent (unique(building,name) upsert). Best-effort: callers
+    must wrap it so a DB hiccup never fails the telemetry POST. Returns rows written."""
+    if not roster:
+        return 0
+    written = 0
+    with database() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS troops(
+                  id serial primary key, building text, tier int, name text, own bigint,
+                  cost_food bigint, cost_wood bigint, cost_stone bigint, cost_ore bigint,
+                  cost_gold bigint, train_seconds bigint, instant_gems bigint, locked boolean,
+                  unique(building, name))
+                """
+            )
+            for troop in roster:
+                building, name = troop.get("building"), troop.get("name")
+                if not building or not name:
+                    continue
+                cursor.execute(
+                    """
+                    INSERT INTO troops (building, tier, name, own) VALUES (%s, %s, %s, %s)
+                    ON CONFLICT (building, name)
+                    DO UPDATE SET tier = EXCLUDED.tier, own = EXCLUDED.own
+                    """,
+                    (building, troop.get("tier"), name, troop.get("own")),
+                )
+                written += 1
+        connection.commit()
+    return written
+
+
 def _display(value, suffix: str = "") -> str:
     if value is None or value == "":
         return "—"
@@ -413,7 +450,14 @@ def build_router(current_user, database) -> APIRouter:
         expected = os.environ.get("MYBOT_SYNC_TOKEN")
         if expected and (x_sync_token is None or not hmac.compare_digest(x_sync_token, expected)):
             raise HTTPException(status_code=401, detail="Invalid sync token")
-        return JSONResponse(store_report(report))
+        payload = store_report(report)
+        # Also feed the roster to Postgres so the AI counter engine is account-aware.
+        # Best-effort — a DB hiccup must never fail the telemetry ingest.
+        try:
+            sync_roster_to_pg(database, payload.get("roster") or [])
+        except Exception:
+            pass
+        return JSONResponse(payload)
 
     @router.get("/api/mybot")
     def mybot_api(_user_id: int = Depends(current_user)):

@@ -1691,6 +1691,14 @@ def counter_generals_api(request: Request, enemy: str = "ground", role: str = "a
                             status_code=200)
 
 
+# Ensure the repo root is importable so view modules can import root modules
+# (game_kb, counter_general, ...) at their OWN module-load time, not just at runtime.
+import sys as _sys_root  # noqa: E402
+import os as _os_root  # noqa: E402
+_REPO_ROOT = _os_root.path.dirname(_os_root.path.dirname(_os_root.path.abspath(__file__)))
+if _REPO_ROOT not in _sys_root.path:
+    _sys_root.path.insert(0, _REPO_ROOT)
+
 # --- Murder Bot feature routers (self-contained modules) ---
 from reports_view import router as reports_router  # noqa: E402
 from generals_view import build_router as build_generals_router  # noqa: E402

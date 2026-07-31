@@ -864,12 +864,12 @@ AUTH_PAGE = """
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Murder Bot — the Evony bot that thinks | Easy Bot alternative</title>
-<meta name="description" content="Murder Bot runs your Evony account 24/7 and out-thinks your enemies with a real battle-sim AI. Everything Easy Bot does, cheaper, plus AI PvP counters, enemy intel, and attack planning. From $5/mo.">
+<meta name="description" content="Murder Bot runs your Evony account 24/7 and out-thinks your enemies with a real battle-sim AI. Everything Easy Bot does — plus AI PvP counters, enemy intel, and attack planning. Free during open beta, no credit card.">
 <meta name="keywords" content="evony bot, easy bot alternative, evony automation, evony rally bot, evony pvp counter, evony auto farm, evony bot cheap, best evony bot 2026">
 <link rel="canonical" href="https://murderbot.vipulnsward.com/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Murder Bot — the Evony bot that thinks">
-<meta property="og:description" content="Everything Easy Bot does, cheaper — plus an AI PvP brain that counters every attacker. From $5/mo.">
+<meta property="og:description" content="Everything Easy Bot does — plus an AI PvP brain that counters every attacker. Free during open beta, no credit card.">
 <meta property="og:url" content="https://murderbot.vipulnsward.com/">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">
@@ -1051,13 +1051,15 @@ footer{border-top:1px solid rgba(230,195,92,.14);color:var(--dim)}
 </div></section>
 
 <section><div class="wrap">
-  <span class="eyebrow">Pricing</span>
-  <h2>Cheaper than Easy Bot, at every tier</h2>
+  <span class="eyebrow">Pricing &middot; open beta</span>
+  <h2>Free right now &mdash; every tier, no card</h2>
+  <p class="lede" style="margin-bottom:22px">We're in open beta: <b>everything below is free</b> while we onboard alliances. The monthly prices are what they'll cost later &mdash; sign up now and lock in free access.</p>
   <div class="price">
-    <div class="tier hot"><div class="t" style="color:var(--red2)">Brain</div><div class="p">$5<small>/mo</small></div><ul><li>Unlimited AI counters</li><li>Enemy intel</li><li>Attack planner</li><li>No setup &mdash; works instantly</li></ul></div>
-    <div class="tier"><div class="t">Auto</div><div class="p">$9<small>/mo</small></div><ul><li>Everything in Brain</li><li>24/7 account automation</li><li>Rally + farm + reports</li></ul></div>
-    <div class="tier"><div class="t">Alliance</div><div class="p">$29<small>/mo</small></div><ul><li>Up to 5 accounts</li><li>Fleet dashboard</li><li>Intel on everyone</li></ul></div>
+    <div class="tier hot"><div class="t" style="color:var(--red2)">Brain</div><div class="p"><span style="color:#3fb950">Free</span> <small><s style="opacity:.55">then $5/mo</s></small></div><ul><li>Unlimited AI counters</li><li>Enemy intel</li><li>Attack planner</li><li>No setup &mdash; works instantly</li></ul></div>
+    <div class="tier"><div class="t">Auto</div><div class="p"><span style="color:#3fb950">Free</span> <small><s style="opacity:.55">then $9/mo</s></small></div><ul><li>Everything in Brain</li><li>24/7 account automation</li><li>Rally + farm + reports</li></ul></div>
+    <div class="tier"><div class="t">Alliance</div><div class="p"><span style="color:#3fb950">Free</span> <small><s style="opacity:.55">then $29/mo</s></small></div><ul><li>Up to 5 accounts</li><li>Fleet dashboard</li><li>Intel on everyone</li></ul></div>
   </div>
+  <p style="text-align:center;margin-top:18px"><a class="btn p" href="#start">Claim your free access &rarr;</a></p>
 </div></section>
 
 <section id="start"><div class="wrap">

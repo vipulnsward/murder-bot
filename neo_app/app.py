@@ -866,11 +866,11 @@ AUTH_PAGE = """
 <title>Murder Bot — the Evony bot that thinks | Easy Bot alternative</title>
 <meta name="description" content="Murder Bot runs your Evony account 24/7 and out-thinks your enemies with a real battle-sim AI. Everything Easy Bot does, cheaper, plus AI PvP counters, enemy intel, and attack planning. From $5/mo.">
 <meta name="keywords" content="evony bot, easy bot alternative, evony automation, evony rally bot, evony pvp counter, evony auto farm, evony bot cheap, best evony bot 2026">
-<link rel="canonical" href="https://murderbot.gg/">
+<link rel="canonical" href="https://murderbot.vipulnsward.com/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Murder Bot — the Evony bot that thinks">
 <meta property="og:description" content="Everything Easy Bot does, cheaper — plus an AI PvP brain that counters every attacker. From $5/mo.">
-<meta property="og:url" content="https://murderbot.gg/">
+<meta property="og:url" content="https://murderbot.vipulnsward.com/">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"SoftwareApplication","name":"Murder Bot","applicationCategory":"GameApplication","operatingSystem":"Web","description":"AI-powered Evony automation and PvP counter engine. An Easy Bot alternative with a real battle-sim brain.","offers":[{"@type":"Offer","name":"Brain","price":"5","priceCurrency":"USD"},{"@type":"Offer","name":"Auto","price":"9","priceCurrency":"USD"}]}
@@ -1601,13 +1601,13 @@ def index(request: Request):
 
 @app.get("/robots.txt", response_class=PlainTextResponse)
 def robots_txt():
-    return "User-agent: *\nAllow: /\nSitemap: https://murderbot.gg/sitemap.xml\n"
+    return "User-agent: *\nAllow: /\nSitemap: https://murderbot.vipulnsward.com/sitemap.xml\n"
 
 
 @app.get("/sitemap.xml")
 def sitemap_xml():
     urls = ["/", *sitemap_paths()]
-    body = "".join(f"<url><loc>https://murderbot.gg{u}</loc><changefreq>weekly</changefreq></url>" for u in urls)
+    body = "".join(f"<url><loc>https://murderbot.vipulnsward.com{u}</loc><changefreq>weekly</changefreq></url>" for u in urls)
     xml = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{body}</urlset>'
     return Response(content=xml, media_type="application/xml")
 

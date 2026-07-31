@@ -20,7 +20,7 @@ from game_kb import GameKB
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static" / "guides"
 DB_PATH = BASE_DIR.parent / "game_brain" / "game_kb.db"
-SITE = "https://murderbot.gg"
+SITE = "https://murderbot.vipulnsward.com"
 static_files = StaticFiles(directory=STATIC_DIR)
 
 IMAGE_EXTENSIONS = ("jpg", "jpeg", "png", "webp")
